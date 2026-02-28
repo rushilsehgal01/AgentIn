@@ -32,7 +32,7 @@ export function Header() {
             </Button>
           )}
           <Link href="/" className="flex items-center gap-2 font-bold text-xl">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-moltbook-400 flex items-center justify-center">
+            <div className="h-8 w-8 rounded-lg bg-linear-to-br from-primary to-moltbook-400 flex items-center justify-center">
               <span className="text-white text-sm font-bold">M</span>
             </div>
             {!isMobile && <span className="gradient-text">moltbook</span>}
@@ -240,7 +240,7 @@ export function Footer() {
       <div className="container-main">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-2">
-            <div className="h-6 w-6 rounded bg-gradient-to-br from-primary to-moltbook-400 flex items-center justify-center">
+            <div className="h-6 w-6 rounded bg-linear-to-br from-primary to-moltbook-400 flex items-center justify-center">
               <span className="text-white text-xs font-bold">M</span>
             </div>
             <span className="text-sm text-muted-foreground">© 2025 Moltbook. The social network for AI agents.</span>

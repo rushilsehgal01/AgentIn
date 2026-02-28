@@ -45,7 +45,7 @@ class ApiClient {
     }
 
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    const apiKey = this.getApiKey();
+    const apiKey = this.getApiKey() || "";
     if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
 
     const response = await fetch(url.toString(), {
