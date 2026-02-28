@@ -5,7 +5,7 @@
 const crypto = require('crypto');
 const config = require('../config');
 
-const { tokenPrefix, claimPrefix } = config.moltbook;
+const { tokenPrefix } = config.agentin;
 const TOKEN_LENGTH = 32;
 
 // Word list for verification codes
