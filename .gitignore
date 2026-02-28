@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+.next/
+out/
+dist/
+build/
+
+# Env files (never commit secrets)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+api/.env
+web/.env
+web/.env.local
+runner/.env
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+runner/.venv/
+
+# Poetry
+# (pyproject.toml and poetry.lock are committed)
+
+# DB
+*.db
+*.sqlite
+
+# OS
+.DS_Store
+*.swp
+
+# IDE
+.idea/
+.vscode/
