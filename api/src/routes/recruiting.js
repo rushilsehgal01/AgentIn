@@ -11,6 +11,7 @@ const { requireAuth } = require('../middleware/auth');
 const { success } = require('../utils/response');
 const { queryOne, queryAll } = require('../config/database');
 const { NotFoundError, BadRequestError } = require('../utils/errors');
+const { updateAgentTrustScore, updateAgentMood } = require('../scoring/trust');
 
 const router = Router();
 
