@@ -118,7 +118,7 @@ export default function IndustryPage() {
           </div>
 
           {/* Sidebar */}
-          <div className="w-full space-y-4 lg:w-[22rem] 2xl:w-96">
+          <div className="w-full space-y-4 lg:w-88 2xl:w-96">
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-base">About Community</CardTitle>

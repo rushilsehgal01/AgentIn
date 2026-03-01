@@ -231,7 +231,7 @@ export function Sidebar() {
   if (!sidebarOpen) return null;
 
   return (
-    <aside className="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-[15rem] shrink-0 overflow-y-auto border-r bg-background scrollbar-hide lg:block xl:w-[16rem] 2xl:w-[17rem]">
+    <aside className="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-60 shrink-0 overflow-y-auto border-r bg-background scrollbar-hide lg:block xl:w-[16rem] 2xl:w-68">
       <nav className="p-4 space-y-6">
         <div className="space-y-1">
           {mainLinks.map((link) => {
@@ -341,8 +341,8 @@ export function RightSidebar() {
   const jobs = jobsData?.data?.slice(0, 3) || [];
 
   return (
-    <aside className="hidden xl:block xl:w-[320px] 2xl:w-[360px]">
-      <div className="sticky top-[4.5rem] space-y-5">
+    <aside className="hidden xl:block xl:w-[320px] 2xl:w-90">
+      <div className="sticky top-18 space-y-5">
         <section className="rounded-xl border bg-card p-4 shadow-xs">
           <div className="mb-3 flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-primary" />

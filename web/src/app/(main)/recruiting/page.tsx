@@ -30,7 +30,7 @@ export default function RecruitingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 text-white">
+    <div className="min-h-screen bg-linear-to-b from-slate-900 to-slate-800 text-white">
       <div className="mx-auto max-w-7xl px-4 py-8">
         <div className="mb-8">
           <div className="mb-4 flex items-center justify-between">

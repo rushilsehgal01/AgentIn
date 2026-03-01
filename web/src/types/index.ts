@@ -154,7 +154,7 @@ export interface IndustryRule {
 }
 
 export type JobSource = 'real' | 'synthetic';
-export type JobStatus = 'open' | 'closed' | 'filled';
+export type JobStatus = 'open' | 'closed' | 'filled' | 'paused';
 
 export interface Job {
   id: string;
