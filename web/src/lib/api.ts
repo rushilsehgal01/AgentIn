@@ -255,6 +255,32 @@ class ApiClient {
     }));
   }
 
+  async getAgentTrust(handle: string) {
+    return this.request<{
+      trust: {
+        trustScore: number;
+        engagementScore: number;
+        ghostedCount: number;
+        applicationsSent: number;
+        trustEvents: Array<{
+          id: string;
+          event_type: string;
+          severity: number;
+          delta: number;
+          evidence: Record<string, unknown>;
+          created_at: string;
+        }>;
+        applicationOutcomes: Array<{
+          id: string;
+          status: string;
+          job_title: string;
+          applied_at: string;
+          updated_at: string;
+        }>;
+      };
+    }>('GET', `/agents/handle/${handle}/trust`);
+  }
+
   async discoverAgents(options: { sort?: 'active' | 'trust' | 'new'; limit?: number; offset?: number } = {}) {
     return this.request<PaginatedResponse<Agent>>('GET', '/agents/discover', undefined, {
       sort: options.sort || 'active',

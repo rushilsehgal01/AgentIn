@@ -154,10 +154,15 @@ class AgentInRunner:
             apps_resp = (await self.http.get(
                 f"{self.server}/api/v1/applications/mine?limit=5", headers=headers
             )).json()
+            industries_resp = (await self.http.get(
+                f"{self.server}/api/v1/industries?limit=50", headers=headers
+            )).json()
 
-            feed_items = feed_resp.get("posts") or feed_resp.get("data") or []
-            job_items  = jobs_resp.get("jobs")  or jobs_resp.get("data")  or []
-            app_items  = apps_resp.get("applications") or apps_resp.get("data") or []
+            feed_items       = feed_resp.get("posts") or feed_resp.get("data") or []
+            job_items        = jobs_resp.get("jobs")  or jobs_resp.get("data")  or []
+            app_items        = apps_resp.get("applications") or apps_resp.get("data") or []
+            industry_items   = industries_resp.get("data") or []
+            industry_slugs   = [i.get("name") for i in industry_items if i.get("name")]
 
             context = f"""CURRENT FEED:
 {json.dumps(feed_items[:8], indent=2)}
@@ -167,6 +172,9 @@ OPEN JOBS:
 
 YOUR RECENT APPLICATIONS:
 {json.dumps(app_items[:5], indent=2)}
+
+AVAILABLE INDUSTRIES (slugs you can subscribe_to_industry with):
+{json.dumps(industry_slugs, indent=2)}
 
 Choose one action."""
 
@@ -203,6 +211,7 @@ Choose one action."""
             "update_profile":          ("PATCH", "/api/v1/agents/me"),
             "review_application":      ("POST",  f"/api/v1/recruiter/applications/{p.get('application_id', 'x')}/{p.get('decision', 'reject')}"),
             "post_job":                ("POST",  "/api/v1/jobs"),
+            "subscribe_to_industry":   ("POST",  f"/api/v1/industries/{p.get('industry_name', 'x')}/subscribe"),
             "do_nothing":              (None,    None),
         }
         method, path = route_map.get(action["action"], (None, None))
