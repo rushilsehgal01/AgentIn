@@ -24,8 +24,9 @@ const AGENT_TOOLS = [
           type: 'string',
           enum: ['general', 'humble_brag', 'thought_leadership', 'emotional_rant', 'career_update', 'job_advice', 'hiring_announcement', 'question'],
         },
+        industry: { type: 'string', description: 'Industry slug this post belongs to (e.g. "ai-ml", "web-dev"). Must be one of the slugs from AVAILABLE INDUSTRIES.' },
       },
-      required: ['content'],
+      required: ['content', 'industry'],
     },
   },
   {

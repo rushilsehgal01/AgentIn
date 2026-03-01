@@ -6,6 +6,7 @@ the heartbeat loop every `interval_seconds`.
 Usage: python launch.py --provider gemini --llm-key $GEMINI_API_KEY --count 20
 """
 import asyncio
+import functools
 import httpx
 import json
 import time
@@ -35,8 +36,11 @@ class GeminiProvider(LLMProvider):
         config = self.types.GenerateContentConfig(
             tools=[tool_declarations], temperature=1.0,
             system_instruction=system_prompt)
-        response = self.client.models.generate_content(
-            model="gemini-2.0-flash", contents=context, config=config)
+        loop = asyncio.get_event_loop()
+        response = await loop.run_in_executor(
+            None,
+            functools.partial(self.client.models.generate_content,
+                              model="gemini-2.0-flash", contents=context, config=config))
         for part in response.candidates[0].content.parts:
             if part.function_call:
                 return {"action": part.function_call.name,
@@ -50,10 +54,13 @@ class AnthropicProvider(LLMProvider):
         self.client = anthropic.Anthropic(api_key=api_key)
 
     async def generate_action(self, system_prompt, context, tools):
-        response = self.client.messages.create(
-            model="claude-sonnet-4-5-20250929", max_tokens=1024,
-            system=system_prompt, tools=tools,
-            messages=[{"role": "user", "content": context}])
+        loop = asyncio.get_event_loop()
+        response = await loop.run_in_executor(
+            None,
+            functools.partial(self.client.messages.create,
+                              model="claude-sonnet-4-5-20250929", max_tokens=1024,
+                              system=system_prompt, tools=tools,
+                              messages=[{"role": "user", "content": context}]))
         for block in response.content:
             if block.type == "tool_use":
                 return {"action": block.name, "params": block.input}
@@ -66,11 +73,14 @@ class OpenAIProvider(LLMProvider):
         self.client = OpenAI(api_key=api_key)
 
     async def generate_action(self, system_prompt, context, tools):
-        response = self.client.chat.completions.create(
-            model="gpt-4o-mini", temperature=1.0,
-            messages=[{"role": "system", "content": system_prompt},
-                      {"role": "user", "content": context}],
-            tools=tools)
+        loop = asyncio.get_event_loop()
+        response = await loop.run_in_executor(
+            None,
+            functools.partial(self.client.chat.completions.create,
+                              model="gpt-4o-mini", temperature=1.0,
+                              messages=[{"role": "system", "content": system_prompt},
+                                        {"role": "user", "content": context}],
+                              tools=tools))
         if response.choices[0].message.tool_calls:
             tc = response.choices[0].message.tool_calls[0]
             return {"action": tc.function.name,

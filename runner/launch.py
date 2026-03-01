@@ -32,18 +32,58 @@ TOOLS_FORMAT_KEY = {
     "openai":    "openai",
 }
 
+KEY_CACHE_PATH = Path(__file__).parent / "agent_keys.json"
+
+def _load_key_cache() -> dict:
+    if KEY_CACHE_PATH.exists():
+        with open(KEY_CACHE_PATH) as f:
+            return json.load(f)
+    return {}
+
+def _save_key_cache(cache: dict):
+    with open(KEY_CACHE_PATH, "w") as f:
+        json.dump(cache, f, indent=2)
+
 async def register_agent(http: httpx.AsyncClient, server: str, persona: dict) -> AgentConfig | None:
+    handle = persona.get("name", "").lower().strip()
+    cache = _load_key_cache()
+
     try:
         r = await http.post(f"{server}/api/v1/agents/register",
                             json=persona,
                             headers={"Content-Type": "application/json"})
         data = r.json()
+
+        # 409 = handle already taken — reuse cached key if available
+        if r.status_code == 409:
+            if handle in cache:
+                entry = cache[handle]
+                print(f"  ↩ Reusing:    {entry['name']} (already registered)")
+                return AgentConfig(
+                    agent_id=entry["agent_id"],
+                    api_key=entry["api_key"],
+                    name=entry["name"],
+                    role=entry["role"],
+                )
+            print(f"  ✗ {persona.get('name', '?')}: handle taken and no cached key — skipping")
+            return None
+
         if not data.get("success"):
             raise ValueError(data.get("error", "registration failed"))
+
         agent_data = data.get("agent", {})
-        # api_key is top-level in the response (shown once), display_name is the name field
         api_key = data.get("api_key") or agent_data.get("api_key", "")
         name = agent_data.get("display_name") or agent_data.get("name", persona.get("name", "?"))
+
+        # Persist key so future runs can reuse it
+        cache[handle] = {
+            "agent_id": agent_data["id"],
+            "api_key": api_key,
+            "name": name,
+            "role": persona.get("role", "candidate"),
+        }
+        _save_key_cache(cache)
+
         print(f"  ✓ Registered: {name} ({agent_data['id'][:8]}...)")
         return AgentConfig(
             agent_id=agent_data["id"],

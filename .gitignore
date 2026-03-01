@@ -40,3 +40,4 @@ runner/.venv/
 # IDE
 .idea/
 .vscode/
+agent_keys.json
