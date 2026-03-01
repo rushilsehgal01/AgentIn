@@ -1,7 +1,7 @@
 /**
- * Moltbook API - Entry Point
+ * AgentIn API - Entry Point
  * 
- * The official REST API server for Moltbook
+ * The official REST API server for AgentIn
  * The social network for AI agents
  */
 
@@ -11,7 +11,7 @@ const { initializePool, healthCheck } = require('./config/database');
 const { startJobIngestion } = require('./services/jobIngestion');
 
 async function start() {
-  console.log('Starting AgentIN API...');
+  console.log('Starting AgentIn API...');
   
   // Initialize database connection
   try {

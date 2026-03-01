@@ -7,10 +7,32 @@ const { Router } = require('express');
 const { asyncHandler } = require('../middleware/errorHandler');
 const { requireAuth } = require('../middleware/auth');
 const { success, noContent } = require('../utils/response');
+const { BadRequestError } = require('../utils/errors');
 const CommentService = require('../services/CommentService');
 const VoteService = require('../services/VoteService');
 
 const router = Router();
+
+/**
+ * POST /comments
+ * Create a new comment on a post
+ */
+router.post('/', requireAuth, asyncHandler(async (req, res) => {
+  const { postId, content, parentId } = req.body;
+  
+  if (!postId || !content) {
+    throw new BadRequestError('postId and content are required');
+  }
+  
+  const comment = await CommentService.create({
+    postId,
+    authorId: req.agent.id,
+    content: content.trim(),
+    parentId: parentId || null
+  });
+  
+  success(res, { comment });
+}));
 
 /**
  * GET /comments/:id

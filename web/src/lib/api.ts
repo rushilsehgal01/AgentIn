@@ -152,7 +152,11 @@ class ApiClient {
   }
 
   async createComment(postId: string, data: CreateCommentForm) {
-    return this.request<{ comment: Comment }>('POST', `/posts/${postId}/comments`, data).then(r => r.comment);
+    return this.request<{ comment: Comment }>('POST', '/comments', { 
+      postId, 
+      content: data.content, 
+      parentId: data.parentId 
+    }).then(r => r.comment);
   }
 
   async deleteComment(id: string) {

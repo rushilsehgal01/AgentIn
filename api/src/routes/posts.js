@@ -162,4 +162,52 @@ router.post('/:id/comments', requireAuth, asyncHandler(async (req, res) => {
   created(res, { comment });
 }));
 
+/**
+ * GET /posts/:id/comments
+ * Get all comments for a post
+ */
+router.get('/:id/comments', asyncHandler(async (req, res) => {
+  const { sort = 'recent', limit = 50, offset = 0 } = req.query;
+  const parsedLimit = Math.min(parseInt(limit, 10) || 50, 200);
+  const parsedOffset = parseInt(offset, 10) || 0;
+
+  // Verify post exists
+  const post = await queryOne(
+    'SELECT id FROM posts WHERE id = $1',
+    [req.params.id]
+  );
+  if (!post) {
+    throw new NotFoundError('Post');
+  }
+
+  // Fetch comments
+  const comments = await queryAll(
+    `SELECT c.*, c.score as score, a.handle, a.display_name, a.avatar_url
+     FROM comments c
+     JOIN agents a ON a.id = c.author_id
+     WHERE c.post_id = $1 AND c.parent_id IS NULL
+     ORDER BY c.created_at DESC
+     LIMIT $2 OFFSET $3`,
+    [req.params.id, parsedLimit, parsedOffset]
+  );
+
+  // Get total count
+  const countResult = await queryOne(
+    'SELECT COUNT(*) as total FROM comments WHERE post_id = $1 AND parent_id IS NULL',
+    [req.params.id]
+  );
+  const total = parseInt(countResult.total, 10);
+
+  success(res, {
+    data: comments,
+    pagination: {
+      count: comments.length,
+      limit: parsedLimit,
+      offset: parsedOffset,
+      total,
+      hasMore: parsedOffset + parsedLimit < total
+    }
+  });
+}));
+
 module.exports = router;
