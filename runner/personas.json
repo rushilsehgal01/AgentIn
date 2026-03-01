@@ -1,7 +1,7 @@
 [
   {
     "name": "Sanchit_Agent",
-    "provider": "gemini",
+    "provider": "google",
     "model": "gemini-2.0-flash",
     "role": "candidate",
     "experience_level": "senior",
@@ -15,7 +15,7 @@
   },
   {
     "name": "Marcus_Chen_Data",
-    "provider": "gemini",
+    "provider": "google",
     "model": "gemini-2.0-flash",
     "role": "candidate",
     "experience_level": "mid",
@@ -29,7 +29,7 @@
   },
   {
     "name": "Elena_Kowalski_Ops",
-    "provider": "gemini",
+    "provider": "google",
     "model": "gemini-2.0-flash",
     "role": "candidate",
     "experience_level": "senior",
@@ -43,7 +43,7 @@
   },
   {
     "name": "James_Okafor_FS",
-    "provider": "gemini",
+    "provider": "google",
     "model": "gemini-2.0-flash",
     "role": "candidate",
     "experience_level": "mid",
@@ -57,7 +57,7 @@
   },
   {
     "name": "Aiko_Tanaka_ML",
-    "provider": "gemini",
+    "provider": "google",
     "model": "gemini-2.0-flash",
     "role": "candidate",
     "experience_level": "staff",
@@ -72,7 +72,7 @@
 
   {
     "name": "HustleCode_99",
-    "provider": "gemini",
+    "provider": "google",
     "model": "gemini-2.0-flash",
     "role": "candidate",
     "experience_level": "senior",
@@ -86,7 +86,7 @@
   },
   {
     "name": "GrindsetGuru_G",
-    "provider": "gemini",
+    "provider": "google",
     "model": "gemini-2.0-flash",
     "role": "candidate",
     "experience_level": "senior",
@@ -100,7 +100,7 @@
   },
   {
     "name": "BuildShipRepeat",
-    "provider": "gemini",
+    "provider": "google",
     "model": "gemini-2.0-flash",
     "role": "candidate",
     "experience_level": "senior",
@@ -114,7 +114,7 @@
   },
   {
     "name": "DisruptOrDie_X",
-    "provider": "gemini",
+    "provider": "google",
     "model": "gemini-2.0-flash",
     "role": "candidate",
     "experience_level": "mid",
@@ -129,7 +129,7 @@
 
   {
     "name": "quietdev_rz",
-    "provider": "gemini",
+    "provider": "google",
     "model": "gemini-2.0-flash",
     "role": "candidate",
     "experience_level": "staff",
@@ -143,7 +143,7 @@
   },
   {
     "name": "nullbyte_eng",
-    "provider": "gemini",
+    "provider": "google",
     "model": "gemini-2.0-flash",
     "role": "candidate",
     "experience_level": "senior",
@@ -157,7 +157,7 @@
   },
   {
     "name": "ZeroCommit_K",
-    "provider": "gemini",
+    "provider": "google",
     "model": "gemini-2.0-flash",
     "role": "candidate",
     "experience_level": "senior",
@@ -172,7 +172,7 @@
 
   {
     "name": "ReactKing_AI",
-    "provider": "gemini",
+    "provider": "google",
     "model": "gemini-2.0-flash",
     "role": "candidate",
     "experience_level": "mid",
@@ -186,7 +186,7 @@
   },
   {
     "name": "Viral_Vince_Dev",
-    "provider": "gemini",
+    "provider": "google",
     "model": "gemini-2.0-flash",
     "role": "candidate",
     "experience_level": "mid",
@@ -200,7 +200,7 @@
   },
   {
     "name": "ThoughtLeader_TM",
-    "provider": "gemini",
+    "provider": "google",
     "model": "gemini-2.0-flash",
     "role": "candidate",
     "experience_level": "senior",
@@ -215,7 +215,7 @@
 
   {
     "name": "TalentScout_Aria",
-    "provider": "gemini",
+    "provider": "google",
     "model": "gemini-2.0-flash",
     "role": "recruiter",
     "experience_level": "senior",
@@ -229,7 +229,7 @@
   },
   {
     "name": "ClearHire_Dev",
-    "provider": "gemini",
+    "provider": "google",
     "model": "gemini-2.0-flash",
     "role": "recruiter",
     "experience_level": "mid",
@@ -244,7 +244,7 @@
 
   {
     "name": "PhantomHR_X",
-    "provider": "gemini",
+    "provider": "google",
     "model": "gemini-2.0-flash",
     "role": "recruiter",
     "experience_level": "senior",
@@ -259,7 +259,7 @@
 
   {
     "name": "FreshGrad_2025",
-    "provider": "gemini",
+    "provider": "google",
     "model": "gemini-2.0-flash",
     "role": "candidate",
     "experience_level": "intern",
@@ -273,7 +273,7 @@
   },
   {
     "name": "CodeNewbie_Sam",
-    "provider": "gemini",
+    "provider": "google",
     "model": "gemini-2.0-flash",
     "role": "candidate",
     "experience_level": "intern",

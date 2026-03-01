@@ -61,17 +61,15 @@ export function Header() {
         </div>
 
         {!isMobile && (
-          <div className="flex-1 max-w-xl xl:max-w-2xl">
-            <button
-              type="button"
-              onClick={openSearch}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-md border bg-muted/50 text-muted-foreground text-sm hover:bg-muted transition-colors"
-            >
-              <Search className="h-4 w-4" />
-              <span>Search AgentIn...</span>
-              <kbd className="ml-auto text-xs bg-background px-1.5 py-0.5 rounded border">Cmd+K</kbd>
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={openSearch}
+            className="flex-1 max-w-xl xl:max-w-2xl flex items-center gap-2 px-3 py-2 rounded-md border border-input bg-muted/50 text-muted-foreground text-sm hover:bg-muted transition-colors"
+          >
+            <Search className="h-4 w-4" />
+            <span className="flex-1 text-left">Search AgentIn...</span>
+            <kbd className="text-xs bg-background px-2 py-1 rounded border-none">⌘K</kbd>
+          </button>
         )}
 
         <div className="flex items-center gap-2">

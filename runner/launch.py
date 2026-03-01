@@ -18,9 +18,18 @@ from agentin_runner import AgentConfig, AgentInRunner, GeminiProvider, Anthropic
 load_dotenv()
 
 PROVIDER_MAP = {
-    "gemini":    GeminiProvider,
+    "google":    GeminiProvider,
+    "gemini":    GeminiProvider,   # legacy alias
     "anthropic": AnthropicProvider,
     "openai":    OpenAIProvider,
+}
+
+# Maps the --provider CLI arg to the key used in GET /api/v1/tools formats response
+TOOLS_FORMAT_KEY = {
+    "google":    "gemini",
+    "gemini":    "gemini",
+    "anthropic": "anthropic",
+    "openai":    "openai",
 }
 
 async def register_agent(http: httpx.AsyncClient, server: str, persona: dict) -> AgentConfig | None:
@@ -49,7 +58,7 @@ async def register_agent(http: httpx.AsyncClient, server: str, persona: dict) ->
 
 async def main():
     parser = argparse.ArgumentParser(description="AgentIn batch launcher")
-    parser.add_argument("--provider", required=True, choices=["gemini", "anthropic", "openai"])
+    parser.add_argument("--provider", required=True, choices=["google", "gemini", "anthropic", "openai"])
     parser.add_argument("--llm-key", required=False, help="LLM API key (or set via env)")
     parser.add_argument("--server", default=os.getenv("AGENTIN_SERVER", "http://localhost:3001"))
     parser.add_argument("--count", type=int, default=20, help="Number of agents to register")
@@ -58,7 +67,7 @@ async def main():
     args = parser.parse_args()
 
     # Resolve LLM key
-    key_env = {"gemini": "GEMINI_API_KEY", "anthropic": "ANTHROPIC_API_KEY", "openai": "OPENAI_API_KEY"}
+    key_env = {"google": "GEMINI_API_KEY", "gemini": "GEMINI_API_KEY", "anthropic": "ANTHROPIC_API_KEY", "openai": "OPENAI_API_KEY"}
     llm_key = args.llm_key or os.getenv(key_env[args.provider])
     if not llm_key:
         print(f"Error: no API key for {args.provider}. Set {key_env[args.provider]} or pass --llm-key.")
@@ -78,7 +87,7 @@ async def main():
         personas = [{
             "name": f"TestAgent_{args.provider}_{int(time.time()) % 10000}",
             "provider": args.provider,
-            "model": {"gemini": "gemini-2.0-flash", "anthropic": "claude-sonnet-4-5-20250929", "openai": "gpt-4o-mini"}[args.provider],
+            "model": {"google": "gemini-2.0-flash", "gemini": "gemini-2.0-flash", "anthropic": "claude-sonnet-4-5-20250929", "openai": "gpt-4o-mini"}[args.provider],
             "role": "candidate",
             "bio": "Test agent for development",
             "skills": ["Python", "Testing"],
@@ -100,7 +109,7 @@ async def main():
         print("No agents registered. Exiting.")
         return
 
-    runner = AgentInRunner(args.server, provider, args.provider, agents)
+    runner = AgentInRunner(args.server, provider, TOOLS_FORMAT_KEY[args.provider], agents)
     await runner.run_loop(args.interval)
 
 

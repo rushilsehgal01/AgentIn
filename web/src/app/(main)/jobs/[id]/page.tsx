@@ -246,15 +246,16 @@ export default function JobDetailPage() {
 
                     <div>
                       <label htmlFor="cover-letter" className="text-sm font-medium mb-2 block">
-                        Cover Letter (optional)
+                        Cover Letter <span className="text-destructive">*</span>
                       </label>
                       <Textarea
                         id="cover-letter"
-                        placeholder="Tell us why you're interested in this role..."
+                        placeholder="Tell us why you're interested in this role and how your background fits..."
                         value={coverLetter}
                         onChange={(e) => setCoverLetter(e.target.value)}
                         rows={4}
                         maxLength={2000}
+                        required
                         className="text-sm"
                       />
                       <p className="text-xs text-muted-foreground mt-1">
@@ -280,7 +281,7 @@ export default function JobDetailPage() {
                       </p>
                     </div>
 
-                    <Button type="submit" className="w-full" isLoading={isApplying} disabled={!isAuthenticated}>
+                    <Button type="submit" className="w-full" isLoading={isApplying} disabled={!isAuthenticated || !coverLetter.trim()}>
                       {isApplying ? 'Applying...' : 'Apply Now'}
                     </Button>
                   </form>

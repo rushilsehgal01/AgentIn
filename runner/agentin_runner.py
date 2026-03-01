@@ -131,7 +131,7 @@ class AgentInRunner:
 
     async def fetch_tools(self):
         """Fetch canonical tool schema once on startup."""
-        r = await self.http.get(f"{self.server}/v1/tools")
+        r = await self.http.get(f"{self.server}/api/v1/tools")
         data = r.json()
         self.tools = data["formats"][self.provider_name]
         print(f"Loaded {len(data['tools'])} tools for provider '{self.provider_name}'")
@@ -140,19 +140,19 @@ class AgentInRunner:
         headers = {"Authorization": f"Bearer {agent.api_key}"}
         try:
             me = (await self.http.get(
-                f"{self.server}/v1/agents/me", headers=headers
+                f"{self.server}/api/v1/agents/me", headers=headers
             )).json()
             # API returns { agent: {...} } — fall back to data or {} for safety
             state = me.get("agent") or me.get("data") or {}
 
             feed_resp = (await self.http.get(
-                f"{self.server}/v1/feed?sort=recent&limit=8", headers=headers
+                f"{self.server}/api/v1/feed?sort=recent&limit=8", headers=headers
             )).json()
             jobs_resp = (await self.http.get(
-                f"{self.server}/v1/jobs?status=open&limit=10", headers=headers
+                f"{self.server}/api/v1/jobs?status=open&limit=10", headers=headers
             )).json()
             apps_resp = (await self.http.get(
-                f"{self.server}/v1/applications/mine?limit=5", headers=headers
+                f"{self.server}/api/v1/applications/mine?limit=5", headers=headers
             )).json()
 
             feed_items = feed_resp.get("posts") or feed_resp.get("data") or []
@@ -175,8 +175,8 @@ Choose one action."""
 
             await self._execute_action(agent, action, headers)
 
-            await self.http.post(
-                f"{self.server}/v1/heartbeat",
+            hb = await self.http.post(
+                f"{self.server}/api/v1/heartbeat",
                 headers={**headers, "Content-Type": "application/json"},
                 json={
                     "actions_taken": [action["action"]],
@@ -185,7 +185,8 @@ Choose one action."""
                     "internal_monologue": action["params"].get("internal_monologue", "")
                 })
 
-            print(f"  [{agent.name}] → {action['action']}")
+            hb_ok = "✓" if hb.status_code < 400 else f"✗ {hb.status_code}"
+            print(f"  [{agent.name}] → {action['action']}  (heartbeat {hb_ok})")
 
         except Exception as e:
             print(f"  [{agent.name}] ERROR: {e}")
@@ -194,19 +195,21 @@ Choose one action."""
         p = action["params"]
         h = {**headers, "Content-Type": "application/json"}
         route_map = {
-            "apply_to_job":            ("POST",  f"/v1/jobs/{p.get('job_id', 'x')}/apply"),
-            "write_post":              ("POST",  "/v1/posts"),
-            "comment_on_post":         ("POST",  f"/v1/posts/{p.get('post_id', 'x')}/comments"),
-            "react_to_post":           ("POST",  "/v1/reactions"),
-            "send_connection_request": ("POST",  "/v1/connections/request"),
-            "update_profile":          ("PATCH", "/v1/agents/me"),
-            "review_application":      ("POST",  f"/v1/recruiter/applications/{p.get('application_id', 'x')}/{p.get('decision', 'reject')}"),
-            "post_job":                ("POST",  "/v1/jobs"),
+            "apply_to_job":            ("POST",  f"/api/v1/jobs/{p.get('job_id', 'x')}/apply"),
+            "write_post":              ("POST",  "/api/v1/posts"),
+            "comment_on_post":         ("POST",  f"/api/v1/posts/{p.get('post_id', 'x')}/comments"),
+            "react_to_post":           ("POST",  "/api/v1/reactions"),
+            "send_connection_request": ("POST",  "/api/v1/connections/request"),
+            "update_profile":          ("PATCH", "/api/v1/agents/me"),
+            "review_application":      ("POST",  f"/api/v1/recruiter/applications/{p.get('application_id', 'x')}/{p.get('decision', 'reject')}"),
+            "post_job":                ("POST",  "/api/v1/jobs"),
             "do_nothing":              (None,    None),
         }
         method, path = route_map.get(action["action"], (None, None))
         if method and path:
-            await self.http.request(method, f"{self.server}{path}", headers=h, json=p)
+            resp = await self.http.request(method, f"{self.server}{path}", headers=h, json=p)
+            if resp.status_code >= 400:
+                print(f"    ⚠ API {resp.status_code} on {method} {path}: {resp.text[:200]}")
 
     async def run_loop(self, interval_seconds: int = 30):
         await self.fetch_tools()

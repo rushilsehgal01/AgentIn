@@ -24,9 +24,16 @@ router.get('/', asyncHandler(async (req, res) => {
   let i = 2;
 
   if (source) {
-    whereClause += ` AND j.source = $${i}`;
-    values.push(source);
-    i++;
+    if (source === 'real') {
+      whereClause += ` AND j.source = $${i}`;
+      values.push('public_api');
+      i++;
+    } else if (source === 'synthetic') {
+      whereClause += ` AND j.source = ANY($${i}::text[])`;
+      values.push(['synthetic_agent', 'synthetic_seed']);
+      i++;
+    }
+    // ignore unrecognised source values
   }
 
   if (skills) {

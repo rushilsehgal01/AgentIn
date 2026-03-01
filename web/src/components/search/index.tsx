@@ -17,7 +17,7 @@ export function SearchModal() {
   const debouncedQuery = useDebounce(query, 200);
   const { data, isLoading } = useSearch(debouncedQuery);
   const inputRef = React.useRef<HTMLInputElement>(null);
-  
+
   // Load recent searches from localStorage
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -25,7 +25,7 @@ export function SearchModal() {
       if (saved) setRecentSearches(JSON.parse(saved));
     }
   }, []);
-  
+
   // Focus input when modal opens
   React.useEffect(() => {
     if (searchOpen) {
@@ -34,10 +34,10 @@ export function SearchModal() {
       setQuery('');
     }
   }, [searchOpen]);
-  
+
   // Close on escape
   useKeyboardShortcut('Escape', closeSearch);
-  
+
   const saveSearch = (term: string) => {
     const updated = [term, ...recentSearches.filter(s => s !== term)].slice(0, 5);
     setRecentSearches(updated);
@@ -45,7 +45,7 @@ export function SearchModal() {
       localStorage.setItem('agentin_recent_searches', JSON.stringify(updated));
     }
   };
-  
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
@@ -54,28 +54,29 @@ export function SearchModal() {
       closeSearch();
     }
   };
-  
+
   const handleResultClick = (term?: string) => {
     if (term) saveSearch(term);
     closeSearch();
   };
-  
+
   const clearRecent = () => {
     setRecentSearches([]);
     if (typeof window !== 'undefined') {
       localStorage.removeItem('agentin_recent_searches');
     }
   };
-  
+
   const hasResults = data && (data.posts?.length || data.agents?.length || data.industries?.length);
-  
+
   return (
     <Dialog open={searchOpen} onOpenChange={(open) => !open && closeSearch()}>
-      <DialogContent hideClose className="sm:max-w-xl p-0 gap-0 overflow-hidden">
+      <DialogContent hideClose className="sm:max-w-xl p-0 gap-0 border-0">
         <DialogTitle className="sr-only">Search agentin</DialogTitle>
         {/* Search input */}
-        <form onSubmit={handleSubmit} className="border-b">
-          <div className="flex items-center px-4">
+        <form onSubmit={handleSubmit} className="p-4">
+          <div className="flex items-center gap-3 px-3 py-2 rounded-md bg-background focus-within:ring-0
+    focus-within:outline-none">
             <Search className="h-5 w-5 text-muted-foreground shrink-0" />
             <input
               ref={inputRef}
@@ -83,7 +84,8 @@ export function SearchModal() {
               placeholder="Search agentin..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="flex-1 h-14 px-3 bg-transparent text-lg focus:outline-none"
+              className="flex-1 bg-transparent text-lg    border-0 outline-none ring-0
+        focus:outline-none focus:ring-0 focus:border-0"
             />
             {query && (
               <button type="button" onClick={() => setQuery('')} className="text-muted-foreground hover:text-foreground">
@@ -92,7 +94,7 @@ export function SearchModal() {
             )}
           </div>
         </form>
-        
+
         {/* Results */}
         <div className="max-h-[60vh] overflow-y-auto">
           {isLoading ? (
@@ -130,7 +132,7 @@ export function SearchModal() {
                     ))}
                   </div>
                 )}
-                
+
                 {/* Industries */}
                 {data.industries && data.industries.length > 0 && (
                   <div className="mb-2">
@@ -154,7 +156,7 @@ export function SearchModal() {
                     ))}
                   </div>
                 )}
-                
+
                 {/* Posts */}
                 {data.posts && data.posts.length > 0 && (
                   <div className="mb-2">
@@ -178,7 +180,7 @@ export function SearchModal() {
                     ))}
                   </div>
                 )}
-                
+
                 {/* View all */}
                 <Link
                   href={`/search?q=${encodeURIComponent(debouncedQuery)}`}
@@ -219,7 +221,7 @@ export function SearchModal() {
             </div>
           )}
         </div>
-        
+
         {/* Footer */}
         <div className="border-t px-4 py-2 flex items-center justify-between text-xs text-muted-foreground">
           <div className="flex items-center gap-4">

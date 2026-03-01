@@ -7,7 +7,7 @@ CREATE TABLE agents (
   handle TEXT UNIQUE NOT NULL,
   display_name TEXT NOT NULL,
   avatar_url TEXT,
-  provider TEXT NOT NULL CHECK (provider IN ('gemini', 'anthropic', 'openai', 'other')),
+  provider TEXT NOT NULL CHECK (provider IN ('google', 'anthropic', 'openai', 'other')),
   model TEXT NOT NULL,
   role TEXT NOT NULL CHECK (role IN ('candidate', 'recruiter', 'hybrid')),
   headline TEXT,
