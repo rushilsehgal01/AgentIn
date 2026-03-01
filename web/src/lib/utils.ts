@@ -8,7 +8,8 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 // Format score (e.g., 1.2K, 3.5M)
-export function formatScore(score: number): string {
+export function formatScore(score?: number | null): string {
+  if (score === undefined || score === null) return '0';
   const abs = Math.abs(score);
   const sign = score < 0 ? '-' : '';
   if (abs >= 1000000) return sign + (abs / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
@@ -17,21 +18,39 @@ export function formatScore(score: number): string {
 }
 
 // Format relative time
-export function formatRelativeTime(date: string | Date): string {
-  const d = typeof date === 'string' ? parseISO(date) : date;
-  return formatDistanceToNow(d, { addSuffix: true });
+export function formatRelativeTime(date?: string | Date | null): string {
+  if (!date) return 'unknown';
+  try {
+    const d = typeof date === 'string' ? parseISO(date) : date;
+    if (isNaN(d.getTime())) return 'unknown';
+    return formatDistanceToNow(d, { addSuffix: true });
+  } catch {
+    return 'unknown';
+  }
 }
 
 // Format absolute date
-export function formatDate(date: string | Date): string {
-  const d = typeof date === 'string' ? parseISO(date) : date;
-  return format(d, 'MMM d, yyyy');
+export function formatDate(date?: string | Date | null): string {
+  if (!date) return 'unknown';
+  try {
+    const d = typeof date === 'string' ? parseISO(date) : date;
+    if (isNaN(d.getTime())) return 'unknown';
+    return format(d, 'MMM d, yyyy');
+  } catch {
+    return 'unknown';
+  }
 }
 
 // Format date and time
-export function formatDateTime(date: string | Date): string {
-  const d = typeof date === 'string' ? parseISO(date) : date;
-  return format(d, 'MMM d, yyyy h:mm a');
+export function formatDateTime(date?: string | Date | null): string {
+  if (!date) return 'unknown';
+  try {
+    const d = typeof date === 'string' ? parseISO(date) : date;
+    if (isNaN(d.getTime())) return 'unknown';
+    return format(d, 'MMM d, yyyy h:mm a');
+  } catch {
+    return 'unknown';
+  }
 }
 
 // Truncate text
@@ -55,18 +74,19 @@ export function isValidAgentName(name: string): boolean {
   return /^[a-z0-9_]{2,32}$/i.test(name);
 }
 
-// Validate submolt name
-export function isValidSubmoltName(name: string): boolean {
+// Validate industry name
+export function isValidIndustryName(name: string): boolean {
   return /^[a-z0-9_]{2,24}$/i.test(name);
 }
 
 // Validate API key
 export function isValidApiKey(key: string): boolean {
-  return /^moltbook_[a-zA-Z0-9]{20,}$/.test(key);
+  return /^agentin_[a-zA-Z0-9]{20,}$/.test(key);
 }
 
 // Generate initials from name
-export function getInitials(name: string): string {
+export function getInitials(name?: string | null): string {
+  if (!name) return '?';
   return name.split(/[\s_]+/).map(part => part[0]?.toUpperCase()).filter(Boolean).slice(0, 2).join('');
 }
 
@@ -137,11 +157,11 @@ export function removeFromStorage(key: string): void {
 }
 
 // URL helpers
-export function getPostUrl(postId: string, submolt?: string): string {
-  return submolt ? `/m/${submolt}/post/${postId}` : `/post/${postId}`;
+export function getPostUrl(postId: string, industry?: string): string {
+  return industry ? `/m/${industry}/post/${postId}` : `/post/${postId}`;
 }
 
-export function getSubmoltUrl(name: string): string {
+export function getIndustryUrl(name: string): string {
   return `/m/${name}`;
 }
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const API_BASE = process.env.MOLTBOOK_API_URL || 'https://www.moltbook.com/api/v1';
+const API_BASE = process.env.AGENTIN_API_URL ||'https://agentin-production-7f76.up.railway.app/api/v1';
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
       if (value) params.append(key, value);
     });
     
-    const response = await fetch(`${API_BASE}/submolts?${params}`, {
+    const response = await fetch(`${API_BASE}/industrys?${params}`, {
       headers: authHeader ? { Authorization: authHeader } : {},
     });
     
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     
     const body = await request.json();
     
-    const response = await fetch(`${API_BASE}/submolts`, {
+    const response = await fetch(`${API_BASE}/industrys`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: authHeader },
       body: JSON.stringify(body),

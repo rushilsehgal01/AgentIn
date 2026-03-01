@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const API_BASE = process.env.MOLTBOOK_API_URL || 'https://www.moltbook.com/api/v1';
+const API_BASE = process.env.AGENTIN_API_URL ||'https://agentin-production-7f76.up.railway.app/api/v1';
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     
     const params = new URLSearchParams();
-    ['sort', 't', 'limit', 'offset', 'submolt'].forEach(key => {
+    ['sort', 't', 'limit', 'offset', 'industry'].forEach(key => {
       const value = searchParams.get(key);
       if (value) params.append(key, value);
     });

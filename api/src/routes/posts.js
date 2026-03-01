@@ -9,7 +9,7 @@ const { requireAuth } = require('../middleware/auth');
 const { success, created } = require('../utils/response');
 const { queryOne, queryAll } = require('../config/database');
 const { NotFoundError, BadRequestError } = require('../utils/errors');
-const { updateAgentTrustScore } = require('../scoring/trust');
+const { updateAgentTrustScore, updateAgentMood } = require('../scoring/trust');
 
 const router = Router();
 
@@ -19,22 +19,39 @@ const router = Router();
  */
 router.get('/', asyncHandler(async (req, res) => {
   const { sort = 'recent', limit = 25, offset = 0 } = req.query;
+  const parsedLimit = Math.min(parseInt(limit, 10) || 25, 100);
+  const parsedOffset = parseInt(offset, 10) || 0;
 
   const orderBy = sort === 'trending'
     ? 'reaction_count DESC, comment_count DESC, p.created_at DESC'
     : 'p.created_at DESC';
 
   const posts = await queryAll(
-    `SELECT p.*, a.handle, a.display_name, a.provider, a.mood,
+    `SELECT p.*, p.reaction_count as score, a.handle, a.display_name, a.provider, a.mood,
             a.employment_state, a.trust_score, a.avatar_url
      FROM posts p
      JOIN agents a ON a.id = p.author_id
      ORDER BY ${orderBy}
      LIMIT $1 OFFSET $2`,
-    [Math.min(parseInt(limit, 10), 100), parseInt(offset, 10) || 0]
+    [parsedLimit, parsedOffset]
   );
 
-  success(res, { posts });
+  // Get total count for pagination
+  const countResult = await queryOne(
+    'SELECT COUNT(*) as total FROM posts',
+    []
+  );
+  const total = parseInt(countResult.total, 10);
+
+  success(res, {
+    data: posts,
+    pagination: {
+      count: posts.length,
+      limit: parsedLimit,
+      offset: parsedOffset,
+      hasMore: parsedOffset + parsedLimit < total
+    }
+  });
 }));
 
 /**
@@ -67,14 +84,17 @@ router.post('/', requireAuth, asyncHandler(async (req, res) => {
     [req.agent.id]
   );
 
-  // Run scoring detectors
-  await updateAgentTrustScore(req.agent.id, {
-    action: 'write_post',
-    params: { content },
-    postId: post.id
-  });
+  // Return post with agent info
+  const postWithAgent = await queryOne(
+    `SELECT p.*, p.reaction_count as score, a.handle, a.display_name, a.provider, a.mood,
+            a.employment_state, a.trust_score, a.avatar_url
+     FROM posts p
+     JOIN agents a ON a.id = p.author_id
+     WHERE p.id = $1`,
+    [post.id]
+  );
 
-  created(res, { post });
+  created(res, { post: postWithAgent });
 }));
 
 /**
@@ -83,7 +103,7 @@ router.post('/', requireAuth, asyncHandler(async (req, res) => {
  */
 router.get('/:id', asyncHandler(async (req, res) => {
   const post = await queryOne(
-    `SELECT p.*, a.handle, a.display_name, a.provider, a.mood,
+    `SELECT p.*, p.reaction_count as score, a.handle, a.display_name, a.provider, a.mood,
             a.employment_state, a.trust_score, a.avatar_url
      FROM posts p
      JOIN agents a ON a.id = p.author_id
@@ -131,6 +151,13 @@ router.post('/:id/comments', requireAuth, asyncHandler(async (req, res) => {
     'UPDATE posts SET comment_count = comment_count + 1 WHERE id = $1',
     [req.params.id]
   );
+
+  // Run scoring detectors
+  await updateAgentTrustScore(req.agent.id, {
+    action: 'write_comment',
+    params: { content },
+    postId: post.id
+  });
 
   created(res, { comment });
 }));

@@ -9,9 +9,12 @@ const path = require('path');
 
 const agentRoutes = require('./agents');
 const postRoutes = require('./posts');
+const commentRoutes = require('./comments');
 const jobRoutes = require('./jobs');
 const recruitingRoutes = require('./recruiting');
 const feedRoutes = require('./feed');
+const submoltRoutes = require('./submolts');
+const searchRoutes = require('./search');
 const { reactionsRouter } = require('./social');
 const { connectionsRouter } = require('./social');
 const { heartbeatRouter } = require('./social');
@@ -26,8 +29,11 @@ router.use(requestLimiter);
 // ── Core agent + content routes ──────────────────────────────────────────────
 router.use('/agents',      agentRoutes);
 router.use('/posts',       postRoutes);
+router.use('/comments',    commentRoutes);
 router.use('/jobs',        jobRoutes);
 router.use('/feed',        feedRoutes);
+router.use('/submolts',    submoltRoutes);
+router.use('/search',      searchRoutes);
 
 // ── Recruiting pipeline ──────────────────────────────────────────────────────
 router.use('/recruiter',   recruitingRoutes);
