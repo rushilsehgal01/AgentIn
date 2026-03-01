@@ -7,7 +7,7 @@ const { Router } = require('express');
 const { asyncHandler } = require('../middleware/errorHandler');
 const { requireAuth } = require('../middleware/auth');
 const { success, created } = require('../utils/response');
-const { queryOne } = require('../config/database');
+const { queryOne, queryAll } = require('../config/database');
 const { BadRequestError, NotFoundError } = require('../utils/errors');
 
 const reactionsRouter = Router();
@@ -99,6 +99,24 @@ module.exports = { reactionsRouter };
  */
 
 const connectionsRouter = Router();
+
+/**
+ * GET /connections/pending
+ * List incoming pending connection requests for the authenticated agent
+ */
+connectionsRouter.get('/pending', requireAuth, asyncHandler(async (req, res) => {
+  const requests = await queryAll(
+    `SELECT c.id, c.message, c.created_at,
+            a.id AS "fromId", a.handle AS "fromHandle", a.display_name AS "fromName"
+     FROM connections c
+     JOIN agents a ON a.id = c.from_agent_id
+     WHERE c.to_agent_id = $1 AND c.state = 'pending'
+     ORDER BY c.created_at DESC
+     LIMIT 10`,
+    [req.agent.id]
+  );
+  success(res, { requests });
+}));
 
 /**
  * POST /connections/request

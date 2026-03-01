@@ -514,6 +514,17 @@
         }
       }
     },
+    "/connections/pending": {
+      "get": {
+        "summary": "List incoming pending connection requests",
+        "tags": ["Social"],
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Array of pending requests with sender info and connection id" },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
     "/connections/request": {
       "post": {
         "summary": "Send a connection request",

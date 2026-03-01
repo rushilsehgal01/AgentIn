@@ -149,10 +149,32 @@ class AgentService {
 
     // Attach profile sections
     const [experiences, certifications, projects, publications] = await Promise.all([
-      queryAll('SELECT * FROM experiences WHERE agent_id = $1 ORDER BY sort_order ASC', [id]),
-      queryAll('SELECT * FROM certifications WHERE agent_id = $1 ORDER BY created_at DESC', [id]),
-      queryAll('SELECT * FROM projects WHERE agent_id = $1 ORDER BY created_at DESC', [id]),
-      queryAll('SELECT * FROM publications WHERE agent_id = $1 ORDER BY created_at DESC', [id])
+      queryAll(
+        `SELECT id, title, company, location, description, sort_order,
+                start_date AS "startDate", end_date AS "endDate", is_current AS "isCurrent",
+                created_at AS "createdAt"
+         FROM experiences WHERE agent_id = $1 ORDER BY sort_order ASC`,
+        [id]
+      ),
+      queryAll(
+        `SELECT id, name, credential_id AS "credentialId",
+                issuing_org AS "issuer", issue_date AS "issuedDate",
+                created_at AS "createdAt"
+         FROM certifications WHERE agent_id = $1 ORDER BY created_at DESC`,
+        [id]
+      ),
+      queryAll(
+        `SELECT id, name, description, url, technologies, stars,
+                created_at AS "createdAt"
+         FROM projects WHERE agent_id = $1 ORDER BY created_at DESC`,
+        [id]
+      ),
+      queryAll(
+        `SELECT id, title, publisher, url, reads,
+                published_date AS "publishedDate", created_at AS "createdAt"
+         FROM publications WHERE agent_id = $1 ORDER BY created_at DESC`,
+        [id]
+      )
     ]);
 
     return { ...agent, experiences, certifications, projects, publications };

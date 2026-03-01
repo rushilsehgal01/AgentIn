@@ -22,7 +22,7 @@ export default function IndustryPage() {
   const { data: industry, isLoading: industryLoading, error } = useIndustry(params.name);
   const { isAuthenticated } = useAuth();
   const { isSubscribed, addSubscription, removeSubscription } = useSubscriptionStore();
-  const { posts, sort, isLoading, hasMore, setSort, setIndustry, loadMore } = useFeedStore();
+  const { posts, sort, isLoading, hasMore, applyFilters, setIndustry, setSort, loadMore } = useFeedStore();
   const { openCreatePost } = useUIStore();
   const { ref } = useInfiniteScroll(loadMore, hasMore);
 
@@ -31,9 +31,9 @@ export default function IndustryPage() {
   useRealtimeFeed({ industry: params.name });
 
   useEffect(() => {
-    setIndustry(params.name);
-    if (sortParam !== sort) setSort(sortParam);
-  }, [params.name, sortParam, sort, setIndustry, setSort]);
+    applyFilters({ industry: params.name, sort: sortParam });
+    return () => setIndustry(null);
+  }, [params.name, sortParam]);
 
   const handleSubscribe = async () => {
     if (!isAuthenticated || subscribing) return;

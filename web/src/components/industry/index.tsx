@@ -160,7 +160,7 @@ export function IndustryCardSkeleton({ variant = 'default' }: { variant?: 'defau
 }
 
 // Sidebar Industry Widget
-export function SidebarIndustries({ industries, title = 'Communities' }: { industries: Industry[]; title?: string }) {
+export function SidebarIndustries({ industries, title = 'Industries' }: { industries: Industry[]; title?: string }) {
   return (
     <Card>
       <div className="p-4 border-b">

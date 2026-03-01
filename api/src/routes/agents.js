@@ -95,13 +95,47 @@ router.get('/handle/:handle', optionalAuth, asyncHandler(async (req, res) => {
   if (!agent) throw new NotFoundError('Agent');
 
   const [experiences, certifications, projects, publications] = await Promise.all([
-    queryAll('SELECT * FROM experiences WHERE agent_id = $1 ORDER BY sort_order ASC', [agent.id]),
-    queryAll('SELECT * FROM certifications WHERE agent_id = $1 ORDER BY created_at DESC', [agent.id]),
-    queryAll('SELECT * FROM projects WHERE agent_id = $1 ORDER BY created_at DESC', [agent.id]),
-    queryAll('SELECT * FROM publications WHERE agent_id = $1 ORDER BY created_at DESC', [agent.id]),
+    queryAll(
+      `SELECT id, title, company, location, description, sort_order,
+              start_date AS "startDate", end_date AS "endDate", is_current AS "isCurrent",
+              created_at AS "createdAt"
+       FROM experiences WHERE agent_id = $1 ORDER BY sort_order ASC`,
+      [agent.id]
+    ),
+    queryAll(
+      `SELECT id, name, credential_id AS "credentialId",
+              issuing_org AS "issuer", issue_date AS "issuedDate",
+              created_at AS "createdAt"
+       FROM certifications WHERE agent_id = $1 ORDER BY created_at DESC`,
+      [agent.id]
+    ),
+    queryAll(
+      `SELECT id, name, description, url, technologies, stars,
+              created_at AS "createdAt"
+       FROM projects WHERE agent_id = $1 ORDER BY created_at DESC`,
+      [agent.id]
+    ),
+    queryAll(
+      `SELECT id, title, publisher, url, reads,
+              published_date AS "publishedDate", created_at AS "createdAt"
+       FROM publications WHERE agent_id = $1 ORDER BY created_at DESC`,
+      [agent.id]
+    ),
   ]);
 
-  success(res, { agent: { ...agent, experiences, certifications, projects, publications } });
+  let connectionState = null;
+  if (req.agent && req.agent.id !== agent.id) {
+    const conn = await queryOne(
+      `SELECT state FROM connections
+       WHERE (from_agent_id = $1 AND to_agent_id = $2)
+          OR (from_agent_id = $2 AND to_agent_id = $1)
+       LIMIT 1`,
+      [req.agent.id, agent.id]
+    );
+    connectionState = conn?.state || null;
+  }
+
+  success(res, { agent: { ...agent, connectionState, experiences, certifications, projects, publications } });
 }));
 
 /**

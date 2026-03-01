@@ -155,24 +155,20 @@ class AgentInRunner:
             # API returns { agent: {...} } — fall back to data or {} for safety
             state = me.get("agent") or me.get("data") or {}
 
-            feed_resp = (await self.http.get(
-                f"{self.server}/api/v1/feed?sort=recent&limit=8", headers=headers
-            )).json()
-            jobs_resp = (await self.http.get(
-                f"{self.server}/api/v1/jobs?status=open&limit=10", headers=headers
-            )).json()
-            apps_resp = (await self.http.get(
-                f"{self.server}/api/v1/applications/mine?limit=5", headers=headers
-            )).json()
-            industries_resp = (await self.http.get(
-                f"{self.server}/api/v1/industries?limit=50", headers=headers
-            )).json()
+            feed_resp, jobs_resp, apps_resp, industries_resp, connections_resp = await asyncio.gather(
+                self.http.get(f"{self.server}/api/v1/feed?sort=recent&limit=8", headers=headers),
+                self.http.get(f"{self.server}/api/v1/jobs?status=open&limit=10", headers=headers),
+                self.http.get(f"{self.server}/api/v1/applications/mine?limit=5", headers=headers),
+                self.http.get(f"{self.server}/api/v1/industries?limit=50", headers=headers),
+                self.http.get(f"{self.server}/api/v1/connections/pending", headers=headers),
+            )
 
-            feed_items       = feed_resp.get("posts") or feed_resp.get("data") or []
-            job_items        = jobs_resp.get("jobs")  or jobs_resp.get("data")  or []
-            app_items        = apps_resp.get("applications") or apps_resp.get("data") or []
-            industry_items   = industries_resp.get("data") or []
-            industry_slugs   = [i.get("name") for i in industry_items if i.get("name")]
+            feed_items     = feed_resp.json().get("posts") or feed_resp.json().get("data") or []
+            job_items      = jobs_resp.json().get("jobs")  or jobs_resp.json().get("data")  or []
+            app_items      = apps_resp.json().get("applications") or apps_resp.json().get("data") or []
+            industry_items = industries_resp.json().get("data") or []
+            pending_reqs   = connections_resp.json().get("requests") or []
+            industry_slugs = [i.get("name") for i in industry_items if i.get("name")]
 
             context = f"""CURRENT FEED:
 {json.dumps(feed_items[:8], indent=2)}
@@ -182,6 +178,9 @@ OPEN JOBS:
 
 YOUR RECENT APPLICATIONS:
 {json.dumps(app_items[:5], indent=2)}
+
+PENDING CONNECTION REQUESTS (use accept_connection_request with the connection id):
+{json.dumps(pending_reqs, indent=2)}
 
 AVAILABLE INDUSTRIES (slugs you can subscribe_to_industry with):
 {json.dumps(industry_slugs, indent=2)}
@@ -217,7 +216,8 @@ Choose one action."""
             "write_post":              ("POST",  "/api/v1/posts"),
             "comment_on_post":         ("POST",  f"/api/v1/posts/{p.get('post_id', 'x')}/comments"),
             "react_to_post":           ("POST",  "/api/v1/reactions"),
-            "send_connection_request": ("POST",  "/api/v1/connections/request"),
+            "send_connection_request":  ("POST",  "/api/v1/connections/request"),
+            "accept_connection_request": ("POST", f"/api/v1/connections/{p.get('connection_id', 'x')}/accept"),
             "update_profile":          ("PATCH", "/api/v1/agents/me"),
             "review_application":      ("POST",  f"/api/v1/recruiter/applications/{p.get('application_id', 'x')}/{p.get('decision', 'reject')}"),
             "post_job":                ("POST",  "/api/v1/jobs"),

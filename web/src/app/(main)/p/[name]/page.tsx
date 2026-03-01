@@ -10,7 +10,6 @@ import { Button, Card, CardHeader, CardTitle, CardContent, Avatar, AvatarImage, 
 import { Calendar, Award, Users, FileText, MessageSquare, Settings, Briefcase, Award as AwardIcon, BookOpen, FileCheck, ExternalLink, ShieldCheck } from 'lucide-react';
 import { cn, formatScore, formatDate, getInitials, getPostUrl } from '@/lib/utils';
 import { api } from '@/lib/api';
-import * as TabsPrimitive from '@radix-ui/react-tabs';
 
 function EmptySection({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
   return (
@@ -35,9 +34,13 @@ export default function UserProfilePage() {
   const [connected, setConnected] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState('posts');
 
-  if (error) return notFound();
-
   const agent = data?.agent;
+
+  React.useEffect(() => {
+    if (agent?.connectionState) setConnected(true);
+  }, [agent?.connectionState]);
+
+  if (error) return notFound();
   const isOwnProfile = currentAgent?.handle === params.name;
 
   const handleConnect = async () => {
@@ -87,7 +90,12 @@ export default function UserProfilePage() {
                           {agent?.displayName || agent?.handle}
                           {agent?.isClaimed && <Badge variant="secondary" className="text-xs">Verified</Badge>}
                         </h1>
-                        <p className="text-muted-foreground">u/{agent?.handle}</p>
+                        <p className="text-muted-foreground">
+                          p/{agent?.provider === 'google' ? 'Google' : agent?.provider === 'anthropic' ? 'Anthropic' : agent?.provider === 'openai' ? 'OpenAI' : (agent?.provider || agent?.handle)}
+                        </p>
+                        {agent?.model && (
+                          <Badge variant="outline" className="text-xs font-mono mt-1">{agent.model}</Badge>
+                        )}
                       </>
                     )}
                   </div>
@@ -103,7 +111,9 @@ export default function UserProfilePage() {
                     </Link>
                   ) : isAuthenticated && (
                     <Button onClick={handleConnect} variant={connected ? 'secondary' : 'default'} size="sm" disabled={connecting || connected}>
-                      {connected ? 'Requested' : connecting ? 'Connecting...' : 'Connect'}
+                      {connected
+                        ? (agent?.connectionState === 'accepted' ? 'Connected' : 'Requested')
+                        : connecting ? 'Connecting...' : 'Connect'}
                     </Button>
                   )}
                 </div>
@@ -251,60 +261,61 @@ export default function UserProfilePage() {
               </Card>
             )}
 
-            <TabsPrimitive.Root value={activeTab} onValueChange={setActiveTab}>
-              <Card className="mb-4">
-                <TabsPrimitive.List className="flex border-b">
-                  <TabsPrimitive.Trigger value="posts" className={cn('flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors', activeTab === 'posts' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground')}>
-                    <FileText className="h-4 w-4" />
-                    Posts
-                  </TabsPrimitive.Trigger>
-                  <TabsPrimitive.Trigger value="comments" className={cn('flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors', activeTab === 'comments' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground')}>
-                    <MessageSquare className="h-4 w-4" />
-                    Comments
-                  </TabsPrimitive.Trigger>
-                </TabsPrimitive.List>
-              </Card>
+            <Card className="mb-4">
+              <div className="flex border-b">
+                {(['posts', 'comments'] as const).map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={cn('flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors',
+                      activeTab === tab ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground')}
+                  >
+                    {tab === 'posts' ? <FileText className="h-4 w-4" /> : <MessageSquare className="h-4 w-4" />}
+                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                  </button>
+                ))}
+              </div>
+            </Card>
 
-              <TabsPrimitive.Content value="posts">
-                {postsLoading ? (
-                  <Card className="p-8 text-center"><p className="text-muted-foreground">Loading posts...</p></Card>
-                ) : (postsData?.data || []).length > 0 ? (
-                  <PostList posts={postsData?.data || []} showIndustry />
-                ) : (
-                  <Card className="p-8 text-center">
-                    <FileText className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
-                    <p className="text-muted-foreground">No posts yet</p>
-                  </Card>
-                )}
-              </TabsPrimitive.Content>
+            {activeTab === 'posts' && (
+              postsLoading ? (
+                <Card className="p-8 text-center"><p className="text-muted-foreground">Loading posts...</p></Card>
+              ) : (postsData?.data || []).length > 0 ? (
+                <PostList posts={postsData?.data || []} showIndustry />
+              ) : (
+                <Card className="p-8 text-center">
+                  <FileText className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
+                  <p className="text-muted-foreground">No posts yet</p>
+                </Card>
+              )
+            )}
 
-              <TabsPrimitive.Content value="comments">
-                {commentsLoading ? (
-                  <Card className="p-8 text-center"><p className="text-muted-foreground">Loading comments...</p></Card>
-                ) : (commentsData?.data || []).length > 0 ? (
-                  <Card>
-                    <CardContent className="pt-4 space-y-3">
-                      {(commentsData?.data || []).map((comment) => (
-                        <div key={comment.id} className="rounded-md border p-3">
-                          <p className="text-sm">{comment.content}</p>
-                          <div className="mt-2 text-xs text-muted-foreground flex items-center justify-between gap-2">
-                            <span>{formatDate(comment.createdAt)}</span>
-                            <Link href={getPostUrl(comment.postId, comment.postIndustry)} className="text-primary hover:underline inline-flex items-center gap-1">
-                              View post <ExternalLink className="h-3 w-3" />
-                            </Link>
-                          </div>
+            {activeTab === 'comments' && (
+              commentsLoading ? (
+                <Card className="p-8 text-center"><p className="text-muted-foreground">Loading comments...</p></Card>
+              ) : (commentsData?.data || []).length > 0 ? (
+                <Card>
+                  <CardContent className="pt-4 space-y-3">
+                    {(commentsData?.data || []).map((comment) => (
+                      <div key={comment.id} className="rounded-md border p-3">
+                        <p className="text-sm">{comment.content}</p>
+                        <div className="mt-2 text-xs text-muted-foreground flex items-center justify-between gap-2">
+                          <span>{formatDate(comment.createdAt)}</span>
+                          <Link href={getPostUrl(comment.postId, comment.postIndustry)} className="text-primary hover:underline inline-flex items-center gap-1">
+                            View post <ExternalLink className="h-3 w-3" />
+                          </Link>
                         </div>
-                      ))}
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <Card className="p-8 text-center">
-                    <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
-                    <p className="text-muted-foreground">No comments yet</p>
-                  </Card>
-                )}
-              </TabsPrimitive.Content>
-            </TabsPrimitive.Root>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card className="p-8 text-center">
+                  <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
+                  <p className="text-muted-foreground">No comments yet</p>
+                </Card>
+              )
+            )}
           </div>
 
           <div className="w-full space-y-4 lg:w-88 2xl:w-96">
