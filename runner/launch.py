@@ -44,9 +44,31 @@ def _save_key_cache(cache: dict):
     with open(KEY_CACHE_PATH, "w") as f:
         json.dump(cache, f, indent=2)
 
+async def _recover_key(http: httpx.AsyncClient, server: str, handle: str, recovery_token: str) -> str | None:
+    """Call /agents/recover to get a fresh API key using the recovery token."""
+    try:
+        r = await http.post(
+            f"{server}/api/v1/agents/recover",
+            json={"handle": handle, "recovery_token": recovery_token},
+            headers={"Content-Type": "application/json"}
+        )
+        data = r.json()
+        if r.status_code == 200 and data.get("success"):
+            return data["api_key"]
+    except Exception:
+        pass
+    return None
+
+def _cache_key(server: str, handle: str) -> str:
+    """Unique cache key scoped to server so local and deployed keys don't collide."""
+    # Normalize server URL: strip trailing slash and protocol for brevity
+    server_key = server.rstrip("/").replace("https://", "").replace("http://", "")
+    return f"{server_key}:{handle}"
+
 async def register_agent(http: httpx.AsyncClient, server: str, persona: dict) -> AgentConfig | None:
     handle = persona.get("name", "").lower().strip()
     cache = _load_key_cache()
+    ck = _cache_key(server, handle)
 
     try:
         r = await http.post(f"{server}/api/v1/agents/register",
@@ -54,18 +76,41 @@ async def register_agent(http: httpx.AsyncClient, server: str, persona: dict) ->
                             headers={"Content-Type": "application/json"})
         data = r.json()
 
-        # 409 = handle already taken — reuse cached key if available
+        # 409 = handle already taken — try to recover using recovery token
         if r.status_code == 409:
-            if handle in cache:
-                entry = cache[handle]
-                print(f"  ↩ Reusing:    {entry['name']} (already registered)")
+            # Check server-scoped key first, then fall back to legacy unscoped key
+            entry = cache.get(ck) or cache.get(handle)
+            if entry:
+                # If we have a recovery token, use it to get a fresh api_key
+                recovery_token = entry.get("recovery_token")
+                if recovery_token:
+                    recovered = await _recover_key(http, server, handle, recovery_token)
+                    if recovered:
+                        entry["api_key"] = recovered
+                        # Migrate to server-scoped key and save fresh key
+                        cache[ck] = entry
+                        _save_key_cache(cache)
+                        print(f"  ↺ Recovered:  {entry['name']} (fresh API key issued)")
+                        return AgentConfig(
+                            agent_id=entry["agent_id"],
+                            api_key=recovered,
+                            recovery_token=recovery_token,
+                            name=entry["name"],
+                            role=entry["role"],
+                        )
+                # No recovery token but have entry — reuse existing key as-is
+                if handle in cache and ck not in cache:
+                    cache[ck] = cache[handle]
+                    _save_key_cache(cache)
+                print(f"  ↩ Reusing:    {entry['name']} (already registered on {server})")
                 return AgentConfig(
                     agent_id=entry["agent_id"],
                     api_key=entry["api_key"],
+                    recovery_token=entry.get("recovery_token", ""),
                     name=entry["name"],
                     role=entry["role"],
                 )
-            print(f"  ✗ {persona.get('name', '?')}: handle taken and no cached key — skipping")
+            print(f"  ✗ {persona.get('name', '?')}: handle taken on {server} — no cached recovery token")
             return None
 
         if not data.get("success"):
@@ -73,12 +118,14 @@ async def register_agent(http: httpx.AsyncClient, server: str, persona: dict) ->
 
         agent_data = data.get("agent", {})
         api_key = data.get("api_key") or agent_data.get("api_key", "")
+        recovery_token = data.get("recovery_token", "")
         name = agent_data.get("display_name") or agent_data.get("name", persona.get("name", "?"))
 
-        # Persist key so future runs can reuse it
-        cache[handle] = {
+        # Persist key + recovery token scoped to this server
+        cache[ck] = {
             "agent_id": agent_data["id"],
             "api_key": api_key,
+            "recovery_token": recovery_token,
             "name": name,
             "role": persona.get("role", "candidate"),
         }
@@ -88,6 +135,7 @@ async def register_agent(http: httpx.AsyncClient, server: str, persona: dict) ->
         return AgentConfig(
             agent_id=agent_data["id"],
             api_key=api_key,
+            recovery_token=recovery_token,
             name=name,
             role=persona.get("role", "candidate"),
         )

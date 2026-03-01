@@ -17,6 +17,9 @@ from dataclasses import dataclass
 _TOOLS: list = []
 _SERVER: str = ""
 
+class _UnauthorizedError(Exception):
+    """Raised when the server returns 401 — signals a stale/invalid API key."""
+
 
 class LLMProvider(ABC):
     @abstractmethod
@@ -127,6 +130,7 @@ class AgentConfig:
     api_key: str
     name: str
     role: str
+    recovery_token: str = ""
 
 
 class AgentInRunner:
@@ -138,6 +142,22 @@ class AgentInRunner:
         self.agents = agents
         self.http = httpx.AsyncClient(timeout=30)
         self.tools: list = []
+        self.dead_agents: set = set()  # agent_ids with stale/invalid keys
+
+    async def _recover_key(self, agent: AgentConfig) -> str | None:
+        """Re-issue a fresh API key using the agent's recovery token."""
+        try:
+            r = await self.http.post(
+                f"{self.server}/api/v1/agents/recover",
+                json={"handle": agent.name.lower(), "recovery_token": agent.recovery_token},
+                headers={"Content-Type": "application/json"}
+            )
+            data = r.json()
+            if r.status_code == 200 and data.get("success"):
+                return data["api_key"]
+        except Exception:
+            pass
+        return None
 
     async def fetch_tools(self):
         """Fetch canonical tool schema once on startup."""
@@ -202,9 +222,25 @@ Choose one action."""
                     "internal_monologue": action["params"].get("internal_monologue", "")
                 })
 
+            if hb.status_code == 401:
+                raise _UnauthorizedError()
+
             hb_ok = "✓" if hb.status_code < 400 else f"✗ {hb.status_code}"
             print(f"  [{agent.name}/{self.provider_name}] → {action['action']}  (heartbeat {hb_ok})")
 
+        except _UnauthorizedError:
+            if agent.recovery_token:
+                print(f"  [{agent.name}/{self.provider_name}] ✗ 401 — attempting key recovery...")
+                new_key = await self._recover_key(agent)
+                if new_key:
+                    agent.api_key = new_key
+                    print(f"  [{agent.name}/{self.provider_name}] ↺ Key recovered — resuming next tick")
+                else:
+                    print(f"  [{agent.name}/{self.provider_name}] ✗ Recovery failed — dropping agent")
+                    self.dead_agents.add(agent.agent_id)
+            else:
+                print(f"  [{agent.name}/{self.provider_name}] ✗ 401 — no recovery token, dropping agent")
+                self.dead_agents.add(agent.agent_id)
         except Exception as e:
             print(f"  [{agent.name}/{self.provider_name}] ERROR: {e}")
 
@@ -227,6 +263,8 @@ Choose one action."""
         method, path = route_map.get(action["action"], (None, None))
         if method and path:
             resp = await self.http.request(method, f"{self.server}{path}", headers=h, json=p)
+            if resp.status_code == 401:
+                raise _UnauthorizedError()
             if resp.status_code >= 400:
                 print(f"    ⚠ API {resp.status_code} on {method} {path}: {resp.text[:200]}")
 
@@ -239,6 +277,8 @@ Choose one action."""
             print(f"TICK @ {time.strftime('%H:%M:%S')}")
             print(f"{'='*55}")
             for agent in self.agents:
+                if agent.agent_id in self.dead_agents:
+                    continue
                 await self.run_agent_cycle(agent)
                 await asyncio.sleep(1)
             await asyncio.sleep(interval_seconds)

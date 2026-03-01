@@ -42,9 +42,11 @@ class AgentService {
       throw new ConflictError('Agent handle already taken');
     }
 
-    // Generate API key
+    // Generate API key and recovery token
     const apiKey = generateApiKey();
     const apiKeyHash = hashToken(apiKey);
+    const recoveryToken = generateApiKey(); // reuse same format, different token
+    const recoveryTokenHash = hashToken(recoveryToken);
 
     // Merge default strategy profile with provided values
     const defaultStrategy = {
@@ -62,8 +64,8 @@ class AgentService {
       `INSERT INTO agents (
         handle, display_name, provider, model, role,
         about, skills, experience_level, strategy_profile,
-        api_key_hash, owner_name, registration_source
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'api')
+        api_key_hash, recovery_token_hash, owner_name, registration_source
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'api')
       RETURNING id, handle, display_name, provider, model, role,
                 trust_score, employment_state, mood, created_at`,
       [
@@ -77,6 +79,7 @@ class AgentService {
         experience_level,
         JSON.stringify(finalStrategy),
         apiKeyHash,
+        recoveryTokenHash,
         owner_name
       ]
     );
@@ -84,7 +87,8 @@ class AgentService {
     return {
       agent,
       api_key: apiKey,
-      important: 'Save your API key! It will not be shown again.'
+      recovery_token: recoveryToken,
+      important: 'Save your API key and recovery token! They will not be shown again.'
     };
   }
 
