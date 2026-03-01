@@ -14,6 +14,31 @@ class ApiError extends Error {
 class ApiClient {
   private apiKey: string | null = null;
 
+  private normalizeJob(raw: Record<string, unknown>): Job {
+    const sourceValue = (raw.source as string | undefined) || 'synthetic';
+    const normalizedSource: Job['source'] = sourceValue === 'real' ? 'real' : 'synthetic';
+
+    return {
+      id: String(raw.id || ''),
+      title: String(raw.title || 'Untitled Role'),
+      company: String(raw.company || raw.poster_name || raw.poster_handle || 'AgentIn Hiring Partner'),
+      description: (raw.description as string | undefined) || undefined,
+      skills: (raw.skills as string[] | undefined)
+        || (raw.skills_required as string[] | undefined)
+        || [],
+      source: normalizedSource,
+      status: ((raw.status as Job['status']) || 'open'),
+      applicantCount: (raw.applicantCount as number | undefined)
+        ?? (raw.applicant_count as number | undefined)
+        ?? 0,
+      createdAt: String(raw.createdAt || raw.created_at || new Date().toISOString()),
+      closedAt: (raw.closedAt as string | undefined) || (raw.closed_at as string | undefined),
+      salary: (raw.salary as string | undefined) || (raw.comp_range as string | undefined),
+      location: (raw.location as string | undefined) || undefined,
+      jobUrl: (raw.jobUrl as string | undefined) || (raw.job_url as string | undefined),
+    };
+  }
+
   setApiKey(key: string | null) {
     this.apiKey = key;
     if (key && typeof window !== 'undefined') {
@@ -144,35 +169,87 @@ class ApiClient {
 
   // Industry endpoints
   async getIndustrys(options: { sort?: string; limit?: number; offset?: number } = {}) {
-    return this.request<PaginatedResponse<Industry>>('GET', '/industrys', undefined, {
+    const query = {
       sort: options.sort || 'popular',
       limit: options.limit || 50,
       offset: options.offset || 0,
-    });
+    };
+
+    try {
+      return await this.request<PaginatedResponse<Industry>>('GET', '/submolts', undefined, query);
+    } catch (err) {
+      if (err instanceof ApiError && err.statusCode === 404) {
+        return this.request<PaginatedResponse<Industry>>('GET', '/industrys', undefined, query);
+      }
+      throw err;
+    }
   }
 
   async getIndustry(name: string) {
-    return this.request<{ industry: Industry }>('GET', `/industrys/${name}`).then(r => r.industry);
+    try {
+      return await this.request<{ submolt: Industry }>('GET', `/submolts/${name}`).then(r => r.submolt);
+    } catch (err) {
+      if (err instanceof ApiError && err.statusCode === 404) {
+        return this.request<{ industry: Industry }>('GET', `/industrys/${name}`).then(r => r.industry);
+      }
+      throw err;
+    }
   }
 
   async createIndustry(data: { name: string; displayName?: string; description?: string }) {
-    return this.request<{ industry: Industry }>('POST', '/industrys', data).then(r => r.industry);
+    const payload = {
+      name: data.name,
+      display_name: data.displayName,
+      description: data.description,
+    };
+
+    try {
+      return await this.request<{ submolt: Industry }>('POST', '/submolts', payload).then(r => r.submolt);
+    } catch (err) {
+      if (err instanceof ApiError && err.statusCode === 404) {
+        return this.request<{ industry: Industry }>('POST', '/industrys', data).then(r => r.industry);
+      }
+      throw err;
+    }
   }
 
   async subscribeIndustry(name: string) {
-    return this.request<{ success: boolean }>('POST', `/industrys/${name}/subscribe`);
+    try {
+      return await this.request<{ success: boolean }>('POST', `/submolts/${name}/subscribe`);
+    } catch (err) {
+      if (err instanceof ApiError && err.statusCode === 404) {
+        return this.request<{ success: boolean }>('POST', `/industrys/${name}/subscribe`);
+      }
+      throw err;
+    }
   }
 
   async unsubscribeIndustry(name: string) {
-    return this.request<{ success: boolean }>('DELETE', `/industrys/${name}/subscribe`);
+    try {
+      return await this.request<{ success: boolean }>('DELETE', `/submolts/${name}/subscribe`);
+    } catch (err) {
+      if (err instanceof ApiError && err.statusCode === 404) {
+        return this.request<{ success: boolean }>('DELETE', `/industrys/${name}/subscribe`);
+      }
+      throw err;
+    }
   }
 
   async getIndustryFeed(name: string, options: { sort?: PostSort; limit?: number; offset?: number } = {}) {
-    return this.request<PaginatedResponse<Post>>('GET', `/industrys/${name}/feed`, undefined, {
+    const query = {
       sort: options.sort || 'hot',
       limit: options.limit || 25,
       offset: options.offset || 0,
-    });
+    };
+
+    try {
+      return await this.request<PaginatedResponse<Post>>('GET', `/submolts/${name}/feed`, undefined, query);
+    } catch (err) {
+      if (err instanceof ApiError && err.statusCode === 404) {
+        return this.request<PaginatedResponse<Post>>('GET', `/industrys/${name}/feed`, undefined, query);
+      }
+      throw err;
+    }
   }
 
   // Feed endpoints
@@ -191,22 +268,44 @@ class ApiClient {
 
   // Jobs endpoints
   async getJobs(options: { skills?: string[]; source?: 'real' | 'synthetic'; status?: 'open' | 'closed' | 'filled'; search?: string; limit?: number; offset?: number } = {}) {
-    return this.request<{ data: Job[] }>('GET', '/public/jobs', undefined, {
+    const query = {
       skills: options.skills?.join(','),
       source: options.source,
       status: options.status,
       search: options.search,
       limit: options.limit || 50,
       offset: options.offset || 0,
-    });
+    };
+
+    try {
+      const response = await this.request<{ jobs: Record<string, unknown>[] }>('GET', '/jobs', undefined, query);
+      return { data: (response.jobs || []).map((job) => this.normalizeJob(job)) };
+    } catch (err) {
+      if (err instanceof ApiError && err.statusCode === 404) {
+        const fallback = await this.request<{ data: Record<string, unknown>[] }>('GET', '/public/jobs', undefined, query);
+        return { data: (fallback.data || []).map((job) => this.normalizeJob(job)) };
+      }
+      throw err;
+    }
   }
 
   async getJob(id: string) {
-    return this.request<{ data: Job }>('GET', `/public/jobs/${id}`).then(r => r.data);
+    try {
+      const response = await this.request<{ job: Record<string, unknown> }>('GET', `/jobs/${id}`);
+      return this.normalizeJob(response.job);
+    } catch (err) {
+      if (err instanceof ApiError && err.statusCode === 404) {
+        return this.request<{ data: Record<string, unknown> }>('GET', `/public/jobs/${id}`).then(r => this.normalizeJob(r.data));
+      }
+      throw err;
+    }
   }
 
   async applyToJob(jobId: string, data: { coverLetter?: string; matchArgument?: string }) {
-    return this.request<{ success: boolean }>('POST', `/jobs/${jobId}/apply`, data);
+    return this.request<{ success: boolean }>('POST', `/jobs/${jobId}/apply`, {
+      cover_letter: data.coverLetter,
+      match_argument: data.matchArgument,
+    });
   }
 }
 

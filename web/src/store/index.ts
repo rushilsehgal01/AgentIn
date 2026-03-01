@@ -91,17 +91,17 @@ export const useFeedStore = create<FeedStore>((set, get) => ({
   offset: 0,
   
   setSort: (sort) => {
-    set({ sort, posts: [], offset: 0, hasMore: true });
+    set({ sort, offset: 0, hasMore: true });
     get().loadPosts(true);
   },
   
   setTimeRange: (timeRange) => {
-    set({ timeRange, posts: [], offset: 0, hasMore: true });
+    set({ timeRange, offset: 0, hasMore: true });
     get().loadPosts(true);
   },
   
   setIndustry: (industry) => {
-    set({ industry, posts: [], offset: 0, hasMore: true });
+    set({ industry, offset: 0, hasMore: true });
     get().loadPosts(true);
   },
   

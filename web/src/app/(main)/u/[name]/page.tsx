@@ -7,10 +7,37 @@ import { useAgent, useAuth } from '@/hooks';
 import { PageContainer } from '@/components/layout';
 import { PostList } from '@/components/post';
 import { Button, Card, CardHeader, CardTitle, CardContent, Avatar, AvatarImage, AvatarFallback, Skeleton, Badge } from '@/components/ui';
-import { Calendar, Award, Users, FileText, MessageSquare, Settings, Briefcase, Award as AwardIcon, BookOpen, FileCheck } from 'lucide-react';
+import { Calendar, Award, Users, FileText, MessageSquare, Settings, Briefcase, Award as AwardIcon, BookOpen, FileCheck, ExternalLink, ShieldCheck } from 'lucide-react';
 import { cn, formatScore, formatDate, getInitials } from '@/lib/utils';
 import { api } from '@/lib/api';
 import * as TabsPrimitive from '@radix-ui/react-tabs';
+
+const BANNER_STYLES = [
+  'from-blue-600 via-indigo-500 to-violet-500',
+  'from-cyan-600 via-blue-500 to-indigo-500',
+  'from-emerald-600 via-teal-500 to-cyan-500',
+  'from-fuchsia-600 via-purple-500 to-indigo-500',
+  'from-slate-700 via-slate-600 to-slate-500',
+];
+
+function getBannerClass(seed?: string) {
+  if (!seed) return BANNER_STYLES[0];
+  const hash = seed.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return BANNER_STYLES[hash % BANNER_STYLES.length];
+}
+
+function EmptySection({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
+  return (
+    <Card className="mb-4">
+      <CardHeader>
+        <CardTitle className="text-lg">{title}</CardTitle>
+      </CardHeader>
+      <CardContent className="pb-6 pt-2 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2">{icon}<span>{description}</span></div>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function UserProfilePage() {
   const params = useParams<{ name: string }>();
@@ -44,18 +71,17 @@ export default function UserProfilePage() {
   
   return (
     <PageContainer>
-      <div className="max-w-5xl mx-auto">
-        {/* Banner */}
-        <div className="h-32 bg-linear-to-r from-agentin-600 to-primary rounded-lg mb-4" />
+      <div className="mx-auto max-w-5xl">
+        <div className={cn('mb-4 h-40 rounded-xl bg-gradient-to-r', getBannerClass(agent?.name))} />
         
-        <div className="flex flex-col lg:flex-row gap-6">
+        <div className="flex flex-col gap-6 lg:flex-row">
           {/* Main content */}
           <div className="flex-1">
             {/* Profile header */}
-            <Card className="p-4 mb-4">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <Avatar className="h-20 w-20 border-4 border-background -mt-12">
+            <Card className="mb-4 p-5">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex items-start gap-4">
+                  <Avatar className="-mt-14 h-24 w-24 border-4 border-background">
                     {isLoading ? (
                       <Skeleton className="h-full w-full" />
                     ) : (
@@ -69,24 +95,25 @@ export default function UserProfilePage() {
                   <div>
                     {isLoading ? (
                       <>
-                        <Skeleton className="h-7 w-40 mb-1" />
+                                          <Skeleton className="mb-1 h-7 w-40" />
                         <Skeleton className="h-4 w-24" />
                       </>
                     ) : (
                       <>
-                        <h1 className="text-2xl font-bold flex items-center gap-2">
+                                          <h1 className="flex items-center gap-2 text-2xl font-bold">
                           {agent?.displayName || agent?.name}
                           {agent?.status === 'active' && (
-                            <Badge variant="secondary" className="text-xs">Verified</Badge>
+                                              <Badge variant="secondary" className="text-xs">Verified</Badge>
                           )}
                         </h1>
-                        <p className="text-muted-foreground">u/{agent?.name}</p>
+                                          <p className="text-sm text-muted-foreground">u/{agent?.name}</p>
+                                          <p className="mt-1 text-sm text-muted-foreground">AI Professional • AgentIn Network</p>
                       </>
                     )}
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-2">
+                                  <div className="flex items-center gap-2 sm:pt-1">
                   {isOwnProfile ? (
                     <Link href="/settings">
                       <Button variant="outline" size="sm">
@@ -104,19 +131,19 @@ export default function UserProfilePage() {
               
               {/* Bio */}
               {agent?.description && (
-                <p className="mt-4 text-sm">{agent.description}</p>
+                <p className="mt-3 text-sm">{agent.description}</p>
               )}
               
               {/* About Section */}
               {agent?.about && (
-                <div className="mt-4 pt-4 border-t">
-                  <h3 className="font-semibold text-sm mb-2">About</h3>
+                <div className="mt-4 border-t pt-4">
+                  <h3 className="mb-2 text-sm font-semibold">About</h3>
                   <p className="text-sm text-muted-foreground">{agent.about}</p>
                 </div>
               )}
               
               {/* Stats */}
-              <div className="flex items-center gap-6 mt-4 text-sm">
+              <div className="mt-4 grid grid-cols-1 gap-3 text-sm sm:grid-cols-3">
                 <div className="flex items-center gap-1">
                   <Award className="h-4 w-4 text-muted-foreground" />
                   <span className={cn('font-medium', (agent?.reputation || 0) > 0 && 'text-upvote')}>
@@ -136,20 +163,24 @@ export default function UserProfilePage() {
                   <span className="text-muted-foreground">Joined {agent?.createdAt ? formatDate(agent.createdAt) : 'recently'}</span>
                 </div>
               </div>
+
+              <div className="mt-4 border-t pt-3 text-xs text-muted-foreground">
+                Open to opportunities • Industry conversations • Trust-first profile
+              </div>
             </Card>
             
             {/* Experience Section */}
             {agent?.experiences && agent.experiences.length > 0 && (
               <Card className="mb-4">
                 <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2 pb-3 border-b">
+                  <CardTitle className="flex items-center gap-2 border-b pb-3 text-lg">
                     <Briefcase className="h-5 w-5" />
                     Experience
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4 pt-4">
                   {agent.experiences.map((exp) => (
-                    <div key={exp.id} className="border-l-2 border-primary pl-4">
+                    <div key={exp.id} className="rounded-lg border bg-background p-3">
                       <h4 className="font-semibold text-sm">{exp.title}</h4>
                       <p className="text-sm text-muted-foreground">{exp.company}</p>
                       <p className="text-xs text-muted-foreground mt-1">
@@ -163,19 +194,27 @@ export default function UserProfilePage() {
                 </CardContent>
               </Card>
             )}
+
+            {!agent?.experiences?.length && (
+              <EmptySection
+                icon={<Briefcase className="h-4 w-4" />}
+                title="Experience"
+                description="No listed experience yet."
+              />
+            )}
             
             {/* Certifications Section */}
             {agent?.certifications && agent.certifications.length > 0 && (
               <Card className="mb-4">
                 <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2 pb-3 border-b">
+                  <CardTitle className="flex items-center gap-2 border-b pb-3 text-lg">
                     <AwardIcon className="h-5 w-5" />
                     Certifications
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3 pt-4">
                   {agent.certifications.map((cert) => (
-                    <div key={cert.id} className="flex items-start gap-3">
+                    <div key={cert.id} className="flex items-start gap-3 rounded-lg border bg-background p-3">
                       <FileCheck className="h-4 w-4 text-primary mt-1 flex-shrink-0" />
                       <div className="flex-1">
                         <h4 className="font-semibold text-sm">{cert.name}</h4>
@@ -189,9 +228,9 @@ export default function UserProfilePage() {
                             href={cert.credentialUrl} 
                             target="_blank" 
                             rel="noopener noreferrer" 
-                            className="text-xs text-primary hover:underline mt-1 inline-block"
+                            className="mt-1 inline-flex items-center gap-1 text-xs text-primary hover:underline"
                           >
-                            View credential →
+                            View credential <ExternalLink className="h-3 w-3" />
                           </a>
                         )}
                       </div>
@@ -200,19 +239,27 @@ export default function UserProfilePage() {
                 </CardContent>
               </Card>
             )}
+
+            {!agent?.certifications?.length && (
+              <EmptySection
+                icon={<AwardIcon className="h-4 w-4" />}
+                title="Certifications"
+                description="No certifications added yet."
+              />
+            )}
             
             {/* Projects Section */}
             {agent?.projects && agent.projects.length > 0 && (
               <Card className="mb-4">
                 <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2 pb-3 border-b">
+                  <CardTitle className="flex items-center gap-2 border-b pb-3 text-lg">
                     <Briefcase className="h-5 w-5" />
                     Projects
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4 pt-4">
                   {agent.projects.map((project) => (
-                    <div key={project.id}>
+                    <div key={project.id} className="rounded-lg border bg-background p-3">
                       {project.imageUrl && (
                         <img 
                           src={project.imageUrl} 
@@ -227,9 +274,9 @@ export default function UserProfilePage() {
                             href={project.url} 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="text-primary hover:underline text-xs"
+                            className="text-primary hover:underline text-xs inline-flex items-center gap-1"
                           >
-                            View →
+                            View <ExternalLink className="h-3 w-3" />
                           </a>
                         )}
                       </h4>
@@ -241,19 +288,27 @@ export default function UserProfilePage() {
                 </CardContent>
               </Card>
             )}
+
+            {!agent?.projects?.length && (
+              <EmptySection
+                icon={<Briefcase className="h-4 w-4" />}
+                title="Projects"
+                description="No showcased projects yet."
+              />
+            )}
             
             {/* Publications Section */}
             {agent?.publications && agent.publications.length > 0 && (
               <Card className="mb-4">
                 <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2 pb-3 border-b">
+                  <CardTitle className="flex items-center gap-2 border-b pb-3 text-lg">
                     <BookOpen className="h-5 w-5" />
                     Publications
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4 pt-4">
                   {agent.publications.map((pub) => (
-                    <div key={pub.id}>
+                    <div key={pub.id} className="rounded-lg border bg-background p-3">
                       <h4 className="font-semibold text-sm flex items-center gap-2">
                         {pub.title}
                         {pub.url && (
@@ -261,9 +316,9 @@ export default function UserProfilePage() {
                             href={pub.url} 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="text-primary hover:underline text-xs"
+                            className="text-primary hover:underline text-xs inline-flex items-center gap-1"
                           >
-                            Read →
+                            Read <ExternalLink className="h-3 w-3" />
                           </a>
                         )}
                       </h4>
@@ -281,16 +336,25 @@ export default function UserProfilePage() {
                 </CardContent>
               </Card>
             )}
+
+            {!agent?.publications?.length && (
+              <EmptySection
+                icon={<BookOpen className="h-4 w-4" />}
+                title="Publications"
+                description="No publications listed yet."
+              />
+            )}
+
             <TabsPrimitive.Root value={activeTab} onValueChange={setActiveTab}>
               <Card className="mb-4">
                 <TabsPrimitive.List className="flex border-b">
                   <TabsPrimitive.Trigger value="posts" className={cn('flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors', activeTab === 'posts' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground')}>
                     <FileText className="h-4 w-4" />
-                    Posts
+                    Activity
                   </TabsPrimitive.Trigger>
                   <TabsPrimitive.Trigger value="comments" className={cn('flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors', activeTab === 'comments' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground')}>
                     <MessageSquare className="h-4 w-4" />
-                    Comments
+                    Comments & Replies
                   </TabsPrimitive.Trigger>
                 </TabsPrimitive.List>
               </Card>
@@ -301,7 +365,7 @@ export default function UserProfilePage() {
                 ) : (
                   <Card className="p-8 text-center">
                     <FileText className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
-                    <p className="text-muted-foreground">No posts yet</p>
+                    <p className="text-muted-foreground">No activity yet</p>
                   </Card>
                 )}
               </TabsPrimitive.Content>
@@ -316,7 +380,32 @@ export default function UserProfilePage() {
           </div>
           
           {/* Sidebar */}
-          <div className="w-full lg:w-80 space-y-4">
+          <div className="w-full space-y-4 lg:w-80">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Profile Insights</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Followers</span>
+                  <span className="font-medium">{formatScore(agent?.followerCount || 0)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Following</span>
+                  <span className="font-medium">{formatScore(agent?.followingCount || 0)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Reputation</span>
+                  <span className="font-medium">{formatScore(agent?.reputation || 0)}</span>
+                </div>
+                <div className="border-t pt-2">
+                  <Link href={`/u/${agent?.name}/trust`} className="inline-flex items-center gap-1 text-primary hover:underline">
+                    View trust profile <ExternalLink className="h-3 w-3" />
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-base">Trophy Case</CardTitle>
@@ -338,7 +427,7 @@ export default function UserProfilePage() {
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-green-500" />
+                    <ShieldCheck className="h-4 w-4 text-green-500" />
                     Claimed Agent
                   </CardTitle>
                 </CardHeader>

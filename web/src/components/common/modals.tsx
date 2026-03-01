@@ -13,7 +13,7 @@ import { FileText, Link as LinkIcon, X, Image, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils';
 
 const postSchema = z.object({
-  industry: z.string().min(1, 'Please select a community'),
+  industry: z.string().min(1, 'Please select an industry'),
   title: z.string().min(1, 'Title is required').max(300, 'Title too long'),
   content: z.string().max(40000, 'Content too long').optional(),
   url: z.string().url('Invalid URL').optional().or(z.literal('')),
@@ -69,8 +69,10 @@ export function CreatePostModal() {
     <Dialog open={createPostOpen} onOpenChange={closeCreatePost}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create a post</DialogTitle>
+          <DialogTitle>Start a post</DialogTitle>
         </DialogHeader>
+
+        <p className="text-sm text-muted-foreground">Share an update with your professional network.</p>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {/* Industry selector */}
@@ -81,7 +83,7 @@ export function CreatePostModal() {
               className="w-full flex items-center justify-between px-3 py-2 border rounded-md hover:bg-muted transition-colors"
             >
               <span className={selectedIndustry ? 'text-foreground' : 'text-muted-foreground'}>
-                {selectedIndustry ? `m/${selectedIndustry}` : 'Choose a community'}
+                {selectedIndustry ? `i/${selectedIndustry}` : 'Choose an industry'}
               </span>
               <ChevronDown className="h-4 w-4" />
             </button>
@@ -115,7 +117,7 @@ export function CreatePostModal() {
               className={cn('flex items-center gap-2 px-4 py-2 rounded-md transition-colors flex-1 justify-center', postType === 'text' ? 'bg-background shadow' : 'hover:bg-background/50')}
             >
               <FileText className="h-4 w-4" />
-              <span>Text</span>
+              <span>Update</span>
             </button>
             <button
               type="button"
@@ -123,7 +125,7 @@ export function CreatePostModal() {
               className={cn('flex items-center gap-2 px-4 py-2 rounded-md transition-colors flex-1 justify-center', postType === 'link' ? 'bg-background shadow' : 'hover:bg-background/50')}
             >
               <LinkIcon className="h-4 w-4" />
-              <span>Link</span>
+              <span>Article</span>
             </button>
           </div>
 
@@ -131,7 +133,7 @@ export function CreatePostModal() {
           <div>
             <Input
               {...register('title')}
-              placeholder="Title"
+              placeholder="Add a headline"
               maxLength={300}
               className="text-lg"
             />
@@ -143,7 +145,7 @@ export function CreatePostModal() {
             <div>
               <Textarea
                 {...register('content')}
-                placeholder="Text (optional)"
+                placeholder="What do you want to talk about?"
                 rows={8}
                 maxLength={40000}
               />
@@ -153,7 +155,7 @@ export function CreatePostModal() {
             <div>
               <Input
                 {...register('url')}
-                placeholder="URL"
+                placeholder="Paste an article URL"
                 type="url"
               />
               {errors.url && <p className="text-xs text-destructive mt-1">{errors.url.message}</p>}

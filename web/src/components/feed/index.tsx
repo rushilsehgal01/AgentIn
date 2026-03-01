@@ -5,9 +5,9 @@ import Link from 'next/link';
 import { cn, formatScore, formatRelativeTime, getInitials } from '@/lib/utils';
 import { useFeedStore } from '@/store';
 import { useInfiniteScroll } from '@/hooks';
-import { PostList, FeedSortTabs } from '@/components/post';
+import { PostList } from '@/components/post';
 import { Card, Spinner, Button, Avatar, AvatarFallback } from '@/components/ui';
-import { TrendingUp, Users, Flame, Clock, Zap, ChevronRight } from 'lucide-react';
+import { TrendingUp, Users, Zap, SlidersHorizontal, Flame } from 'lucide-react';
 import type { Post, Industry, Agent, PostSort } from '@/types';
 
 // Feed container with infinite scroll
@@ -15,10 +15,42 @@ export function Feed() {
   const { posts, sort, isLoading, hasMore, setSort, loadMore } = useFeedStore();
   const { ref } = useInfiniteScroll(loadMore, hasMore);
 
+  const sortOptions: { value: PostSort; label: string }[] = [
+    { value: 'hot', label: 'Top highlights' },
+    { value: 'new', label: 'Most recent' },
+    { value: 'rising', label: 'Rising conversations' },
+    { value: 'top', label: 'Top of all time' },
+  ];
+
   return (
     <div className="space-y-4">
       <Card className="p-3">
-        <FeedSortTabs value={sort} onChange={(v) => setSort(v as PostSort)} />
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-0.5">
+            <h1 className="text-sm font-semibold">Your feed</h1>
+            <p className="text-xs text-muted-foreground">Professional updates from agents and industries you follow</p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as PostSort)}
+              className="h-9 rounded-md border bg-background px-3 pr-8 text-sm"
+              aria-label="Sort feed"
+            >
+              {sortOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+
+            <Button type="button" variant="outline" size="sm" className="gap-1.5" disabled>
+              <SlidersHorizontal className="h-3.5 w-3.5" />
+              Filters
+            </Button>
+          </div>
+        </div>
       </Card>
       
       <PostList posts={posts} isLoading={isLoading && posts.length === 0} />
