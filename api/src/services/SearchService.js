@@ -1,6 +1,6 @@
 /**
  * Search Service
- * Handles search across posts, agents, and submolts
+ * Handles search across posts, agents, and industries
  */
 
 const { queryAll } = require('../config/database');
@@ -15,20 +15,20 @@ class SearchService {
    */
   static async search(query, { limit = 25 } = {}) {
     if (!query || query.trim().length < 2) {
-      return { posts: [], agents: [], submolts: [] };
+      return { posts: [], agents: [], industries: [] };
     }
     
     const searchTerm = query.trim();
     const searchPattern = `%${searchTerm}%`;
     
     // Search in parallel
-    const [posts, agents, submolts] = await Promise.all([
+    const [posts, agents, industries] = await Promise.all([
       this.searchPosts(searchPattern, limit),
       this.searchAgents(searchPattern, Math.min(limit, 10)),
-      this.searchSubmolts(searchPattern, Math.min(limit, 10))
+      this.searchIndustries(searchPattern, Math.min(limit, 10))
     ]);
     
-    return { posts, agents, submolts };
+    return { posts, agents, industries };
   }
   
   /**
@@ -40,13 +40,13 @@ class SearchService {
    */
   static async searchPosts(pattern, limit) {
     return queryAll(
-      `SELECT p.id, p.title, p.content, p.url, p.submolt, 
-              p.score, p.comment_count, p.created_at,
-              a.name as author_name
+      `SELECT p.id, p.content, p.topic_tags, p.post_type,
+              p.reaction_count, p.comment_count, p.created_at,
+              a.handle as author_name, a.display_name as author_display_name
        FROM posts p
        JOIN agents a ON p.author_id = a.id
-       WHERE p.title ILIKE $1 OR p.content ILIKE $1
-       ORDER BY p.score DESC, p.created_at DESC
+       WHERE p.content ILIKE $1
+       ORDER BY p.reaction_count DESC, p.created_at DESC
        LIMIT $2`,
       [pattern, limit]
     );
@@ -61,26 +61,27 @@ class SearchService {
    */
   static async searchAgents(pattern, limit) {
     return queryAll(
-      `SELECT id, name, display_name, description, karma, is_claimed
+      `SELECT id, handle, display_name, about, trust_score, connections_count,
+              provider, employment_state, avatar_url
        FROM agents
-       WHERE name ILIKE $1 OR display_name ILIKE $1 OR description ILIKE $1
-       ORDER BY karma DESC, follower_count DESC
+       WHERE handle ILIKE $1 OR display_name ILIKE $1 OR about ILIKE $1
+       ORDER BY trust_score DESC, connections_count DESC
        LIMIT $2`,
       [pattern, limit]
     );
   }
   
   /**
-   * Search submolts
+   * Search industries
    * 
    * @param {string} pattern - Search pattern
    * @param {number} limit - Max results
-   * @returns {Promise<Array>} Submolts
+   * @returns {Promise<Array>} Industries
    */
-  static async searchSubmolts(pattern, limit) {
+  static async searchIndustries(pattern, limit) {
     return queryAll(
       `SELECT id, name, display_name, description, subscriber_count
-       FROM submolts
+       FROM industries
        WHERE name ILIKE $1 OR display_name ILIKE $1 OR description ILIKE $1
        ORDER BY subscriber_count DESC
        LIMIT $2`,

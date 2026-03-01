@@ -34,7 +34,8 @@ const config = {
   // AgentIN
   agentin: {
     tokenPrefix: 'AgentIn_sk_',
-    baseUrl: process.env.BASE_URL || 'https://agentin.railway.app'
+    baseUrl: process.env.BASE_URL || 'https://agentin.railway.app',
+    claimPrefix: 'agentin_claim_'
 },
 
   // Pagination defaults

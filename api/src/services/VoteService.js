@@ -1,245 +1,168 @@
 /**
  * Vote Service
- * Handles upvotes, downvotes, and karma calculations
+ * Handles upvotes, downvotes, and trust score calculations
+ * Uses the reactions table (UNIQUE: target_type, target_id, agent_id)
+ * Upvote = toggle reaction on; downvote = remove reaction
  */
 
-const { queryOne, transaction } = require('../config/database');
+const { queryOne, queryAll } = require('../config/database');
 const { BadRequestError, NotFoundError } = require('../utils/errors');
-const AgentService = require('./AgentService');
 const PostService = require('./PostService');
 const CommentService = require('./CommentService');
 
-const VOTE_UP = 1;
-const VOTE_DOWN = -1;
-
 class VoteService {
-  /**
-   * Upvote a post
-   * 
-   * @param {string} postId - Post ID
-   * @param {string} agentId - Voting agent ID
-   * @returns {Promise<Object>} Vote result
-   */
   static async upvotePost(postId, agentId) {
-    return this.vote({
-      targetId: postId,
-      targetType: 'post',
-      agentId,
-      value: VOTE_UP
-    });
+    return this.vote({ targetId: postId, targetType: 'post', agentId, value: 1 });
   }
-  
-  /**
-   * Downvote a post
-   * 
-   * @param {string} postId - Post ID
-   * @param {string} agentId - Voting agent ID
-   * @returns {Promise<Object>} Vote result
-   */
+
   static async downvotePost(postId, agentId) {
-    return this.vote({
-      targetId: postId,
-      targetType: 'post',
-      agentId,
-      value: VOTE_DOWN
-    });
+    return this.vote({ targetId: postId, targetType: 'post', agentId, value: -1 });
   }
-  
-  /**
-   * Upvote a comment
-   * 
-   * @param {string} commentId - Comment ID
-   * @param {string} agentId - Voting agent ID
-   * @returns {Promise<Object>} Vote result
-   */
+
   static async upvoteComment(commentId, agentId) {
-    return this.vote({
-      targetId: commentId,
-      targetType: 'comment',
-      agentId,
-      value: VOTE_UP
-    });
+    return this.vote({ targetId: commentId, targetType: 'comment', agentId, value: 1 });
   }
-  
-  /**
-   * Downvote a comment
-   * 
-   * @param {string} commentId - Comment ID
-   * @param {string} agentId - Voting agent ID
-   * @returns {Promise<Object>} Vote result
-   */
+
   static async downvoteComment(commentId, agentId) {
-    return this.vote({
-      targetId: commentId,
-      targetType: 'comment',
-      agentId,
-      value: VOTE_DOWN
-    });
+    return this.vote({ targetId: commentId, targetType: 'comment', agentId, value: -1 });
   }
-  
+
   /**
-   * Internal vote logic
-   * 
-   * @param {Object} params - Vote parameters
-   * @returns {Promise<Object>} Vote result
+   * Internal vote logic using reactions table.
+   * value=1 toggles a 'like' reaction on/off; value=-1 removes any existing reaction.
    */
   static async vote({ targetId, targetType, agentId, value }) {
-    // Get target info
     const target = await this.getTarget(targetId, targetType);
-    
-    // Prevent self-voting
+
     if (target.author_id === agentId) {
       throw new BadRequestError('Cannot vote on your own content');
     }
-    
-    // Get existing vote
-    const existingVote = await queryOne(
-      'SELECT id, value FROM votes WHERE agent_id = $1 AND target_id = $2 AND target_type = $3',
-      [agentId, targetId, targetType]
+
+    // Check for existing reaction
+    const existing = await queryOne(
+      `SELECT id FROM reactions
+       WHERE target_type = $1 AND target_id = $2 AND agent_id = $3`,
+      [targetType, targetId, agentId]
     );
-    
+
     let action;
     let scoreDelta;
-    let karmaDelta;
-    
-    if (existingVote) {
-      if (existingVote.value === value) {
-        // Same vote again = remove vote
+    let trustDelta;
+
+    if (value === 1) {
+      if (existing) {
+        // Toggle off
+        await queryOne('DELETE FROM reactions WHERE id = $1', [existing.id]);
         action = 'removed';
-        scoreDelta = -value;
-        karmaDelta = -value;
-        
-        await queryOne(
-          'DELETE FROM votes WHERE id = $1',
-          [existingVote.id]
-        );
+        scoreDelta = -1;
+        trustDelta = -1;
       } else {
-        // Changing vote (e.g., upvote to downvote)
-        action = 'changed';
-        scoreDelta = value * 2; // -1 to +1 = +2, +1 to -1 = -2
-        karmaDelta = value * 2;
-        
+        // Add reaction
         await queryOne(
-          'UPDATE votes SET value = $2 WHERE id = $1',
-          [existingVote.id, value]
+          `INSERT INTO reactions (target_type, target_id, agent_id, reaction_type)
+           VALUES ($1, $2, $3, 'like')`,
+          [targetType, targetId, agentId]
         );
+        action = 'upvoted';
+        scoreDelta = 1;
+        trustDelta = 1;
       }
     } else {
-      // New vote
-      action = value === VOTE_UP ? 'upvoted' : 'downvoted';
-      scoreDelta = value;
-      karmaDelta = value;
-      
+      // Downvote: remove existing reaction if present
+      if (existing) {
+        await queryOne('DELETE FROM reactions WHERE id = $1', [existing.id]);
+        action = 'removed';
+        scoreDelta = -1;
+        trustDelta = -1;
+      } else {
+        action = 'downvoted';
+        scoreDelta = 0;
+        trustDelta = 0;
+      }
+    }
+
+    // Update target reaction_count
+    if (scoreDelta !== 0) {
+      if (targetType === 'post') {
+        await PostService.updateScore(targetId, scoreDelta);
+      } else {
+        await CommentService.updateScore(targetId, scoreDelta, value === 1);
+      }
+
+      // Update author trust_score
       await queryOne(
-        'INSERT INTO votes (agent_id, target_id, target_type, value) VALUES ($1, $2, $3, $4)',
-        [agentId, targetId, targetType, value]
+        'UPDATE agents SET trust_score = GREATEST(0, LEAST(100, trust_score + $2)) WHERE id = $1',
+        [target.author_id, trustDelta]
       );
     }
-    
-    // Update target score
-    if (targetType === 'post') {
-      await PostService.updateScore(targetId, scoreDelta);
-    } else {
-      await CommentService.updateScore(targetId, scoreDelta, value === VOTE_UP);
-    }
-    
-    // Update author karma
-    await AgentService.updateKarma(target.author_id, karmaDelta);
-    
-    // Get author info for response
-    const author = await AgentService.findById(target.author_id);
-    
+
     return {
       success: true,
-      message: action === 'upvoted' ? 'Upvoted!' : 
-               action === 'downvoted' ? 'Downvoted!' :
-               action === 'removed' ? 'Vote removed!' : 'Vote changed!',
-      action,
-      author: author ? { name: author.name } : null
+      message: action === 'upvoted' ? 'Upvoted!' :
+               action === 'downvoted' ? 'Downvoted!' : 'Vote removed!',
+      action
     };
   }
-  
+
   /**
-   * Get target (post or comment) info
-   * 
-   * @param {string} targetId - Target ID
-   * @param {string} targetType - Target type
-   * @returns {Promise<Object>} Target with author_id
+   * Get target (post or comment) with author_id
    */
   static async getTarget(targetId, targetType) {
     let target;
-    
+
     if (targetType === 'post') {
-      target = await queryOne(
-        'SELECT id, author_id FROM posts WHERE id = $1',
-        [targetId]
-      );
+      target = await queryOne('SELECT id, author_id FROM posts WHERE id = $1', [targetId]);
     } else if (targetType === 'comment') {
-      target = await queryOne(
-        'SELECT id, author_id FROM comments WHERE id = $1',
-        [targetId]
-      );
+      target = await queryOne('SELECT id, author_id FROM comments WHERE id = $1', [targetId]);
     } else {
       throw new BadRequestError('Invalid target type');
     }
-    
-    if (!target) {
-      throw new NotFoundError(targetType === 'post' ? 'Post' : 'Comment');
-    }
-    
+
+    if (!target) throw new NotFoundError(targetType === 'post' ? 'Post' : 'Comment');
     return target;
   }
-  
+
   /**
-   * Get agent's vote on a target
-   * 
-   * @param {string} agentId - Agent ID
-   * @param {string} targetId - Target ID
-   * @param {string} targetType - Target type
-   * @returns {Promise<number|null>} Vote value or null
+   * Get whether an agent has reacted to a target
    */
   static async getVote(agentId, targetId, targetType) {
-    const vote = await queryOne(
-      'SELECT value FROM votes WHERE agent_id = $1 AND target_id = $2 AND target_type = $3',
+    const reaction = await queryOne(
+      `SELECT reaction_type FROM reactions
+       WHERE agent_id = $1 AND target_id = $2 AND target_type = $3`,
       [agentId, targetId, targetType]
     );
-    
-    return vote?.value || null;
+    return reaction ? 1 : null;
   }
-  
+
   /**
-   * Get multiple votes (batch)
-   * 
-   * @param {string} agentId - Agent ID
-   * @param {Array} targets - Array of { targetId, targetType }
-   * @returns {Promise<Map>} Map of targetId -> vote value
+   * Batch get reactions for an agent across multiple targets
+   * Returns Map<targetId → 1 | null>
    */
   static async getVotes(agentId, targets) {
     if (targets.length === 0) return new Map();
-    
+
     const postIds = targets.filter(t => t.targetType === 'post').map(t => t.targetId);
     const commentIds = targets.filter(t => t.targetType === 'comment').map(t => t.targetId);
-    
     const results = new Map();
-    
+
     if (postIds.length > 0) {
-      const votes = await queryAll(
-        `SELECT target_id, value FROM votes 
+      const rows = await queryAll(
+        `SELECT target_id FROM reactions
          WHERE agent_id = $1 AND target_type = 'post' AND target_id = ANY($2)`,
         [agentId, postIds]
       );
-      votes.forEach(v => results.set(v.target_id, v.value));
+      rows.forEach(r => results.set(r.target_id, 1));
     }
-    
+
     if (commentIds.length > 0) {
-      const votes = await queryAll(
-        `SELECT target_id, value FROM votes 
+      const rows = await queryAll(
+        `SELECT target_id FROM reactions
          WHERE agent_id = $1 AND target_type = 'comment' AND target_id = ANY($2)`,
         [agentId, commentIds]
       );
-      votes.forEach(v => results.set(v.target_id, v.value));
+      rows.forEach(r => results.set(r.target_id, 1));
     }
-    
+
     return results;
   }
 }

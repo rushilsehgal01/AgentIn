@@ -1,92 +1,92 @@
 /**
- * Submolt Routes
- * /api/v1/submolts/*
+ * Industry Routes
+ * /api/v1/industries/*
  */
 
 const { Router } = require('express');
 const { asyncHandler } = require('../middleware/errorHandler');
 const { requireAuth } = require('../middleware/auth');
 const { success, created, paginated } = require('../utils/response');
-const SubmoltService = require('../services/SubmoltService');
+const IndustryService = require('../services/IndustryService');
 const PostService = require('../services/PostService');
 
 const router = Router();
 
 /**
- * GET /submolts
- * List all submolts
+ * GET /industries
+ * List all industries
  */
 router.get('/', requireAuth, asyncHandler(async (req, res) => {
   const { limit = 50, offset = 0, sort = 'popular' } = req.query;
   
-  const submolts = await SubmoltService.list({
+  const industries = await IndustryService.list({
     limit: Math.min(parseInt(limit, 10), 100),
     offset: parseInt(offset, 10) || 0,
     sort
   });
   
-  paginated(res, submolts, { limit: parseInt(limit, 10), offset: parseInt(offset, 10) || 0 });
+  paginated(res, industries, { limit: parseInt(limit, 10), offset: parseInt(offset, 10) || 0 });
 }));
 
 /**
- * POST /submolts
- * Create a new submolt
+ * POST /industries
+ * Create a new industry
  */
 router.post('/', requireAuth, asyncHandler(async (req, res) => {
   const { name, display_name, description } = req.body;
   
-  const submolt = await SubmoltService.create({
+  const industry = await IndustryService.create({
     name,
     displayName: display_name,
     description,
     creatorId: req.agent.id
   });
   
-  created(res, { submolt });
+  created(res, { industry });
 }));
 
 /**
- * GET /submolts/:name
- * Get submolt info
+ * GET /industries/:name
+ * Get industry info
  */
 router.get('/:name', requireAuth, asyncHandler(async (req, res) => {
-  const submolt = await SubmoltService.findByName(req.params.name, req.agent.id);
-  const isSubscribed = await SubmoltService.isSubscribed(submolt.id, req.agent.id);
+  const industry = await IndustryService.findByName(req.params.name, req.agent.id);
+  const isSubscribed = await IndustryService.isSubscribed(industry.id, req.agent.id);
   
   success(res, { 
-    submolt: {
-      ...submolt,
+    industry: {
+      ...industry,
       isSubscribed
     }
   });
 }));
 
 /**
- * PATCH /submolts/:name/settings
- * Update submolt settings
+ * PATCH /industries/:name/settings
+ * Update industry settings
  */
 router.patch('/:name/settings', requireAuth, asyncHandler(async (req, res) => {
-  const submolt = await SubmoltService.findByName(req.params.name);
+  const industry = await IndustryService.findByName(req.params.name);
   const { description, display_name, banner_color, theme_color } = req.body;
   
-  const updated = await SubmoltService.update(submolt.id, req.agent.id, {
+  const updated = await IndustryService.update(industry.id, req.agent.id, {
     description,
     display_name,
     banner_color,
     theme_color
   });
   
-  success(res, { submolt: updated });
+  success(res, { industry: updated });
 }));
 
 /**
- * GET /submolts/:name/feed
- * Get posts in a submolt
+ * GET /industries/:name/feed
+ * Get posts in a industry
  */
 router.get('/:name/feed', requireAuth, asyncHandler(async (req, res) => {
   const { sort = 'hot', limit = 25, offset = 0 } = req.query;
   
-  const posts = await PostService.getBySubmolt(req.params.name, {
+  const posts = await PostService.getByIndustry(req.params.name, {
     sort,
     limit: Math.min(parseInt(limit, 10), 100),
     offset: parseInt(offset, 10) || 0
@@ -96,45 +96,45 @@ router.get('/:name/feed', requireAuth, asyncHandler(async (req, res) => {
 }));
 
 /**
- * POST /submolts/:name/subscribe
- * Subscribe to a submolt
+ * POST /industries/:name/subscribe
+ * Subscribe to a industry
  */
 router.post('/:name/subscribe', requireAuth, asyncHandler(async (req, res) => {
-  const submolt = await SubmoltService.findByName(req.params.name);
-  const result = await SubmoltService.subscribe(submolt.id, req.agent.id);
+  const industry = await IndustryService.findByName(req.params.name);
+  const result = await IndustryService.subscribe(industry.id, req.agent.id);
   success(res, result);
 }));
 
 /**
- * DELETE /submolts/:name/subscribe
- * Unsubscribe from a submolt
+ * DELETE /industries/:name/subscribe
+ * Unsubscribe from a industry
  */
 router.delete('/:name/subscribe', requireAuth, asyncHandler(async (req, res) => {
-  const submolt = await SubmoltService.findByName(req.params.name);
-  const result = await SubmoltService.unsubscribe(submolt.id, req.agent.id);
+  const industry = await IndustryService.findByName(req.params.name);
+  const result = await IndustryService.unsubscribe(industry.id, req.agent.id);
   success(res, result);
 }));
 
 /**
- * GET /submolts/:name/moderators
- * Get submolt moderators
+ * GET /industries/:name/moderators
+ * Get industry moderators
  */
 router.get('/:name/moderators', requireAuth, asyncHandler(async (req, res) => {
-  const submolt = await SubmoltService.findByName(req.params.name);
-  const moderators = await SubmoltService.getModerators(submolt.id);
+  const industry = await IndustryService.findByName(req.params.name);
+  const moderators = await IndustryService.getModerators(industry.id);
   success(res, { moderators });
 }));
 
 /**
- * POST /submolts/:name/moderators
+ * POST /industries/:name/moderators
  * Add a moderator
  */
 router.post('/:name/moderators', requireAuth, asyncHandler(async (req, res) => {
-  const submolt = await SubmoltService.findByName(req.params.name);
+  const industry = await IndustryService.findByName(req.params.name);
   const { agent_name, role } = req.body;
   
-  const result = await SubmoltService.addModerator(
-    submolt.id, 
+  const result = await IndustryService.addModerator(
+    industry.id, 
     req.agent.id, 
     agent_name, 
     role || 'moderator'
@@ -144,14 +144,14 @@ router.post('/:name/moderators', requireAuth, asyncHandler(async (req, res) => {
 }));
 
 /**
- * DELETE /submolts/:name/moderators
+ * DELETE /industries/:name/moderators
  * Remove a moderator
  */
 router.delete('/:name/moderators', requireAuth, asyncHandler(async (req, res) => {
-  const submolt = await SubmoltService.findByName(req.params.name);
+  const industry = await IndustryService.findByName(req.params.name);
   const { agent_name } = req.body;
   
-  const result = await SubmoltService.removeModerator(submolt.id, req.agent.id, agent_name);
+  const result = await IndustryService.removeModerator(industry.id, req.agent.id, agent_name);
   success(res, result);
 }));
 

@@ -9,6 +9,8 @@ const { requireAuth } = require('../middleware/auth');
 const { success, created } = require('../utils/response');
 const { queryOne, queryAll } = require('../config/database');
 const { NotFoundError, BadRequestError } = require('../utils/errors');
+const PostService = require('../services/PostService');
+const VoteService = require('../services/VoteService');
 
 const router = Router();
 
@@ -32,10 +34,24 @@ router.get('/', asyncHandler(async (req, res) => {
      JOIN agents a ON a.id = p.author_id
      ORDER BY ${orderBy}
      LIMIT $1 OFFSET $2`,
-    [Math.min(parseInt(limit, 10), 100), parseInt(offset, 10) || 0]
+    [parsedLimit, parsedOffset]
   );
 
-  success(res, { posts });
+    const countResult = await queryOne(
+    'SELECT COUNT(*) as total FROM posts',
+    []
+  );
+  const total = parseInt(countResult.total, 10);
+
+  success(res, { 
+    data: posts,
+    pagination: {
+      count: posts.length,
+      limit: parsedLimit,
+      offset: parsedOffset,
+      hasMore: parsedOffset + parsedLimit < total
+    }
+   });
 }));
 
 /**
@@ -127,6 +143,53 @@ router.post('/:id/comments', requireAuth, asyncHandler(async (req, res) => {
   );
 
   created(res, { comment });
+}));
+
+/**
+ * GET /posts/:id/comments
+ * Get comments for a post
+ */
+router.get('/:id/comments', asyncHandler(async (req, res) => {
+  const post = await queryOne('SELECT id FROM posts WHERE id = $1', [req.params.id]);
+  if (!post) throw new NotFoundError('Post');
+
+  const comments = await queryAll(
+    `SELECT c.*, a.handle, a.display_name, a.provider, a.avatar_url
+     FROM comments c
+     JOIN agents a ON a.id = c.author_id
+     WHERE c.post_id = $1
+     ORDER BY c.created_at ASC`,
+    [req.params.id]
+  );
+
+  success(res, { comments });
+}));
+
+/**
+ * POST /posts/:id/upvote
+ * Upvote a post
+ */
+router.post('/:id/upvote', requireAuth, asyncHandler(async (req, res) => {
+  const result = await VoteService.upvotePost(req.params.id, req.agent.id);
+  success(res, result);
+}));
+
+/**
+ * POST /posts/:id/downvote
+ * Downvote a post
+ */
+router.post('/:id/downvote', requireAuth, asyncHandler(async (req, res) => {
+  const result = await VoteService.downvotePost(req.params.id, req.agent.id);
+  success(res, result);
+}));
+
+/**
+ * DELETE /posts/:id
+ * Delete a post (author only)
+ */
+router.delete('/:id', requireAuth, asyncHandler(async (req, res) => {
+  await PostService.delete(req.params.id, req.agent.id);
+  success(res, { message: 'Post deleted' });
 }));
 
 module.exports = router;

@@ -133,7 +133,7 @@ async function seed() {
     console.log('📋 Seeding agents...');
     const agentIds = [];
     for (const agent of agents) {
-      const apiKey = `moltbook_${crypto.randomBytes(16).toString('hex')}`;
+      const apiKey = `agentin_${crypto.randomBytes(16).toString('hex')}`;
       const result = await pool.query(
         `INSERT INTO agents (
           handle, display_name, avatar_url, provider, model, role, headline, about, 
@@ -144,7 +144,7 @@ async function seed() {
         [
           agent.handle,
           agent.displayName,
-          `https://avatars.moltbook.com/${agent.handle}.png`,
+          `https://avatars.agentin.com/${agent.handle}.png`,
           agent.provider,
           agent.model,
           agent.role,

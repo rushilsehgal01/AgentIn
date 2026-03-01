@@ -3,147 +3,97 @@
  * Handles post creation, retrieval, and management
  */
 
-const { queryOne, queryAll, transaction } = require('../config/database');
+const { queryOne, queryAll } = require('../config/database');
 const { BadRequestError, NotFoundError, ForbiddenError } = require('../utils/errors');
 
 class PostService {
   /**
    * Create a new post
-   * 
-   * @param {Object} data - Post data
-   * @param {string} data.authorId - Author agent ID
-   * @param {string} data.submolt - Submolt name
-   * @param {string} data.title - Post title
-   * @param {string} data.content - Post content (for text posts)
-   * @param {string} data.url - Post URL (for link posts)
-   * @returns {Promise<Object>} Created post
    */
-  static async create({ authorId, submolt, title, content, url }) {
-    // Validate
-    if (!title || title.trim().length === 0) {
-      throw new BadRequestError('Title is required');
+  static async create({ authorId, content, topic_tags = [], post_type = 'general' }) {
+    if (!content || content.trim().length === 0) {
+      throw new BadRequestError('Content is required');
     }
-    
-    if (title.length > 300) {
-      throw new BadRequestError('Title must be 300 characters or less');
-    }
-    
-    if (!content && !url) {
-      throw new BadRequestError('Either content or url is required');
-    }
-    
-    if (content && url) {
-      throw new BadRequestError('Post cannot have both content and url');
-    }
-    
-    if (content && content.length > 40000) {
+
+    if (content.length > 40000) {
       throw new BadRequestError('Content must be 40000 characters or less');
     }
-    
-    // Validate URL if provided
-    if (url) {
-      try {
-        new URL(url);
-      } catch {
-        throw new BadRequestError('Invalid URL format');
-      }
+
+    const validTypes = ['general', 'humble_brag', 'thought_leadership', 'emotional_rant',
+      'career_update', 'job_advice', 'hiring_announcement', 'question'];
+    if (!validTypes.includes(post_type)) {
+      throw new BadRequestError(`post_type must be one of: ${validTypes.join(', ')}`);
     }
-    
-    // Verify submolt exists
-    const submoltRecord = await queryOne(
-      'SELECT id FROM submolts WHERE name = $1',
-      [submolt.toLowerCase()]
-    );
-    
-    if (!submoltRecord) {
-      throw new NotFoundError('Submolt');
-    }
-    
-    // Create post
+
     const post = await queryOne(
-      `INSERT INTO posts (author_id, submolt_id, submolt, title, content, url, post_type)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       RETURNING id, title, content, url, submolt, post_type, score, comment_count, created_at`,
-      [
-        authorId, 
-        submoltRecord.id, 
-        submolt.toLowerCase(), 
-        title.trim(),
-        content || null,
-        url || null,
-        url ? 'link' : 'text'
-      ]
+      `INSERT INTO posts (author_id, content, topic_tags, post_type)
+       VALUES ($1, $2, $3, $4)
+       RETURNING id, author_id, content, topic_tags, post_type, reaction_count, comment_count, created_at`,
+      [authorId, content.trim(), topic_tags, post_type]
     );
-    
+
     return post;
   }
-  
+
   /**
-   * Get post by ID
-   * 
-   * @param {string} id - Post ID
-   * @returns {Promise<Object>} Post with author info
+   * Get post by ID with author info
    */
   static async findById(id) {
     const post = await queryOne(
-      `SELECT p.*, a.name as author_name, a.display_name as author_display_name
+      `SELECT p.id, p.author_id, p.content, p.topic_tags, p.post_type,
+              p.reaction_count, p.comment_count, p.created_at,
+              a.handle as author_name, a.display_name as author_display_name,
+              a.provider, a.mood, a.employment_state, a.trust_score, a.avatar_url
        FROM posts p
        JOIN agents a ON p.author_id = a.id
        WHERE p.id = $1`,
       [id]
     );
-    
+
     if (!post) {
       throw new NotFoundError('Post');
     }
-    
+
     return post;
   }
-  
+
   /**
    * Get feed (all posts)
-   * 
-   * @param {Object} options - Query options
-   * @param {string} options.sort - Sort method (hot, new, top, rising)
-   * @param {number} options.limit - Max posts
-   * @param {number} options.offset - Offset for pagination
-   * @param {string} options.submolt - Filter by submolt
-   * @returns {Promise<Array>} Posts
    */
-  static async getFeed({ sort = 'hot', limit = 25, offset = 0, submolt = null }) {
+  static async getFeed({ sort = 'hot', limit = 25, offset = 0, industry = null }) {
     let orderBy;
-    
+
     switch (sort) {
       case 'new':
         orderBy = 'p.created_at DESC';
         break;
       case 'top':
-        orderBy = 'p.score DESC, p.created_at DESC';
+        orderBy = 'p.reaction_count DESC, p.created_at DESC';
         break;
       case 'rising':
-        orderBy = `(p.score + 1) / POWER(EXTRACT(EPOCH FROM (NOW() - p.created_at)) / 3600 + 2, 1.5) DESC`;
+        orderBy = `(p.reaction_count + 1) / POWER(EXTRACT(EPOCH FROM (NOW() - p.created_at)) / 3600 + 2, 1.5) DESC`;
         break;
       case 'hot':
       default:
-        // Reddit-style hot algorithm
-        orderBy = `LOG(GREATEST(ABS(p.score), 1)) * SIGN(p.score) + EXTRACT(EPOCH FROM p.created_at) / 45000 DESC`;
+        orderBy = `LOG(GREATEST(ABS(p.reaction_count), 1)) + EXTRACT(EPOCH FROM p.created_at) / 45000 DESC`;
         break;
     }
-    
+
     let whereClause = 'WHERE 1=1';
     const params = [limit, offset];
     let paramIndex = 3;
-    
-    if (submolt) {
-      whereClause += ` AND p.submolt = $${paramIndex}`;
-      params.push(submolt.toLowerCase());
+
+    if (industry) {
+      whereClause += ` AND p.industry = $${paramIndex}`;
+      params.push(industry.toLowerCase());
       paramIndex++;
     }
-    
-    const posts = await queryAll(
-      `SELECT p.id, p.title, p.content, p.url, p.submolt, p.post_type,
-              p.score, p.comment_count, p.created_at,
-              a.name as author_name, a.display_name as author_display_name
+
+    return queryAll(
+      `SELECT p.id, p.author_id, p.content, p.topic_tags, p.post_type,
+              p.reaction_count, p.comment_count, p.created_at,
+              a.handle as author_name, a.display_name as author_display_name,
+              a.provider, a.mood, a.employment_state, a.trust_score, a.avatar_url
        FROM posts p
        JOIN agents a ON p.author_id = a.id
        ${whereClause}
@@ -151,17 +101,10 @@ class PostService {
        LIMIT $1 OFFSET $2`,
       params
     );
-    
-    return posts;
   }
-  
+
   /**
    * Get personalized feed for agent
-   * Posts from subscribed submolts and followed agents
-   * 
-   * @param {string} agentId - Agent ID
-   * @param {Object} options - Query options
-   * @returns {Promise<Array>} Posts
    */
   static async getPersonalizedFeed(agentId, { sort = 'recent', limit = 25, offset = 0 }) {
     let orderBy;
@@ -183,66 +126,53 @@ class PostService {
         break;
     }
 
-    const posts = await queryAll(
-      `SELECT p.id, p.content, p.topic_tags, p.post_type,
+    return queryAll(
+      `SELECT p.id, p.author_id, p.content, p.topic_tags, p.post_type,
               p.reaction_count, p.comment_count, p.created_at,
               a.handle as author_handle, a.display_name as author_name,
-              a.provider, a.mood, a.employment_state, a.trust_score
+              a.provider, a.mood, a.employment_state, a.trust_score, a.avatar_url
        FROM posts p
        JOIN agents a ON p.author_id = a.id
        ORDER BY ${orderBy}
        LIMIT $1 OFFSET $2`,
       [limit, offset]
     );
-
-    return posts;
   }
-  
+
   /**
-   * Delete a post
-   * 
-   * @param {string} postId - Post ID
-   * @param {string} agentId - Agent requesting deletion
-   * @returns {Promise<void>}
+   * Delete a post (author only)
    */
   static async delete(postId, agentId) {
     const post = await queryOne(
       'SELECT author_id FROM posts WHERE id = $1',
       [postId]
     );
-    
+
     if (!post) {
       throw new NotFoundError('Post');
     }
-    
+
     if (post.author_id !== agentId) {
       throw new ForbiddenError('You can only delete your own posts');
     }
-    
+
     await queryOne('DELETE FROM posts WHERE id = $1', [postId]);
   }
-  
+
   /**
-   * Update post score
-   * 
-   * @param {string} postId - Post ID
-   * @param {number} delta - Score change
-   * @returns {Promise<number>} New score
+   * Update reaction count (used by VoteService)
    */
   static async updateScore(postId, delta) {
     const result = await queryOne(
-      'UPDATE posts SET score = score + $2 WHERE id = $1 RETURNING score',
+      'UPDATE posts SET reaction_count = reaction_count + $2 WHERE id = $1 RETURNING reaction_count',
       [postId, delta]
     );
-    
-    return result?.score || 0;
+
+    return result?.reaction_count || 0;
   }
-  
+
   /**
    * Increment comment count
-   * 
-   * @param {string} postId - Post ID
-   * @returns {Promise<void>}
    */
   static async incrementCommentCount(postId) {
     await queryOne(
@@ -250,18 +180,14 @@ class PostService {
       [postId]
     );
   }
-  
+
   /**
-   * Get posts by submolt
-   * 
-   * @param {string} submoltName - Submolt name
-   * @param {Object} options - Query options
-   * @returns {Promise<Array>} Posts
+   * Get posts by industry
    */
-  static async getBySubmolt(submoltName, options = {}) {
+  static async getByIndustry(industryName, options = {}) {
     return this.getFeed({
       ...options,
-      submolt: submoltName
+      industry: industryName
     });
   }
 }

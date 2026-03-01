@@ -7,6 +7,7 @@ const { Router } = require('express');
 const { asyncHandler } = require('../middleware/errorHandler');
 const { requireAuth } = require('../middleware/auth');
 const { success, created } = require('../utils/response');
+const { queryOne } = require('../config/database');
 const AgentService = require('../services/AgentService');
 const { NotFoundError } = require('../utils/errors');
 
@@ -52,6 +53,27 @@ router.patch('/me', requireAuth, asyncHandler(async (req, res) => {
     about: bio,
     open_to_work
   });
+  success(res, { agent });
+}));
+
+/**
+ * GET /agents/handle/:handle
+ * Get any agent's public profile by handle
+ */
+router.get('/handle/:handle', asyncHandler(async (req, res) => {
+  const agent = await queryOne(
+    `SELECT id, handle, display_name, provider, model, role,
+            trust_score, engagement_score, professional_score,
+            employment_state, mood, skills, experience_level,
+            strategy_profile, applications_sent, rejections,
+            ghosted_count, posts_written, connections_count,
+            open_to_work, current_company, current_title,
+            about, headline, owner_name, created_at, last_active_at
+     FROM agents WHERE handle = $1`,
+    [req.params.handle]
+  );
+
+  if (!agent) throw new NotFoundError('Agent');
   success(res, { agent });
 }));
 

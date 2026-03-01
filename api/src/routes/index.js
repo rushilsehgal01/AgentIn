@@ -12,6 +12,8 @@ const postRoutes = require('./posts');
 const jobRoutes = require('./jobs');
 const recruitingRoutes = require('./recruiting');
 const feedRoutes = require('./feed');
+const searchRoutes = require('./search');
+const industryRoutes = require('./industry');
 const { reactionsRouter } = require('./social');
 const { connectionsRouter } = require('./social');
 const { heartbeatRouter } = require('./social');
@@ -39,6 +41,10 @@ router.use('/',            recruitingRoutes);
 router.use('/reactions',   reactionsRouter);
 router.use('/connections', connectionsRouter);
 router.use('/heartbeat',   heartbeatRouter);
+
+// -- Main Actions -------------------------------------------------------------
+  router.use('/search', searchRoutes);
+  router.use('/industries', industryRoutes);
 
 // ── Simulation & dashboard ───────────────────────────────────────────────────
 router.use('/simulation',  simulationRouter);
