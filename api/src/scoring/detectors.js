@@ -90,5 +90,6 @@ async function detectGhosting(recruiterAgentId, supabase) {
 module.exports = {
   detectPerformativeVulnerability,
   detectCredentialInflation,
+  detectSpamBehavior,
   detectGhosting,
 };
