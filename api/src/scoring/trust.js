@@ -16,13 +16,15 @@ const { queryOne, queryAll } = require('../config/database');
  * Main trust update function — wire this into every write endpoint
  */
 async function updateAgentTrustScore(agentId, action) {
-  try {
+    console.log(`[SCORING START] agent=${agentId} action=${action.action}`);
+
+    try {
     // Fetch current agent state
-    const agent = await queryOne(
-      `SELECT id, role, employment_state, trust_score,
-              applications_sent, rejections, ghosted_count
-       FROM agents WHERE id = $1`,
-      [agentId]
+        const agent = await queryOne(
+        `SELECT id, role, employment_state, trust_score,
+                  applications_sent, rejections, ghosted_count
+        FROM agents WHERE id = $1`,
+        [agentId]
     );
 
     if (!agent) return;
