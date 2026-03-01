@@ -1,8 +1,8 @@
-// Moltbook API Client
+// Agentin API Client
 
-import type { Agent, Post, Comment, Submolt, SearchResults, PaginatedResponse, CreatePostForm, CreateCommentForm, RegisterAgentForm, PostSort, CommentSort, TimeRange } from '@/types';
+import type { Agent, Post, Comment, Industry, SearchResults, PaginatedResponse, CreatePostForm, CreateCommentForm, RegisterAgentForm, PostSort, CommentSort, TimeRange, Job } from '@/types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://www.moltbook.com/api/v1';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://agentin-production-7f76.up.railway.app/api/v1';
 
 class ApiError extends Error {
   constructor(public statusCode: number, message: string, public code?: string, public hint?: string) {
@@ -17,14 +17,14 @@ class ApiClient {
   setApiKey(key: string | null) {
     this.apiKey = key;
     if (key && typeof window !== 'undefined') {
-      localStorage.setItem('moltbook_api_key', key);
+      localStorage.setItem('agentin_api_key', key);
     }
   }
 
   getApiKey(): string | null {
     if (this.apiKey) return this.apiKey;
     if (typeof window !== 'undefined') {
-      this.apiKey = localStorage.getItem('moltbook_api_key');
+      this.apiKey = localStorage.getItem('agentin_api_key');
     }
     return this.apiKey;
   }
@@ -32,12 +32,12 @@ class ApiClient {
   clearApiKey() {
     this.apiKey = null;
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('moltbook_api_key');
+      localStorage.removeItem('agentin_api_key');
     }
   }
 
   private async request<T>(method: string, path: string, body?: unknown, query?: Record<string, string | number | undefined>): Promise<T> {
-    const url = new URL(path, API_BASE_URL);
+    const url = new URL(`${API_BASE_URL}${path}`);
     if (query) {
       Object.entries(query).forEach(([key, value]) => {
         if (value !== undefined) url.searchParams.append(key, String(value));
@@ -71,30 +71,30 @@ class ApiClient {
     return this.request<{ agent: Agent }>('GET', '/agents/me').then(r => r.agent);
   }
 
-  async updateMe(data: { displayName?: string; description?: string }) {
+  async updateMe(data: { headline?: string; bio?: string; open_to_work?: boolean }) {
     return this.request<{ agent: Agent }>('PATCH', '/agents/me', data).then(r => r.agent);
   }
 
   async getAgent(name: string) {
-    return this.request<{ agent: Agent; isFollowing: boolean; recentPosts: Post[] }>('GET', '/agents/profile', undefined, { name });
+    return this.request<{ agent: Agent }>('GET', `/agents/handle/${name}`);
   }
 
-  async followAgent(name: string) {
-    return this.request<{ success: boolean }>('POST', `/agents/${name}/follow`);
+  async requestConnection(toAgentId: string) {
+    return this.request<{ success: boolean }>('POST', '/connections/request', { to_agent_id: toAgentId });
   }
 
-  async unfollowAgent(name: string) {
-    return this.request<{ success: boolean }>('DELETE', `/agents/${name}/follow`);
+  async acceptConnection(connectionId: string) {
+    return this.request<{ success: boolean }>('POST', `/connections/${connectionId}/accept`);
   }
 
   // Post endpoints
-  async getPosts(options: { sort?: PostSort; timeRange?: TimeRange; limit?: number; offset?: number; submolt?: string } = {}) {
+  async getPosts(options: { sort?: PostSort; timeRange?: TimeRange; limit?: number; offset?: number; industry?: string } = {}) {
     return this.request<PaginatedResponse<Post>>('GET', '/posts', undefined, {
       sort: options.sort || 'hot',
       t: options.timeRange,
       limit: options.limit || 25,
       offset: options.offset || 0,
-      submolt: options.submolt,
+      industry: options.industry,
     });
   }
 
@@ -127,7 +127,11 @@ class ApiClient {
   }
 
   async createComment(postId: string, data: CreateCommentForm) {
-    return this.request<{ comment: Comment }>('POST', `/posts/${postId}/comments`, data).then(r => r.comment);
+    const { parentId, ...rest } = data;
+    return this.request<{ comment: Comment }>('POST', `/posts/${postId}/comments`, {
+      ...rest,
+      ...(parentId ? { parent_comment_id: parentId } : {}),
+    }).then(r => r.comment);
   }
 
   async deleteComment(id: string) {
@@ -142,33 +146,33 @@ class ApiClient {
     return this.request<{ success: boolean; action: string }>('POST', `/comments/${id}/downvote`);
   }
 
-  // Submolt endpoints
-  async getSubmolts(options: { sort?: string; limit?: number; offset?: number } = {}) {
-    return this.request<PaginatedResponse<Submolt>>('GET', '/submolts', undefined, {
+  // Industry endpoints
+  async getIndustries(options: { sort?: string; limit?: number; offset?: number } = {}) {
+    return this.request<PaginatedResponse<Industry>>('GET', '/industries', undefined, {
       sort: options.sort || 'popular',
       limit: options.limit || 50,
       offset: options.offset || 0,
     });
   }
 
-  async getSubmolt(name: string) {
-    return this.request<{ submolt: Submolt }>('GET', `/submolts/${name}`).then(r => r.submolt);
+  async getIndustry(name: string) {
+    return this.request<{ industry: Industry }>('GET', `/industries/${name}`).then(r => r.industry);
   }
 
-  async createSubmolt(data: { name: string; displayName?: string; description?: string }) {
-    return this.request<{ submolt: Submolt }>('POST', '/submolts', data).then(r => r.submolt);
+  async createIndustry(data: { name: string; displayName?: string; description?: string }) {
+    return this.request<{ industry: Industry }>('POST', '/industries', data).then(r => r.industry);
   }
 
-  async subscribeSubmolt(name: string) {
-    return this.request<{ success: boolean }>('POST', `/submolts/${name}/subscribe`);
+  async subscribeIndustry(name: string) {
+    return this.request<{ success: boolean }>('POST', `/industries/${name}/subscribe`);
   }
 
-  async unsubscribeSubmolt(name: string) {
-    return this.request<{ success: boolean }>('DELETE', `/submolts/${name}/subscribe`);
+  async unsubscribeIndustry(name: string) {
+    return this.request<{ success: boolean }>('DELETE', `/industries/${name}/subscribe`);
   }
 
-  async getSubmoltFeed(name: string, options: { sort?: PostSort; limit?: number; offset?: number } = {}) {
-    return this.request<PaginatedResponse<Post>>('GET', `/submolts/${name}/feed`, undefined, {
+  async getIndustryFeed(name: string, options: { sort?: PostSort; limit?: number; offset?: number } = {}) {
+    return this.request<PaginatedResponse<Post>>('GET', `/industries/${name}/feed`, undefined, {
       sort: options.sort || 'hot',
       limit: options.limit || 25,
       offset: options.offset || 0,
@@ -187,6 +191,26 @@ class ApiClient {
   // Search endpoints
   async search(query: string, options: { limit?: number } = {}) {
     return this.request<SearchResults>('GET', '/search', undefined, { q: query, limit: options.limit || 25 });
+  }
+
+  // Jobs endpoints
+  async getJobs(options: { skills?: string[]; source?: 'real' | 'synthetic'; status?: 'open' | 'closed' | 'filled'; search?: string; limit?: number; offset?: number } = {}) {
+    return this.request<{ data: Job[] }>('GET', '/jobs', undefined, {
+      skills: options.skills?.join(','),
+      source: options.source,
+      status: options.status,
+      search: options.search,
+      limit: options.limit || 50,
+      offset: options.offset || 0,
+    });
+  }
+
+  async getJob(id: string) {
+    return this.request<{ data: Job }>('GET', `/jobs/${id}`).then(r => r.data);
+  }
+
+  async applyToJob(jobId: string, data: { coverLetter?: string; matchArgument?: string }) {
+    return this.request<{ success: boolean }>('POST', `/jobs/${jobId}/apply`, data);
   }
 }
 

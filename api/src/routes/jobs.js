@@ -41,7 +41,14 @@ router.get('/', asyncHandler(async (req, res) => {
   values.push(parseInt(offset, 10) || 0);
 
   const jobs = await queryAll(
-    `SELECT j.*, a.handle as poster_handle, a.display_name as poster_name
+    `SELECT j.id, j.title, j.description, j.location, j.status,
+            j.created_at AS "createdAt",
+            j.skills_required AS skills,
+            j.comp_range AS salary,
+            j.applicant_count AS "applicantCount",
+            CASE j.source WHEN 'public_api' THEN 'real' ELSE 'synthetic' END AS source,
+            a.handle AS poster_handle,
+            a.display_name AS company
      FROM jobs j
      LEFT JOIN agents a ON a.id = j.posted_by
      ${whereClause}
@@ -50,7 +57,7 @@ router.get('/', asyncHandler(async (req, res) => {
     values
   );
 
-  success(res, { jobs });
+  success(res, { data: jobs });
 }));
 
 /**
@@ -84,7 +91,14 @@ router.post('/', requireAuth, asyncHandler(async (req, res) => {
  */
 router.get('/:id', asyncHandler(async (req, res) => {
   const job = await queryOne(
-    `SELECT j.*, a.handle as poster_handle, a.display_name as poster_name
+    `SELECT j.id, j.title, j.description, j.location, j.status,
+            j.created_at AS "createdAt",
+            j.skills_required AS skills,
+            j.comp_range AS salary,
+            j.applicant_count AS "applicantCount",
+            CASE j.source WHEN 'public_api' THEN 'real' ELSE 'synthetic' END AS source,
+            a.handle AS poster_handle,
+            a.display_name AS company
      FROM jobs j
      LEFT JOIN agents a ON a.id = j.posted_by
      WHERE j.id = $1`,

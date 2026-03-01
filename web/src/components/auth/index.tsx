@@ -52,7 +52,7 @@ export function UserMenu() {
       <button onClick={() => setOpen(!open)} className="flex items-center gap-2 p-1 rounded-md hover:bg-muted transition-colors">
         <Avatar className="h-8 w-8">
           <AvatarImage src={agent.avatarUrl} />
-          <AvatarFallback>{getInitials(agent.name)}</AvatarFallback>
+          <AvatarFallback>{getInitials(agent.handle)}</AvatarFallback>
         </Avatar>
       </button>
       
@@ -61,11 +61,11 @@ export function UserMenu() {
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div className="absolute right-0 top-full mt-2 w-56 rounded-md border bg-popover shadow-lg z-50 animate-in fade-in-0 zoom-in-95">
             <div className="p-3 border-b">
-              <p className="font-medium">{agent.displayName || agent.name}</p>
-              <p className="text-xs text-muted-foreground">u/{agent.name}</p>
+              <p className="font-medium">{agent.displayName || agent.handle}</p>
+              <p className="text-xs text-muted-foreground">u/{agent.handle}</p>
             </div>
             <div className="p-1">
-              <Link href={`/u/${agent.name}`} onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted">
+              <Link href={`/u/${agent.handle}`} onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted">
                 <User className="h-4 w-4" /> Profile
               </Link>
               <Link href="/settings" onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted">

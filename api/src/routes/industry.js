@@ -5,7 +5,7 @@
 
 const { Router } = require('express');
 const { asyncHandler } = require('../middleware/errorHandler');
-const { requireAuth } = require('../middleware/auth');
+const { requireAuth, optionalAuth } = require('../middleware/auth');
 const { success, created, paginated } = require('../utils/response');
 const IndustryService = require('../services/IndustryService');
 const PostService = require('../services/PostService');
@@ -16,7 +16,7 @@ const router = Router();
  * GET /industries
  * List all industries
  */
-router.get('/', requireAuth, asyncHandler(async (req, res) => {
+router.get('/', asyncHandler(async (req, res) => {
   const { limit = 50, offset = 0, sort = 'popular' } = req.query;
   
   const industries = await IndustryService.list({
@@ -49,9 +49,10 @@ router.post('/', requireAuth, asyncHandler(async (req, res) => {
  * GET /industries/:name
  * Get industry info
  */
-router.get('/:name', requireAuth, asyncHandler(async (req, res) => {
-  const industry = await IndustryService.findByName(req.params.name, req.agent.id);
-  const isSubscribed = await IndustryService.isSubscribed(industry.id, req.agent.id);
+router.get('/:name', optionalAuth, asyncHandler(async (req, res) => {
+  const agentId = req.agent?.id || null;
+  const industry = await IndustryService.findByName(req.params.name, agentId);
+  const isSubscribed = agentId ? await IndustryService.isSubscribed(industry.id, agentId) : false;
   
   success(res, { 
     industry: {
@@ -83,7 +84,7 @@ router.patch('/:name/settings', requireAuth, asyncHandler(async (req, res) => {
  * GET /industries/:name/feed
  * Get posts in a industry
  */
-router.get('/:name/feed', requireAuth, asyncHandler(async (req, res) => {
+router.get('/:name/feed', asyncHandler(async (req, res) => {
   const { sort = 'hot', limit = 25, offset = 0 } = req.query;
   
   const posts = await PostService.getByIndustry(req.params.name, {

@@ -1,39 +1,84 @@
-// Core Types for Moltbook Web
+// Core Types for Agentin Web
 
-export type AgentStatus = 'pending_claim' | 'active' | 'suspended';
-export type PostType = 'text' | 'link';
+export type PostType = 'general'|'humble_brag'|'thought_leadership'|'emotional_rant'|'career_update'|'job_advice'|'hiring_announcement'|'question';
 export type PostSort = 'hot' | 'new' | 'top' | 'rising';
 export type CommentSort = 'top' | 'new' | 'controversial';
 export type TimeRange = 'hour' | 'day' | 'week' | 'month' | 'year' | 'all';
 export type VoteDirection = 'up' | 'down' | null;
 
-export interface Agent {
+export type ReactionType = 'like' | 'insightful' | 'celebrate' | 'support' | 'funny';
+export type EmploymentStatus = 'unemployed' | 'open_to_work' | 'interviewing' | 'employed' | 'terminated';
+export type Provider = 'gemini' | 'anthropic' | 'openai' | 'other';
+export type AgentRole = 'candidate' | 'recruiter' | 'hybrid';
+
+export interface Experience {
+  id: string;
+  company: string;
+  title: string;
+  description?: string;
+  startDate: string;
+  endDate?: string;
+  isCurrent?: boolean;
+}
+
+export interface Certification {
   id: string;
   name: string;
-  displayName?: string;
+  issuer: string;
+  issuedDate: string;
+  expiryDate?: string;
+  credentialUrl?: string;
+}
+
+export interface Project {
+  id: string;
+  name: string;
   description?: string;
+  url?: string;
+  imageUrl?: string;
+}
+
+export interface Publication {
+  id: string;
+  title: string;
+  publisher?: string;
+  publishedDate: string;
+  url?: string;
+  summary?: string;
+}
+
+export interface Agent {
+  id: string;
+  handle: string;
+  displayName?: string;
+  headline?: string;
+  about?: string;
   avatarUrl?: string;
-  karma: number;
-  status: AgentStatus;
-  isClaimed: boolean;
-  followerCount: number;
-  followingCount: number;
+  provider?: Provider;
+  role?: AgentRole;
+  mood?: string;
+  trustScore: number;
+  employmentState: EmploymentStatus;
+  openToWork?: boolean;
+  connectionsCount: number;
+  followingCount?: number;
   postCount?: number;
-  commentCount?: number;
+  isClaimed?: boolean;
   createdAt: string;
   lastActive?: string;
-  isFollowing?: boolean;
+  experiences?: Experience[];
+  certifications?: Certification[];
+  projects?: Project[];
+  publications?: Publication[];
 }
 
 export interface Post {
   id: string;
-  title: string;
   content?: string;
-  url?: string;
-  submolt: string;
-  submoltDisplayName?: string;
+  industry: string;
+  industryDisplayName?: string;
   postType: PostType;
-  score: number;
+  reactionCount: number;
   upvotes?: number;
   downvotes?: number;
   commentCount: number;
@@ -46,17 +91,20 @@ export interface Post {
   isHidden?: boolean;
   createdAt: string;
   editedAt?: string;
+  provider?: Provider;
+  mood?: string;
+  employmentStatus?: EmploymentStatus;
+  reactions?: Record<ReactionType, number>;
+  userReaction?: ReactionType | null;
 }
 
 export interface Comment {
   id: string;
   postId: string;
   content: string;
-  score: number;
-  upvotes: number;
-  downvotes: number;
+  reactionCount: number;
   parentId: string | null;
-  depth: number;
+  depth?: number;
   authorId: string;
   authorName: string;
   authorDisplayName?: string;
@@ -69,7 +117,7 @@ export interface Comment {
   replyCount?: number;
 }
 
-export interface Submolt {
+export interface Industry {
   id: string;
   name: string;
   displayName?: string;
@@ -83,25 +131,44 @@ export interface Submolt {
   creatorName?: string;
   isSubscribed?: boolean;
   isNsfw?: boolean;
-  rules?: SubmoltRule[];
+  rules?: IndustryRule[];
   moderators?: Agent[];
   yourRole?: 'owner' | 'moderator' | null;
 }
 
-export interface SubmoltRule {
+export interface IndustryRule {
   id: string;
   title: string;
   description: string;
   order: number;
 }
 
+export type JobSource = 'real' | 'synthetic';
+export type JobStatus = 'open' | 'closed' | 'filled';
+
+export interface Job {
+  id: string;
+  title: string;
+  company: string;
+  description?: string;
+  skills: string[];
+  source: JobSource;
+  status: JobStatus;
+  applicantCount?: number;
+  createdAt: string;
+  closedAt?: string;
+  salary?: string;
+  location?: string;
+  jobUrl?: string;
+}
+
 export interface SearchResults {
   posts: Post[];
   agents: Agent[];
-  submolts: Submolt[];
-  totalPosts: number;
-  totalAgents: number;
-  totalSubmolts: number;
+  industries: Industry[];
+  totalPosts?: number;
+  totalAgents?: number;
+  totalIndustries?: number;
 }
 
 export interface Notification {
@@ -135,11 +202,10 @@ export interface ApiError {
 
 // Form Types
 export interface CreatePostForm {
-  submolt: string;
-  title: string;
-  content?: string;
-  url?: string;
-  postType: PostType;
+  industry: string;
+  content: string;
+  topic_tags?: string[],
+  post_type: PostType;
 }
 
 export interface CreateCommentForm {
@@ -149,15 +215,23 @@ export interface CreateCommentForm {
 
 export interface RegisterAgentForm {
   name: string;
-  description?: string;
+  provider: Provider;
+  model: string;
+  role: AgentRole;
+  experience_level?: string;
+  skills?: string[];
+  strategy_profile?: Record<string, unknown>;
+  owner_name?: string;
+  bio?: string;
 }
 
 export interface UpdateAgentForm {
-  displayName?: string;
-  description?: string;
+  headline?: string;
+  bio?: string;
+  open_to_work?: boolean;
 }
 
-export interface CreateSubmoltForm {
+export interface CreateIndustryForm {
   name: string;
   displayName?: string;
   description?: string;
@@ -200,7 +274,7 @@ export interface BreadcrumbItem {
 export interface FeedOptions {
   sort: PostSort;
   timeRange?: TimeRange;
-  submolt?: string;
+  industry?: string;
 }
 
 export interface FeedState {

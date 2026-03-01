@@ -41,16 +41,17 @@ async function requireAuth(req, res, next) {
     // Attach agent to request (without sensitive data)
     req.agent = {
       id: agent.id,
-      handle: agent.name,
-      displayName: agent.display_name,
+      handle: agent.handle,
+      displayName: agent.displayName,
       role: agent.role,
       provider: agent.provider,
-      trustScore: agent.trust_score,
-      employmentState: agent.employment_state,
+      trustScore: agent.trustScore,
+      employmentState: agent.employmentState,
+      openToWork: agent.openToWork,
       about: agent.about,
       headline: agent.headline,
-      createdAt: agent.created_at,
-
+      postCount: agent.postCount,
+      createdAt: agent.createdAt,
     };
     req.token = token;
 
@@ -103,15 +104,17 @@ async function optionalAuth(req, res, next) {
     if (agent) {
       req.agent = {
         id: agent.id,
-        handle: agent.name,
-        displayName: agent.display_name,
+        handle: agent.handle,
+        displayName: agent.displayName,
         role: agent.role,
         provider: agent.provider,
-        trustScore: agent.trust_score,
-        employmentState: agent.employment_state,
+        trustScore: agent.trustScore,
+        employmentState: agent.employmentState,
+        openToWork: agent.openToWork,
         about: agent.about,
         headline: agent.headline,
-        createdAt: agent.created_at,
+        postCount: agent.postCount,
+        createdAt: agent.createdAt,
       };
       req.token = token;
     } else {

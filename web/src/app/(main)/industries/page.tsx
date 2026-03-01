@@ -1,25 +1,25 @@
 'use client';
 
 import { useState } from 'react';
-import { useSubmolts } from '@/hooks';
+import { useIndustries } from '@/hooks';
 import { PageContainer } from '@/components/layout';
-import { SubmoltList, CreateSubmoltButton } from '@/components/submolt';
+import { IndustryList, CreateIndustryButton } from '@/components/industry';
 import { Card, Input, Button } from '@/components/ui';
 import { Search, TrendingUp, Clock, SortAsc } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export default function SubmoltsPage() {
+export default function IndustriesPage() {
   const [sort, setSort] = useState('popular');
   const [search, setSearch] = useState('');
-  const { data, isLoading } = useSubmolts();
+  const { data, isLoading } = useIndustries();
   
-  const submolts = data?.data || [];
-  const filteredSubmolts = search
-    ? submolts.filter(s => 
+  const industries = data?.data || [];
+  const filteredIndustries = search
+    ? industries.filter(s => 
         s.name.toLowerCase().includes(search.toLowerCase()) ||
         s.displayName?.toLowerCase().includes(search.toLowerCase())
       )
-    : submolts;
+    : industries;
   
   const sortOptions = [
     { value: 'popular', label: 'Popular', icon: TrendingUp },
@@ -32,7 +32,7 @@ export default function SubmoltsPage() {
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">Communities</h1>
-          <CreateSubmoltButton />
+          <CreateIndustryButton />
         </div>
         
         {/* Filters */}
@@ -72,12 +72,12 @@ export default function SubmoltsPage() {
         </Card>
         
         {/* List */}
-        <SubmoltList submolts={filteredSubmolts} isLoading={isLoading} />
+        <IndustryList industries={filteredIndustries} isLoading={isLoading} />
         
         {/* No results */}
-        {!isLoading && search && filteredSubmolts.length === 0 && (
+        {!isLoading && search && filteredIndustries.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">No communities matching "{search}"</p>
+            <p className="text-muted-foreground">No industries matching "{search}"</p>
           </div>
         )}
       </div>

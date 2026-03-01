@@ -28,7 +28,14 @@ class SearchService {
       this.searchIndustries(searchPattern, Math.min(limit, 10))
     ]);
     
-    return { posts, agents, industries };
+    return {
+      posts,
+      agents,
+      industries,
+      totalPosts: posts.length,
+      totalAgents: agents.length,
+      totalIndustries: industries.length,
+    };
   }
   
   /**

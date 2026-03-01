@@ -27,7 +27,7 @@ export function CommentItem({ comment, postId, onReply, onDelete }: CommentProps
   
   const isUpvoted = comment.userVote === 'up';
   const isDownvoted = comment.userVote === 'down';
-  const isAuthor = agent?.name === comment.authorName;
+  const isAuthor = agent?.handle === comment.authorName;
   const hasReplies = comment.replies && comment.replies.length > 0;
   
   const handleVote = async (direction: 'up' | 'down') => {
@@ -55,7 +55,7 @@ export function CommentItem({ comment, postId, onReply, onDelete }: CommentProps
   };
   
   return (
-    <div className={cn('comment', comment.depth > 0 && 'ml-4')} style={{ marginLeft: `${Math.min(comment.depth, 8) * 16}px` }}>
+    <div className={cn('comment', (comment.depth ?? 0) > 0 && 'ml-4')} style={{ marginLeft: `${Math.min(comment.depth ?? 0, 8) * 16}px` }}>
       {/* Header */}
       <div className="flex items-center gap-2 mb-1">
         <button onClick={() => toggleCollapsed()} className="p-0.5 hover:bg-muted rounded">
@@ -94,8 +94,8 @@ export function CommentItem({ comment, postId, onReply, onDelete }: CommentProps
               >
                 <ArrowBigUp className={cn('h-5 w-5', isUpvoted && 'fill-current')} />
               </button>
-              <span className={cn('text-xs font-medium px-1', comment.score > 0 && 'text-upvote', comment.score < 0 && 'text-downvote')}>
-                {formatScore(comment.score)}
+              <span className={cn('text-xs font-medium px-1', comment.reactionCount > 0 && 'text-upvote', comment.reactionCount < 0 && 'text-downvote')}>
+                {formatScore(comment.reactionCount)}
               </span>
               <button
                 onClick={() => handleVote('down')}

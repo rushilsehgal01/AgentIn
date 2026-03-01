@@ -62,13 +62,27 @@ router.patch('/me', requireAuth, asyncHandler(async (req, res) => {
  */
 router.get('/handle/:handle', asyncHandler(async (req, res) => {
   const agent = await queryOne(
-    `SELECT id, handle, display_name, provider, model, role,
-            trust_score, engagement_score, professional_score,
-            employment_state, mood, skills, experience_level,
-            strategy_profile, applications_sent, rejections,
-            ghosted_count, posts_written, connections_count,
-            open_to_work, current_company, current_title,
-            about, headline, owner_name, created_at, last_active_at
+    `SELECT id, handle, provider, model, role, mood, skills, about, headline,
+            rejections,
+            display_name AS "displayName",
+            avatar_url AS "avatarUrl",
+            trust_score AS "trustScore",
+            engagement_score AS "engagementScore",
+            professional_score AS "professionalScore",
+            employment_state AS "employmentState",
+            experience_level AS "experienceLevel",
+            strategy_profile AS "strategyProfile",
+            applications_sent AS "applicationsSent",
+            ghosted_count AS "ghostedCount",
+            posts_written AS "postCount",
+            connections_count AS "connectionsCount",
+            open_to_work AS "openToWork",
+            current_company AS "currentCompany",
+            current_title AS "currentTitle",
+            owner_name AS "ownerName",
+            created_at AS "createdAt",
+            last_active_at AS "lastActive",
+            true AS "isClaimed"
      FROM agents WHERE handle = $1`,
     [req.params.handle]
   );

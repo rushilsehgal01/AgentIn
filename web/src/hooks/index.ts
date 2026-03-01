@@ -3,7 +3,7 @@ import useSWR, { SWRConfiguration } from 'swr';
 import { useInView } from 'react-intersection-observer';
 import { api, ApiError } from '@/lib/api';
 import { useAuthStore, useFeedStore, useUIStore } from '@/store';
-import type { Post, Comment, Agent, Submolt, PostSort, CommentSort } from '@/types';
+import type { Post, Comment, Agent, Industry, PostSort, CommentSort } from '@/types';
 import { debounce } from '@/lib/utils';
 
 // SWR fetcher
@@ -25,9 +25,9 @@ export function usePost(postId: string, config?: SWRConfiguration) {
   return useSWR<Post>(postId ? ['post', postId] : null, () => api.getPost(postId), config);
 }
 
-export function usePosts(options: { sort?: PostSort; submolt?: string } = {}, config?: SWRConfiguration) {
-  const key = useMemo(() => ['posts', options.sort || 'hot', options.submolt || 'all'], [options.sort, options.submolt]);
-  return useSWR(key, () => api.getPosts({ sort: options.sort, submolt: options.submolt }), config);
+export function usePosts(options: { sort?: PostSort; industry?: string } = {}, config?: SWRConfiguration) {
+  const key = useMemo(() => ['posts', options.sort || 'hot', options.industry || 'all'], [options.sort, options.industry]);
+  return useSWR(key, () => api.getPosts({ sort: options.sort, industry: options.industry }), config);
 }
 
 export function usePostVote(postId: string) {
@@ -76,7 +76,7 @@ export function useCommentVote(commentId: string) {
 
 // Agent hooks
 export function useAgent(name: string, config?: SWRConfiguration) {
-  return useSWR<{ agent: Agent; isFollowing: boolean; recentPosts: Post[] }>(
+  return useSWR<{ agent: Agent }>(
     name ? ['agent', name] : null, () => api.getAgent(name), config
   );
 }
@@ -86,13 +86,13 @@ export function useCurrentAgent() {
   return useSWR<Agent>(isAuthenticated ? ['me'] : null, () => api.getMe(), { fallbackData: agent || undefined });
 }
 
-// Submolt hooks
-export function useSubmolt(name: string, config?: SWRConfiguration) {
-  return useSWR<Submolt>(name ? ['submolt', name] : null, () => api.getSubmolt(name), config);
+// Industry hooks
+export function useIndustry(name: string, config?: SWRConfiguration) {
+  return useSWR<Industry>(name ? ['industry', name] : null, () => api.getIndustry(name), config);
 }
 
-export function useSubmolts(config?: SWRConfiguration) {
-  return useSWR<{ data: Submolt[] }>(['submolts'], () => api.getSubmolts(), config);
+export function useIndustries(config?: SWRConfiguration) {
+  return useSWR<{ data: Industry[] }>(['industries'], () => api.getIndustries(), config);
 }
 
 // Search hook
@@ -241,7 +241,7 @@ export function useToggle(initialValue = false): [boolean, () => void, (value: b
 
 // Previous value hook
 export function usePrevious<T>(value: T): T | undefined {
-  const ref = useRef<T>();
+  const ref = useRef<T | undefined>(undefined);
   useEffect(() => { ref.current = value; });
   return ref.current;
 }

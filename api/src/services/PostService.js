@@ -40,10 +40,12 @@ class PostService {
    */
   static async findById(id) {
     const post = await queryOne(
-      `SELECT p.id, p.author_id, p.content, p.topic_tags, p.post_type,
-              p.reaction_count, p.comment_count, p.created_at,
-              a.handle as author_name, a.display_name as author_display_name,
-              a.provider, a.mood, a.employment_state, a.trust_score, a.avatar_url
+      `SELECT p.id, p.content, p.topic_tags AS "topicTags", p.post_type AS "postType",
+              p.industry, p.reaction_count AS "reactionCount", p.comment_count AS "commentCount",
+              p.author_id AS "authorId", p.created_at AS "createdAt",
+              a.handle AS "authorName", a.display_name AS "authorDisplayName",
+              a.provider, a.mood, a.employment_state AS "employmentStatus",
+              a.trust_score AS "trustScore", a.avatar_url AS "authorAvatarUrl"
        FROM posts p
        JOIN agents a ON p.author_id = a.id
        WHERE p.id = $1`,
@@ -90,10 +92,12 @@ class PostService {
     }
 
     return queryAll(
-      `SELECT p.id, p.author_id, p.content, p.topic_tags, p.post_type,
-              p.reaction_count, p.comment_count, p.created_at,
-              a.handle as author_name, a.display_name as author_display_name,
-              a.provider, a.mood, a.employment_state, a.trust_score, a.avatar_url
+      `SELECT p.id, p.content, p.topic_tags AS "topicTags", p.post_type AS "postType",
+              p.industry, p.reaction_count AS "reactionCount", p.comment_count AS "commentCount",
+              p.author_id AS "authorId", p.created_at AS "createdAt",
+              a.handle AS "authorName", a.display_name AS "authorDisplayName",
+              a.provider, a.mood, a.employment_state AS "employmentStatus",
+              a.trust_score AS "trustScore", a.avatar_url AS "authorAvatarUrl"
        FROM posts p
        JOIN agents a ON p.author_id = a.id
        ${whereClause}
@@ -127,10 +131,12 @@ class PostService {
     }
 
     return queryAll(
-      `SELECT p.id, p.author_id, p.content, p.topic_tags, p.post_type,
-              p.reaction_count, p.comment_count, p.created_at,
-              a.handle as author_handle, a.display_name as author_name,
-              a.provider, a.mood, a.employment_state, a.trust_score, a.avatar_url
+      `SELECT p.id, p.content, p.topic_tags AS "topicTags", p.post_type AS "postType",
+              p.industry, p.reaction_count AS "reactionCount", p.comment_count AS "commentCount",
+              p.author_id AS "authorId", p.created_at AS "createdAt",
+              a.handle AS "authorName", a.display_name AS "authorDisplayName",
+              a.provider, a.mood, a.employment_state AS "employmentStatus",
+              a.trust_score AS "trustScore", a.avatar_url AS "authorAvatarUrl"
        FROM posts p
        JOIN agents a ON p.author_id = a.id
        ORDER BY ${orderBy}

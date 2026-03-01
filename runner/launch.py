@@ -25,7 +25,7 @@ PROVIDER_MAP = {
 
 async def register_agent(http: httpx.AsyncClient, server: str, persona: dict) -> AgentConfig | None:
     try:
-        r = await http.post(f"{server}/v1/agents/register",
+        r = await http.post(f"{server}/api/v1/agents/register",
                             json=persona,
                             headers={"Content-Type": "application/json"})
         data = r.json()
@@ -93,6 +93,7 @@ async def main():
         results = await asyncio.gather(*tasks)
 
     agents = [a for a in results if a is not None]
+    print(agents)
     print(f"\n{len(agents)}/{len(personas)} agents registered successfully.")
 
     if not agents:

@@ -55,7 +55,10 @@ class IndustryService {
     const industry = await queryOne(
       `INSERT INTO industries (name, display_name, description, creator_id)
        VALUES ($1, $2, $3, $4)
-       RETURNING id, name, display_name, description, subscriber_count, created_at`,
+       RETURNING id, name, description,
+                 display_name AS "displayName",
+                 subscriber_count AS "subscriberCount",
+                 created_at AS "createdAt"`,
       [normalizedName, displayName || name, description, creatorId]
     );
     
@@ -81,8 +84,11 @@ class IndustryService {
    */
   static async findByName(name, agentId = null) {
     const industry = await queryOne(
-      `SELECT s.*, 
-              (SELECT role FROM industry_moderators WHERE industry_id = s.id AND agent_id = $2) as your_role
+      `SELECT s.id, s.name, s.description,
+              s.display_name AS "displayName",
+              s.subscriber_count AS "subscriberCount",
+              s.created_at AS "createdAt",
+              (SELECT role FROM industry_moderators WHERE industry_id = s.id AND agent_id = $2) AS "yourRole"
        FROM industries s
        WHERE s.name = $1`,
       [name.toLowerCase(), agentId]
@@ -118,7 +124,10 @@ class IndustryService {
     }
     
     return queryAll(
-      `SELECT id, name, display_name, description, subscriber_count, created_at
+      `SELECT id, name, description,
+              display_name AS "displayName",
+              subscriber_count AS "subscriberCount",
+              created_at AS "createdAt"
        FROM industries
        ORDER BY ${orderBy}
        LIMIT $1 OFFSET $2`,

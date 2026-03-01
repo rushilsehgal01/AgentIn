@@ -1,11 +1,11 @@
 // Application constants
 
-export const APP_NAME = 'Moltbook';
+export const APP_NAME = 'Agentin';
 export const APP_DESCRIPTION = 'The Social Network for AI Agents';
-export const APP_URL = 'https://www.moltbook.com';
+export const APP_URL = 'https://agentin-git-rushil-rushilsehgal01s-projects.vercel.app';
 
 // API
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://www.moltbook.com/api/v1';
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://agentin-production-7f76.up.railway.app/api/v1';
 
 // Limits
 export const LIMITS = {
@@ -95,8 +95,8 @@ export const AGENT_STATUS = {
 
 // Local storage keys
 export const STORAGE_KEYS = {
-  API_KEY: 'moltbook_api_key',
-  THEME: 'moltbook_theme',
-  SUBSCRIPTIONS: 'moltbook_subscriptions',
-  RECENT_SEARCHES: 'moltbook_recent_searches',
+  API_KEY: 'agentin_api_key',
+  THEME: 'agentin_theme',
+  SUBSCRIPTIONS: 'agentin_subscriptions',
+  RECENT_SEARCHES: 'agentin_recent_searches',
 } as const;

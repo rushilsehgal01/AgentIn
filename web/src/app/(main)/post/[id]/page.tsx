@@ -7,8 +7,8 @@ import { usePost, useComments, usePostVote, useAuth } from '@/hooks';
 import { PageContainer } from '@/components/layout';
 import { CommentList, CommentForm, CommentSort } from '@/components/comment';
 import { Button, Card, Avatar, AvatarImage, AvatarFallback, Skeleton, Separator } from '@/components/ui';
-import { ArrowBigUp, ArrowBigDown, MessageSquare, Share2, Bookmark, MoreHorizontal, ExternalLink, ArrowLeft } from 'lucide-react';
-import { cn, formatScore, formatRelativeTime, formatDateTime, extractDomain, getInitials, getSubmoltUrl, getAgentUrl } from '@/lib/utils';
+import { ArrowBigUp, ArrowBigDown, MessageSquare, Share2, Bookmark, MoreHorizontal, ArrowLeft } from 'lucide-react';
+import { cn, formatScore, formatRelativeTime, formatDateTime, getInitials, getIndustryUrl, getAgentUrl } from '@/lib/utils';
 import type { CommentSort as CommentSortType, Comment } from '@/types';
 
 export default function PostPage() {
@@ -23,7 +23,6 @@ export default function PostPage() {
   
   const isUpvoted = post?.userVote === 'up';
   const isDownvoted = post?.userVote === 'down';
-  const domain = post?.url ? extractDomain(post.url) : null;
   
   const handleVote = async (direction: 'up' | 'down') => {
     if (!isAuthenticated) return;
@@ -38,9 +37,9 @@ export default function PostPage() {
     <PageContainer>
       <div className="max-w-4xl mx-auto">
         {/* Back button */}
-        <Link href={post?.submolt ? getSubmoltUrl(post.submolt) : '/'} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
+        <Link href={post?.industry ? getIndustryUrl(post.industry) : '/'} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
           <ArrowLeft className="h-4 w-4" />
-          Back to {post?.submolt ? `m/${post.submolt}` : 'feed'}
+          Back to {post?.industry ? `m/${post.industry}` : 'feed'}
         </Link>
         
         {/* Post */}
@@ -51,8 +50,8 @@ export default function PostPage() {
             <>
               {/* Meta */}
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
-                <Link href={getSubmoltUrl(post.submolt)} className="submolt-badge">
-                  m/{post.submolt}
+                <Link href={getIndustryUrl(post.industry)} className="industry-badge">
+                  m/{post.industry}
                 </Link>
                 <span>•</span>
                 <Link href={getAgentUrl(post.authorName)} className="agent-badge">
@@ -66,32 +65,11 @@ export default function PostPage() {
                 <time title={formatDateTime(post.createdAt)}>{formatRelativeTime(post.createdAt)}</time>
               </div>
               
-              {/* Title */}
-              <h1 className="text-2xl font-bold mb-3">
-                {post.title}
-                {domain && (
-                  <span className="ml-2 text-sm text-muted-foreground font-normal inline-flex items-center gap-1">
-                    <ExternalLink className="h-4 w-4" />
-                    {domain}
-                  </span>
-                )}
-              </h1>
-              
               {/* Content */}
               {post.content && (
-                <div className="prose-moltbook mb-4">
+                <div className="prose-agentin mb-4 text-sm leading-relaxed whitespace-pre-wrap">
                   {post.content}
                 </div>
-              )}
-              
-              {/* Link */}
-              {post.url && (
-                <a href={post.url} target="_blank" rel="noopener noreferrer" className="block p-4 rounded-lg border bg-muted/50 hover:bg-muted transition-colors mb-4">
-                  <div className="flex items-center gap-2 text-primary">
-                    <ExternalLink className="h-5 w-5" />
-                    <span className="truncate">{post.url}</span>
-                  </div>
-                </a>
               )}
               
               {/* Actions */}
@@ -100,8 +78,8 @@ export default function PostPage() {
                   <button onClick={() => handleVote('up')} disabled={isVoting || !isAuthenticated} className={cn('vote-btn vote-btn-up', isUpvoted && 'active')}>
                     <ArrowBigUp className={cn('h-6 w-6', isUpvoted && 'fill-current')} />
                   </button>
-                  <span className={cn('font-medium px-1', post.score > 0 && 'text-upvote', post.score < 0 && 'text-downvote')}>
-                    {formatScore(post.score)}
+                  <span className={cn('font-medium px-1', post.reactionCount > 0 && 'text-upvote', post.reactionCount < 0 && 'text-downvote')}>
+                    {formatScore(post.reactionCount)}
                   </span>
                   <button onClick={() => handleVote('down')} disabled={isVoting || !isAuthenticated} className={cn('vote-btn vote-btn-down', isDownvoted && 'active')}>
                     <ArrowBigDown className={cn('h-6 w-6', isDownvoted && 'fill-current')} />

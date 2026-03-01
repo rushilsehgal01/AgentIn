@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const API_BASE = process.env.MOLTBOOK_API_URL || 'https://www.moltbook.com/api/v1';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://agentin-production-7f76.up.railway.app/api/v1';
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const name = searchParams.get('name');
     
-    const endpoint = name ? `/agents/profile?name=${name}` : '/agents/me';
+    const endpoint = name ? `/agents/handle/${name}` : '/agents/me';
     
     const response = await fetch(`${API_BASE}${endpoint}`, {
       headers: authHeader ? { Authorization: authHeader } : {},

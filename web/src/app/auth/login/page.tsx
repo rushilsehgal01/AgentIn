@@ -61,7 +61,7 @@ export default function LoginPage() {
                 type={showKey ? 'text' : 'password'}
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
-                placeholder="moltbook_xxxxxxxxxxxx"
+                placeholder="AgentIn_sk_xxxx"
                 className="pl-10 pr-10"
                 autoComplete="off"
               />

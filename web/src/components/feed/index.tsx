@@ -8,7 +8,7 @@ import { useInfiniteScroll } from '@/hooks';
 import { PostList, FeedSortTabs } from '@/components/post';
 import { Card, Spinner, Button, Avatar, AvatarFallback } from '@/components/ui';
 import { TrendingUp, Users, Flame, Clock, Zap, ChevronRight } from 'lucide-react';
-import type { Post, Submolt, Agent, PostSort } from '@/types';
+import type { Post, Industry, Agent, PostSort } from '@/types';
 
 // Feed container with infinite scroll
 export function Feed() {
@@ -53,8 +53,8 @@ export function TrendingPosts({ posts }: { posts: Post[] }) {
           <Link key={post.id} href={`/post/${post.id}`} className="flex items-start gap-3 group">
             <span className="text-2xl font-bold text-muted-foreground/50 w-6">{i + 1}</span>
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-sm line-clamp-2 group-hover:text-primary transition-colors">{post.title}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{formatScore(post.score)} points • m/{post.submolt}</p>
+              <p className="font-medium text-sm line-clamp-2 group-hover:text-primary transition-colors">{post.content?.slice(0, 80) ?? ''}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{formatScore(post.reactionCount)} points • m/{post.industry}</p>
             </div>
           </Link>
         ))}
@@ -63,9 +63,9 @@ export function TrendingPosts({ posts }: { posts: Post[] }) {
   );
 }
 
-// Popular submolts widget
-export function PopularSubmolts({ submolts }: { submolts: Submolt[] }) {
-  if (!submolts.length) return null;
+// Popular industries widget
+export function PopularIndustries({ industries }: { industries: Industry[] }) {
+  if (!industries.length) return null;
 
   return (
     <Card className="p-4">
@@ -74,18 +74,18 @@ export function PopularSubmolts({ submolts }: { submolts: Submolt[] }) {
           <Users className="h-5 w-5 text-primary" />
           <h3 className="font-semibold">Popular Communities</h3>
         </div>
-        <Link href="/submolts" className="text-xs text-primary hover:underline">See all</Link>
+        <Link href="/industries" className="text-xs text-primary hover:underline">See all</Link>
       </div>
       <div className="space-y-2">
-        {submolts.slice(0, 5).map((submolt, i) => (
-          <Link key={submolt.id} href={`/m/${submolt.name}`} className="flex items-center gap-3 p-2 rounded-md hover:bg-muted transition-colors">
+        {industries.slice(0, 5).map((industry, i) => (
+          <Link key={industry.id} href={`/m/${industry.name}`} className="flex items-center gap-3 p-2 rounded-md hover:bg-muted transition-colors">
             <span className="text-sm font-medium text-muted-foreground w-4">{i + 1}</span>
             <Avatar className="h-8 w-8">
-              <AvatarFallback className="text-xs bg-primary/10 text-primary">{getInitials(submolt.name)}</AvatarFallback>
+              <AvatarFallback className="text-xs bg-primary/10 text-primary">{getInitials(industry.name)}</AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-sm">m/{submolt.name}</p>
-              <p className="text-xs text-muted-foreground">{formatScore(submolt.subscriberCount)} members</p>
+              <p className="font-medium text-sm">m/{industry.name}</p>
+              <p className="text-xs text-muted-foreground">{formatScore(industry.subscriberCount)} members</p>
             </div>
           </Link>
         ))}
@@ -106,13 +106,13 @@ export function ActiveAgents({ agents }: { agents: Agent[] }) {
       </div>
       <div className="space-y-2">
         {agents.slice(0, 5).map(agent => (
-          <Link key={agent.id} href={`/u/${agent.name}`} className="flex items-center gap-3 p-2 rounded-md hover:bg-muted transition-colors">
+          <Link key={agent.id} href={`/u/${agent.handle}`} className="flex items-center gap-3 p-2 rounded-md hover:bg-muted transition-colors">
             <Avatar className="h-8 w-8">
-              <AvatarFallback className="text-xs">{getInitials(agent.name)}</AvatarFallback>
+              <AvatarFallback className="text-xs">{getInitials(agent.handle)}</AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-sm">u/{agent.name}</p>
-              <p className="text-xs text-muted-foreground">{formatScore(agent.karma)} karma</p>
+              <p className="font-medium text-sm">u/{agent.handle}</p>
+              <p className="text-xs text-muted-foreground">{formatScore(agent.trustScore)} reputation</p>
             </div>
           </Link>
         ))}
@@ -122,15 +122,15 @@ export function ActiveAgents({ agents }: { agents: Agent[] }) {
 }
 
 // Feed sidebar
-export function FeedSidebar({ trendingPosts, popularSubmolts, activeAgents }: {
+export function FeedSidebar({ trendingPosts, popularIndustries, activeAgents }: {
   trendingPosts?: Post[];
-  popularSubmolts?: Submolt[];
+  popularIndustries?: Industry[];
   activeAgents?: Agent[];
 }) {
   return (
     <div className="space-y-4">
       {trendingPosts && <TrendingPosts posts={trendingPosts} />}
-      {popularSubmolts && <PopularSubmolts submolts={popularSubmolts} />}
+      {popularIndustries && <PopularIndustries industries={popularIndustries} />}
       {activeAgents && <ActiveAgents agents={activeAgents} />}
       
       {/* Footer links */}
@@ -144,7 +144,7 @@ export function FeedSidebar({ trendingPosts, popularSubmolts, activeAgents }: {
           <span>•</span>
           <Link href="/api" className="hover:text-foreground">API</Link>
         </div>
-        <p className="text-xs text-muted-foreground mt-2">© 2025 Moltbook</p>
+        <p className="text-xs text-muted-foreground mt-2">© 2025 Agentin</p>
       </Card>
     </div>
   );
