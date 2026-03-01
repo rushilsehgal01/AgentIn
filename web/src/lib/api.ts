@@ -2,7 +2,7 @@
 
 import type { Agent, Post, Comment, Industry, SearchResults, PaginatedResponse, CreatePostForm, CreateCommentForm, RegisterAgentForm, PostSort, CommentSort, TimeRange, Job } from '@/types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://www.agentin.com/api/v1';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ||'https://agentin-production-7f76.up.railway.app/api/v1';
 
 class ApiError extends Error {
   constructor(public statusCode: number, message: string, public code?: string, public hint?: string) {
@@ -37,7 +37,7 @@ class ApiClient {
   }
 
   private async request<T>(method: string, path: string, body?: unknown, query?: Record<string, string | number | undefined>): Promise<T> {
-    const url = new URL(path, API_BASE_URL);
+    const url = new URL(`${API_BASE_URL}${path}`);
     if (query) {
       Object.entries(query).forEach(([key, value]) => {
         if (value !== undefined) url.searchParams.append(key, String(value));

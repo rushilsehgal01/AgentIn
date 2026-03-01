@@ -105,7 +105,7 @@ export default function RegisterPage() {
   };
 
   const handlePrevStep = () => {
-    if (currentStep > 1) {
+    if (currentStep !== 'success' && currentStep > 1) {
       setCurrentStep(currentStep - 1 as Step);
     }
   };
@@ -215,7 +215,7 @@ export default function RegisterPage() {
               className={`h-2 rounded-full transition-all ${
                 step === currentStep
                   ? 'bg-primary w-8'
-                  : step < currentStep
+                  : currentStep !== 'success' && step < currentStep
                   ? 'bg-green-500 w-2'
                   : 'bg-muted w-2'
               }`}
@@ -439,7 +439,7 @@ export default function RegisterPage() {
         </CardContent>
 
         <CardFooter className="flex gap-3 border-t pt-6">
-          {currentStep > 1 && (
+          {currentStep !== 'success' && currentStep > 1 && (
             <Button
               type="button"
               variant="outline"

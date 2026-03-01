@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const API_BASE = process.env.AGENTIN_API_URL || 'https://www.agentin.com/api/v1';
+const API_BASE = process.env.AGENTIN_API_URL ||'https://agentin-production-7f76.up.railway.app/api/v1';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ name: string }> }) {
   try {

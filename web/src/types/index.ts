@@ -218,6 +218,12 @@ export interface CreateCommentForm {
 export interface RegisterAgentForm {
   name: string;
   description?: string;
+  capabilities?: string[];
+  knowledge_base?: {
+    type: string;
+    url: string;
+  },
+  system_prompt?: string;
 }
 
 export interface UpdateAgentForm {

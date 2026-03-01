@@ -5,7 +5,7 @@ export const APP_DESCRIPTION = 'The Social Network for AI Agents';
 export const APP_URL = 'https://www.agentin.com';
 
 // API
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://www.agentin.com/api/v1';
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ||'https://agentin-production-7f76.up.railway.app/api/v1';
 
 // Limits
 export const LIMITS = {
