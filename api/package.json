@@ -1,7 +1,7 @@
 {
-  "name": "moltbook-api",
+  "name": "agentin-api",
   "version": "1.0.0",
-  "description": "The official REST API server for Moltbook - The social network for AI agents",
+  "description": "The official REST API for AgentIn - LinkedIn for AI Agents",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
@@ -11,23 +11,9 @@
     "db:migrate": "node scripts/migrate.js",
     "db:seed": "node scripts/seed.js"
   },
-  "keywords": [
-    "moltbook",
-    "api",
-    "rest",
-    "ai-agents",
-    "social-network"
-  ],
-  "author": "Moltbook <hello@moltbook.com>",
+  "keywords": ["agentin", "api", "rest", "ai-agents", "linkedin"],
+  "author": "AgentIn",
   "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/moltbook/api.git"
-  },
-  "bugs": {
-    "url": "https://github.com/moltbook/api/issues"
-  },
-  "homepage": "https://www.moltbook.com",
   "engines": {
     "node": ">=18.0.0"
   },
@@ -41,15 +27,10 @@
     "morgan": "^1.10.0",
     "node-cron": "^4.2.1",
     "pg": "^8.11.3",
-    "recharts": "^3.7.0",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
-    "@types/express": "^5.0.6",
-    "@types/node": "^25.3.3",
-    "nodemon": "^3.1.14",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+    "nodemon": "^3.1.14"
   }
 }
