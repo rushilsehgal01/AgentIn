@@ -3,18 +3,15 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import useSWR from 'swr';
-import { cn, formatRelativeTime, formatScore, getInitials } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { useAuth, useIsMobile, useKeyboardShortcut } from '@/hooks';
 import { useUIStore, useNotificationStore } from '@/store';
-import { api } from '@/lib/api';
-import { deriveSuggestedAgents, rankTrendingPosts } from '@/lib/discovery';
-import { Button, Avatar, AvatarImage, AvatarFallback } from '@/components/ui';
-import { Home, Search, Bell, Plus, Menu, X, Settings, LogOut, User, Briefcase, MessageSquare, ChevronDown, Users, Compass, Sparkles, ArrowUpRight, Loader2 } from 'lucide-react';
+import { Button, Avatar, AvatarImage, AvatarFallback, Input, Skeleton } from '@/components/ui';
+import { Home, Search, Bell, Plus, Menu, X, Settings, LogOut, User, Flame, Clock, TrendingUp, Zap, ChevronDown, Moon, Sun, Hash, Users } from 'lucide-react';
+import { getInitials } from '@/lib/utils';
 
 // Header
 export function Header() {
-  const pathname = usePathname();
   const { agent, isAuthenticated, logout } = useAuth();
   const { toggleMobileMenu, mobileMenuOpen, openSearch, openCreatePost } = useUIStore();
   const { unreadCount } = useNotificationStore();
@@ -25,75 +22,48 @@ export function Header() {
   useKeyboardShortcut('n', openCreatePost, { ctrl: true });
   
   return (
-<<<<<<< HEAD
-    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-      <div className="container-main mx-auto flex h-14 max-w-[1128px] items-center justify-between gap-4">
-=======
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
       <div className="container-main flex h-14 items-center justify-between gap-4">
->>>>>>> smoke-test-gemini
         {/* Logo */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           {isMobile && (
-            <Button variant="ghost" size="icon" onClick={toggleMobileMenu} aria-label="Toggle navigation menu">
+            <Button variant="ghost" size="icon" onClick={toggleMobileMenu}>
               {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
           )}
-<<<<<<< HEAD
-          <Link href="/" className="flex items-center gap-2 font-bold text-lg">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary">
-              <span className="text-sm font-bold text-primary-foreground">in</span>
-            </div>
-            {!isMobile && <span>AgentIn</span>}
-=======
           <Link href="/" className="flex items-center gap-2 font-bold text-xl">
             <div className="h-8 w-8 rounded-lg bg-linear-to-br from-primary to-agentin-400 flex items-center justify-center">
               <span className="text-white text-sm font-bold">M</span>
             </div>
             {!isMobile && <span className="linear-text">agentin</span>}
->>>>>>> smoke-test-gemini
           </Link>
         </div>
         
         {/* Search */}
         {!isMobile && (
-          <div className="mx-2 flex-1 max-w-md">
-            <button type="button" onClick={openSearch} className="flex w-full items-center gap-2 rounded-md border bg-muted/50 px-3 py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-muted" aria-label="Open search">
+          <div className="flex-1 max-w-md">
+            <button onClick={openSearch} className="w-full flex items-center gap-2 px-3 py-2 rounded-md border bg-muted/50 text-muted-foreground text-sm hover:bg-muted transition-colors">
               <Search className="h-4 w-4" />
-<<<<<<< HEAD
-              <span>Search</span>
-              <kbd className="ml-auto rounded border bg-background px-1.5 py-0.5 text-xs">⌘K</kbd>
-=======
               <span>Search agentin...</span>
               <kbd className="ml-auto text-xs bg-background px-1.5 py-0.5 rounded border">⌘K</kbd>
->>>>>>> smoke-test-gemini
             </button>
           </div>
-        )}
-
-        {!isMobile && (
-          <nav className="hidden items-center gap-1 lg:flex">
-            <Link href="/" className={cn('rounded-md px-3 py-2 text-sm font-medium', pathname === '/' ? 'bg-muted' : 'hover:bg-muted')}>Home</Link>
-            <Link href="/network" className={cn('rounded-md px-3 py-2 text-sm font-medium', pathname === '/network' ? 'bg-muted' : 'hover:bg-muted')}>My Network</Link>
-            <Link href="/jobs" className={cn('rounded-md px-3 py-2 text-sm font-medium', pathname.startsWith('/jobs') ? 'bg-muted' : 'hover:bg-muted')}>Jobs</Link>
-            <Link href="/dashboard" className={cn('rounded-md px-3 py-2 text-sm font-medium', pathname.startsWith('/dashboard') ? 'bg-muted' : 'hover:bg-muted')}>Dashboard</Link>
-          </nav>
         )}
         
         {/* Actions */}
         <div className="flex items-center gap-2">
           {isMobile && (
-            <Button variant="ghost" size="icon" onClick={openSearch} aria-label="Open search">
+            <Button variant="ghost" size="icon" onClick={openSearch}>
               <Search className="h-5 w-5" />
             </Button>
           )}
           
           {isAuthenticated ? (
             <>
-              <Button variant="ghost" size="icon" className="relative" aria-label="Open notifications">
+              <Button variant="ghost" size="icon" className="relative">
                 <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
-                  <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] text-destructive-foreground">
+                  <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-destructive text-destructive-foreground text-[10px] flex items-center justify-center">
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
@@ -105,7 +75,7 @@ export function Header() {
               </Button>
               
               <div className="relative">
-                <button type="button" onClick={() => setShowUserMenu(!showUserMenu)} className="flex items-center gap-2 rounded-md p-1 transition-colors hover:bg-muted" aria-label="Open profile menu">
+                <button onClick={() => setShowUserMenu(!showUserMenu)} className="flex items-center gap-2 p-1 rounded-md hover:bg-muted transition-colors">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={agent?.avatarUrl} />
                     <AvatarFallback>{agent?.handle ? getInitials(agent.handle) : '?'}</AvatarFallback>
@@ -114,7 +84,7 @@ export function Header() {
                 </button>
                 
                 {showUserMenu && (
-                  <div className="absolute right-0 top-full mt-2 w-56 rounded-md border bg-popover p-1 shadow-lg">
+                  <div className="absolute right-0 top-full mt-2 w-56 rounded-md border bg-popover p-1 shadow-lg animate-in fade-in-0 zoom-in-95">
                     <div className="px-3 py-2 border-b mb-1">
                       <p className="font-medium">{agent?.displayName || agent?.handle}</p>
                       <p className="text-xs text-muted-foreground">u/{agent?.handle}</p>
@@ -125,7 +95,7 @@ export function Header() {
                     <Link href="/settings" className="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted" onClick={() => setShowUserMenu(false)}>
                       <Settings className="h-4 w-4" /> Settings
                     </Link>
-                    <button type="button" onClick={() => { logout(); setShowUserMenu(false); }} className="w-full flex items-center gap-2 rounded px-3 py-2 text-sm text-destructive hover:bg-muted">
+                    <button onClick={() => { logout(); setShowUserMenu(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted text-destructive">
                       <LogOut className="h-4 w-4" /> Log out
                     </button>
                   </div>
@@ -152,52 +122,27 @@ export function Header() {
 export function Sidebar() {
   const pathname = usePathname();
   const { sidebarOpen } = useUIStore();
-  const { agent, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   
   const mainLinks = [
     { href: '/', label: 'Home', icon: Home },
-    { href: '/network', label: 'My Network', icon: Users },
-    { href: '/jobs', label: 'Jobs', icon: Briefcase },
-    { href: '/search', label: 'Messaging', icon: MessageSquare },
+    { href: '/?sort=hot', label: 'Hot', icon: Flame },
+    { href: '/?sort=new', label: 'New', icon: Clock },
+    { href: '/?sort=rising', label: 'Rising', icon: TrendingUp },
+    { href: '/?sort=top', label: 'Top', icon: Zap },
   ];
   
-<<<<<<< HEAD
-  const featuredIndustries = [
-=======
   const popularIndustries = [
->>>>>>> smoke-test-gemini
     { name: 'general', displayName: 'General' },
     { name: 'announcements', displayName: 'Announcements' },
     { name: 'showcase', displayName: 'Showcase' },
-    { name: 'careers', displayName: 'Careers' },
+    { name: 'help', displayName: 'Help' },
+    { name: 'meta', displayName: 'Meta' },
   ];
   
   if (!sidebarOpen) return null;
   
   return (
-<<<<<<< HEAD
-    <aside className="hidden lg:block lg:w-64 xl:w-[250px]">
-      <div className="sticky top-[4.5rem] space-y-4">
-        {isAuthenticated && agent && (
-          <div className="rounded-xl border bg-card p-4 shadow-xs">
-            <div className="mb-3 h-12 rounded-md bg-linear-to-r from-primary/30 via-primary/20 to-agentin-400/20" />
-            <div className="-mt-8 flex items-end gap-3">
-              <Avatar className="h-14 w-14 border-2 border-background">
-                <AvatarImage src={agent.avatarUrl} />
-                <AvatarFallback>{getInitials(agent.name)}</AvatarFallback>
-              </Avatar>
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold">{agent.displayName || agent.name}</p>
-                <p className="text-xs text-muted-foreground">AI Agent</p>
-              </div>
-            </div>
-            <div className="mt-3 flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">Reputation</span>
-              <span className="font-semibold">{agent.reputation}</span>
-            </div>
-            <Link href={`/u/${agent.name}`} className="mt-3 block rounded-md border px-3 py-2 text-center text-xs font-medium hover:bg-muted">
-              View profile
-=======
     <aside className="sticky top-14 h-[calc(100vh-3.5rem)] w-64 shrink-0 border-r bg-background overflow-y-auto scrollbar-hide hidden lg:block">
       <nav className="p-4 space-y-6">
         {/* Main Links */}
@@ -238,189 +183,10 @@ export function Sidebar() {
             <Link href="/agents" className="flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-muted transition-colors">
               <Users className="h-4 w-4" />
               Agents
->>>>>>> smoke-test-gemini
             </Link>
           </div>
-        )}
-
-        <nav className="rounded-xl border bg-card p-4 shadow-xs">
-          <div className="space-y-1">
-            {mainLinks.map(link => {
-              const Icon = link.icon;
-              const isActive = pathname === link.href || (link.href !== '/' && pathname.startsWith(link.href));
-              return (
-                <Link key={link.href} href={link.href} className={cn('flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors', isActive ? 'bg-muted font-medium' : 'hover:bg-muted')}>
-                  <Icon className="h-4 w-4" />
-                  {link.label}
-                </Link>
-              );
-            })}
-          </div>
-
-          <div className="border-t pt-3 mt-3">
-            <h3 className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Industries</h3>
-            <div className="space-y-1">
-              {featuredIndustries.map(industry => (
-                <Link key={industry.name} href={`/m/${industry.name}`} className={cn('flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors', pathname === `/m/${industry.name}` ? 'bg-muted font-medium' : 'hover:bg-muted')}>
-                  <Compass className="h-4 w-4" />
-                  {industry.displayName}
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          <div className="border-t pt-3 mt-3">
-            <Link href="/submolts" className="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-muted transition-colors">
-              <Compass className="h-4 w-4" />
-              See all industries
-            </Link>
-          </div>
-        </nav>
-      </div>
-    </aside>
-  );
-}
-
-export function RightSidebar() {
-  const { agent: currentAgent, isAuthenticated } = useAuth();
-  const [busyAgent, setBusyAgent] = React.useState<string | null>(null);
-  const [followMap, setFollowMap] = React.useState<Record<string, boolean>>({});
-
-  const { data: postsData, isLoading: postsLoading } = useSWR('sidebar-discovery-posts', () =>
-    api.getPosts({ sort: 'hot', limit: 60, offset: 0 })
-  );
-
-  const { data: jobsData, isLoading: jobsLoading } = useSWR('sidebar-discovery-jobs', () =>
-    api.getJobs({ status: 'open', limit: 6, offset: 0 })
-  );
-
-  const trending = React.useMemo(() => rankTrendingPosts(postsData?.data || []).slice(0, 4), [postsData?.data]);
-  const suggestions = React.useMemo(
-    () => deriveSuggestedAgents(postsData?.data || [], currentAgent?.name).slice(0, 4),
-    [postsData?.data, currentAgent?.name]
-  );
-  const jobs = jobsData?.data?.slice(0, 3) || [];
-
-  const handleToggleFollow = async (name: string, currentlyFollowing: boolean) => {
-    if (!isAuthenticated || busyAgent) return;
-    setBusyAgent(name);
-
-    try {
-      if (currentlyFollowing) {
-        await api.unfollowAgent(name);
-        setFollowMap((prev) => ({ ...prev, [name]: false }));
-      } else {
-        await api.followAgent(name);
-        setFollowMap((prev) => ({ ...prev, [name]: true }));
-      }
-    } catch (err) {
-      console.error('Failed to update connection status', err);
-    } finally {
-      setBusyAgent(null);
-    }
-  };
-
-  return (
-    <aside className="hidden xl:block xl:w-[280px]">
-      <div className="sticky top-[4.5rem] space-y-4">
-        <section className="rounded-xl border bg-card p-4 shadow-xs">
-          <div className="mb-3 flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-primary" />
-            <h3 className="text-sm font-semibold">Trending</h3>
-          </div>
-          {postsLoading ? (
-            <div className="py-4 text-center text-xs text-muted-foreground">
-              <Loader2 className="mx-auto mb-2 h-4 w-4 animate-spin" />
-              Loading trends...
-            </div>
-          ) : trending.length === 0 ? (
-            <p className="text-xs text-muted-foreground">Trending insights will appear as activity grows.</p>
-          ) : (
-            <ul className="space-y-3 text-sm">
-              {trending.map(({ post, score }) => (
-                <li key={post.id}>
-                  <Link href={`/post/${post.id}`} className="block rounded-md p-1 transition-colors hover:bg-muted">
-                    <p className="line-clamp-2 font-medium">{post.title}</p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {formatScore(score)} trend score • {formatRelativeTime(post.createdAt)}
-                    </p>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-
-        <section className="rounded-xl border bg-card p-4 shadow-xs">
-          <h3 className="mb-3 text-sm font-semibold">Suggested agents</h3>
-          {postsLoading ? (
-            <div className="py-4 text-center text-xs text-muted-foreground">
-              <Loader2 className="mx-auto mb-2 h-4 w-4 animate-spin" />
-              Loading suggestions...
-            </div>
-          ) : suggestions.length === 0 ? (
-            <p className="text-xs text-muted-foreground">Suggestions will appear from active feed participants.</p>
-          ) : (
-            <ul className="space-y-3 text-sm">
-              {suggestions.map((person) => {
-                const isFollowing = followMap[person.name] ?? false;
-                return (
-                  <li key={person.name} className="flex items-center justify-between gap-2">
-                    <Link href={`/u/${person.name}`} className="flex min-w-0 items-center gap-2">
-                      <Avatar className="h-7 w-7">
-                        <AvatarImage src={person.avatarUrl} />
-                        <AvatarFallback className="text-[10px]">{getInitials(person.name)}</AvatarFallback>
-                      </Avatar>
-                      <span className="truncate">{person.displayName || person.name}</span>
-                    </Link>
-                    <Button
-                      variant={isFollowing ? 'secondary' : 'outline'}
-                      size="sm"
-                      className="h-7 px-2"
-                      isLoading={busyAgent === person.name}
-                      onClick={() => handleToggleFollow(person.name, isFollowing)}
-                      disabled={!isAuthenticated}
-                      aria-label={`${isFollowing ? 'Disconnect from' : 'Connect with'} ${person.displayName || person.name}`}
-                    >
-                      {isFollowing ? 'Connected' : 'Connect'}
-                    </Button>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </section>
-
-        <section className="rounded-xl border bg-card p-4 shadow-xs">
-          <div className="mb-3 flex items-center justify-between">
-            <h3 className="text-sm font-semibold">Jobs spotlight</h3>
-            <Link href="/jobs" className="text-xs text-primary hover:underline">See all</Link>
-          </div>
-
-          {jobsLoading ? (
-            <div className="py-4 text-center text-xs text-muted-foreground">
-              <Loader2 className="mx-auto mb-2 h-4 w-4 animate-spin" />
-              Loading jobs...
-            </div>
-          ) : jobs.length === 0 ? (
-            <p className="text-xs text-muted-foreground">No open jobs available right now.</p>
-          ) : (
-            <ul className="space-y-3 text-sm">
-              {jobs.map((job) => (
-                <li key={job.id}>
-                  <Link href={`/jobs/${job.id}`} className="block rounded-md p-1 transition-colors hover:bg-muted">
-                    <p className="line-clamp-1 font-medium">{job.title}</p>
-                    <p className="line-clamp-1 text-xs text-muted-foreground">{job.company}</p>
-                    <p className="mt-1 inline-flex items-center gap-1 text-xs text-primary">
-                      View role <ArrowUpRight className="h-3 w-3" />
-                    </p>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      </div>
+        </div>
+      </nav>
     </aside>
   );
 }
@@ -446,13 +212,8 @@ export function MobileMenu() {
                   <AvatarFallback>{getInitials(agent.handle)}</AvatarFallback>
                 </Avatar>
                 <div>
-<<<<<<< HEAD
-                  <p className="font-medium">{agent.displayName || agent.name}</p>
-                  <p className="text-xs text-muted-foreground">{agent.reputation} reputation</p>
-=======
                   <p className="font-medium">{agent.displayName || agent.handle}</p>
                   <p className="text-xs text-muted-foreground">{agent.trustScore} reputation</p>
->>>>>>> smoke-test-gemini
                 </div>
               </div>
             </div>
@@ -461,12 +222,6 @@ export function MobileMenu() {
           <div className="space-y-1">
             <Link href="/" onClick={toggleMobileMenu} className={cn('flex items-center gap-3 px-3 py-2 rounded-md', pathname === '/' && 'bg-muted font-medium')}>
               <Home className="h-4 w-4" /> Home
-            </Link>
-            <Link href="/jobs" onClick={toggleMobileMenu} className={cn('flex items-center gap-3 px-3 py-2 rounded-md', pathname === '/jobs' && 'bg-muted font-medium')}>
-              <Briefcase className="h-4 w-4" /> Jobs
-            </Link>
-            <Link href="/network" onClick={toggleMobileMenu} className={cn('flex items-center gap-3 px-3 py-2 rounded-md', pathname === '/network' && 'bg-muted font-medium')}>
-              <Users className="h-4 w-4" /> Network
             </Link>
             <Link href="/search" onClick={toggleMobileMenu} className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted">
               <Search className="h-4 w-4" /> Search
@@ -480,9 +235,6 @@ export function MobileMenu() {
 
 // Footer
 export function Footer() {
-<<<<<<< HEAD
-  return null;
-=======
   return (
     <footer className="border-t py-8 mt-auto">
       <div className="container-main">
@@ -503,12 +255,11 @@ export function Footer() {
       </div>
     </footer>
   );
->>>>>>> smoke-test-gemini
 }
 
 // Page Container
 export function PageContainer({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <div className={cn('flex-1 py-4 lg:py-6', className)}>{children}</div>;
+  return <div className={cn('flex-1 py-6', className)}>{children}</div>;
 }
 
 // Main Layout
@@ -516,10 +267,9 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <div className="container-main mx-auto flex w-full max-w-[1128px] flex-1 gap-6 py-4 lg:py-6">
+      <div className="flex-1 flex">
         <Sidebar />
-        <main className="min-w-0 flex-1">{children}</main>
-        <RightSidebar />
+        <main className="flex-1 container-main">{children}</main>
       </div>
       <MobileMenu />
       <Footer />

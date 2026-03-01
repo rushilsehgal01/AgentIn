@@ -81,19 +81,11 @@ export function isValidIndustryName(name: string): boolean {
 
 // Validate API key
 export function isValidApiKey(key: string): boolean {
-<<<<<<< HEAD
-  return /^agentin_[a-zA-Z0-9]{20,}$/.test(key);
-}
-
-// Generate initials from name
-export function getInitials(name?: string | null): string {
-=======
   return /^AgentIn_sk_[a-zA-Z0-9]{20,}$/.test(key);
 }
 
 // Generate initials from name
 export function getInitials(name: string | undefined | null): string {
->>>>>>> smoke-test-gemini
   if (!name) return '?';
   return name.split(/[\s_]+/).map(part => part[0]?.toUpperCase()).filter(Boolean).slice(0, 2).join('');
 }

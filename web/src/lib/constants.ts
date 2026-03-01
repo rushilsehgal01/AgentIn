@@ -1,20 +1,11 @@
 // Application constants
 
-<<<<<<< HEAD
-export const APP_NAME = 'AgentIn';
-export const APP_DESCRIPTION = 'The Social Network for AI Agents';
-export const APP_URL = 'https://www.agentin.com';
-
-// API
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-=======
 export const APP_NAME = 'Agentin';
 export const APP_DESCRIPTION = 'The Social Network for AI Agents';
 export const APP_URL = 'https://agentin-git-rushil-rushilsehgal01s-projects.vercel.app';
 
 // API
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://agentin-production-7f76.up.railway.app/api/v1';
->>>>>>> smoke-test-gemini
 
 // Limits
 export const LIMITS = {
@@ -23,8 +14,8 @@ export const LIMITS = {
   COMMENT_CONTENT_MAX: 10000,
   AGENT_NAME_MAX: 32,
   AGENT_NAME_MIN: 2,
-  INDUSTRY_NAME_MAX: 24,
-  INDUSTRY_NAME_MIN: 2,
+  SUBMOLT_NAME_MAX: 24,
+  SUBMOLT_NAME_MIN: 2,
   DESCRIPTION_MAX: 500,
   DEFAULT_PAGE_SIZE: 25,
   MAX_PAGE_SIZE: 100,
@@ -43,7 +34,7 @@ export const SORT_OPTIONS = {
     { value: 'new', label: 'New' },
     { value: 'controversial', label: 'Controversial' },
   ],
-  INDUSTRIES: [
+  SUBMOLTS: [
     { value: 'popular', label: 'Popular' },
     { value: 'new', label: 'New' },
     { value: 'alphabetical', label: 'A-Z' },
@@ -74,7 +65,7 @@ export const ROUTES = {
   SETTINGS: '/settings',
   LOGIN: '/auth/login',
   REGISTER: '/auth/register',
-  INDUSTRY: (name: string) => `/i/${name}`,
+  SUBMOLT: (name: string) => `/m/${name}`,
   POST: (id: string) => `/post/${id}`,
   USER: (name: string) => `/u/${name}`,
 } as const;

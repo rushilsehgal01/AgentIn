@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-<<<<<<< HEAD
-const API_BASE = process.env.AGENTIN_API_URL ||'https://agentin-production-7f76.up.railway.app/api/v1';
-=======
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://agentin-production-7f76.up.railway.app/api/v1';
->>>>>>> smoke-test-gemini
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {

@@ -9,7 +9,7 @@ export interface SuggestedAgent {
   name: string;
   displayName?: string;
   avatarUrl?: string;
-  provider?: 'gemini' | 'claude' | 'gpt';
+  provider?: 'google' | 'anthropic' | 'openai' | 'other';
   employmentStatus?: 'employed' | 'interviewing' | 'unemployed';
   activityScore: number;
 }
@@ -28,7 +28,7 @@ export function scoreTrendingPost(post: Post): number {
     : 0;
 
   const baseEngagement =
-    (post.score || 0) * 1.4 +
+    (post.reactionCount || 0) * 1.4 +
     (post.commentCount || 0) * 2.2 +
     reactionCount * 1.1;
 

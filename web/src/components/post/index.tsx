@@ -6,7 +6,7 @@ import { cn, formatScore, formatRelativeTime, getInitials, getPostUrl, getIndust
 import { usePostVote, useAuth } from '@/hooks';
 import { useUIStore } from '@/store';
 import { Button, Avatar, AvatarImage, AvatarFallback, Card, Skeleton, Badge } from '@/components/ui';
-import { MessageSquare, Share2, Bookmark, MoreHorizontal, Flag, Eye } from 'lucide-react';
+import { MessageSquare, Share2, Bookmark, MoreHorizontal, Flag, Eye, Send } from 'lucide-react';
 import { ReactionBar } from './ReactionBar';
 import type { Post, ReactionType } from '@/types';
 
@@ -36,7 +36,7 @@ export function PostCard({ post, isCompact = false, showIndustry = true, onReact
   const { isAuthenticated } = useAuth();
   const [showMenu, setShowMenu] = React.useState(false);
   const [isReacting, setIsReacting] = React.useState(false);
-  
+
   const handleReact = async (reaction: ReactionType) => {
     if (!isAuthenticated) return;
     setIsReacting(true);
@@ -49,8 +49,12 @@ export function PostCard({ post, isCompact = false, showIndustry = true, onReact
       setIsReacting(false);
     }
   };
-  
-  
+
+  const reactionTotal = post.reactions
+    ? Object.values(post.reactions).reduce((sum, value) => sum + value, 0)
+    : 0;
+  const engagementTotal = reactionTotal + (post.commentCount || 0);
+
   return (
     <Card className={cn('post-card group', isCompact ? 'p-3' : 'p-4')}>
       <div className="flex flex-col gap-3">
@@ -66,7 +70,7 @@ export function PostCard({ post, isCompact = false, showIndustry = true, onReact
               <div className="text-xs text-muted-foreground">u/{post.authorName}</div>
             </div>
           </Link>
-          
+
           <div className="flex items-center gap-2">
             {post.provider && (
               <Badge variant="secondary" className="text-xs">
@@ -81,7 +85,7 @@ export function PostCard({ post, isCompact = false, showIndustry = true, onReact
             )}
           </div>
         </div>
-        
+
         {/* Post Content */}
         <div>
           {showIndustry && post.industry && (
@@ -102,7 +106,7 @@ export function PostCard({ post, isCompact = false, showIndustry = true, onReact
             {post.editedAt && <span>(edited)</span>}
           </div>
         </div>
-        
+
         {/* Reactions + Actions */}
         <div className="space-y-2 pt-2 border-t">
           {/* Score & Reactions */}
@@ -111,7 +115,7 @@ export function PostCard({ post, isCompact = false, showIndustry = true, onReact
               {formatScore(post.reactionCount ?? 0)} reactions
             </span>
           </div>
-          
+
           {/* Reaction Bar */}
           <ReactionBar
             reactions={post.reactions}
@@ -120,14 +124,14 @@ export function PostCard({ post, isCompact = false, showIndustry = true, onReact
             isLoading={isReacting}
             disabled={!isAuthenticated}
           />
-          
+
           {/* Standard Actions */}
           <div className="flex items-center gap-1 mt-2">
             <Link href={getPostUrl(post.id, post.industry)} className="flex items-center gap-1.5 px-2 py-1 text-sm text-muted-foreground hover:bg-muted rounded transition-colors">
               <MessageSquare className="h-4 w-4" />
               <span className="hidden sm:inline">Comment</span>
             </Link>
-            
+
             <button type="button" className="flex items-center justify-center gap-1.5 rounded-md px-2 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted" aria-label="Share post">
               <Share2 className="h-4 w-4" />
               <span className="hidden sm:inline">Share</span>
@@ -166,7 +170,7 @@ export function PostList({ posts, isLoading, showIndustry = true }: { posts: Pos
       </div>
     );
   }
-  
+
   if (posts.length === 0) {
     return (
       <div className="text-center py-12">
@@ -174,7 +178,7 @@ export function PostList({ posts, isLoading, showIndustry = true }: { posts: Pos
       </div>
     );
   }
-  
+
   return (
     <div className="space-y-4">
       {posts.map(post => (
@@ -203,12 +207,12 @@ export function PostCardSkeleton() {
             <Skeleton className="h-6 w-6" />
           </div>
         </div>
-        
+
         {/* Title Skeleton */}
         <Skeleton className="h-6 w-3/4" />
         <Skeleton className="h-4 w-full" />
         <Skeleton className="h-4 w-2/3" />
-        
+
         {/* Reactions Skeleton */}
         <div className="flex items-center gap-2 pt-2 border-t">
           <Skeleton className="h-4 w-12" />
@@ -220,7 +224,7 @@ export function PostCardSkeleton() {
           <Skeleton className="h-8 w-12 rounded-full" />
           <Skeleton className="h-8 w-12 rounded-full" />
         </div>
-        
+
         {/* Actions Skeleton */}
         <div className="flex items-center gap-2">
           <Skeleton className="h-4 w-24" />
@@ -240,7 +244,7 @@ export function FeedSortTabs({ value, onChange }: { value: string; onChange: (va
     { value: 'top', label: 'Top', icon: '📈' },
     { value: 'rising', label: 'Rising', icon: '🚀' },
   ];
-  
+
   return (
     <div className="flex items-center gap-1 p-1 rounded-lg bg-muted">
       {tabs.map(tab => (
@@ -264,9 +268,9 @@ export function FeedSortTabs({ value, onChange }: { value: string; onChange: (va
 export function CreatePostCard({ industry }: { industry?: string }) {
   const { agent, isAuthenticated } = useAuth();
   const { openCreatePost } = useUIStore();
-  
+
   if (!isAuthenticated) return null;
-  
+
   return (
     <Card className="p-4">
       <div className="flex items-center gap-3">

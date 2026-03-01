@@ -7,11 +7,7 @@ import { useFeedStore } from '@/store';
 import { useInfiniteScroll } from '@/hooks';
 import { PostList } from '@/components/post';
 import { Card, Spinner, Button, Avatar, AvatarFallback } from '@/components/ui';
-<<<<<<< HEAD
-import { TrendingUp, Users, Zap, SlidersHorizontal, Flame } from 'lucide-react';
-=======
-import { TrendingUp, Users, Flame, Clock, Zap, ChevronRight } from 'lucide-react';
->>>>>>> smoke-test-gemini
+import { TrendingUp, Users, Flame, Clock, Zap, ChevronRight, SlidersHorizontal } from 'lucide-react';
 import type { Post, Industry, Agent, PostSort } from '@/types';
 
 // Feed container with infinite scroll
@@ -89,13 +85,8 @@ export function TrendingPosts({ posts }: { posts: Post[] }) {
           <Link key={post.id} href={`/post/${post.id}`} className="flex items-start gap-3 group">
             <span className="text-2xl font-bold text-muted-foreground/50 w-6">{i + 1}</span>
             <div className="flex-1 min-w-0">
-<<<<<<< HEAD
-              <p className="font-medium text-sm line-clamp-2 group-hover:text-primary transition-colors">{post.title}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{formatScore(post.score)} points • m/{post.industry}</p>
-=======
               <p className="font-medium text-sm line-clamp-2 group-hover:text-primary transition-colors">{post.content?.slice(0, 80) ?? ''}</p>
               <p className="text-xs text-muted-foreground mt-0.5">{formatScore(post.reactionCount)} points • m/{post.industry}</p>
->>>>>>> smoke-test-gemini
             </div>
           </Link>
         ))}
@@ -104,15 +95,9 @@ export function TrendingPosts({ posts }: { posts: Post[] }) {
   );
 }
 
-<<<<<<< HEAD
-// Popular industrys widget
-export function PopularIndustrys({ industrys }: { industrys: Industry[] }) {
-  if (!industrys.length) return null;
-=======
 // Popular industries widget
 export function PopularIndustries({ industries }: { industries: Industry[] }) {
   if (!industries.length) return null;
->>>>>>> smoke-test-gemini
 
   return (
     <Card className="p-4">
@@ -121,17 +106,10 @@ export function PopularIndustries({ industries }: { industries: Industry[] }) {
           <Users className="h-5 w-5 text-primary" />
           <h3 className="font-semibold">Popular Communities</h3>
         </div>
-<<<<<<< HEAD
-        <Link href="/industrys" className="text-xs text-primary hover:underline">See all</Link>
-      </div>
-      <div className="space-y-2">
-        {industrys.slice(0, 5).map((industry, i) => (
-=======
         <Link href="/industries" className="text-xs text-primary hover:underline">See all</Link>
       </div>
       <div className="space-y-2">
         {industries.slice(0, 5).map((industry, i) => (
->>>>>>> smoke-test-gemini
           <Link key={industry.id} href={`/m/${industry.name}`} className="flex items-center gap-3 p-2 rounded-md hover:bg-muted transition-colors">
             <span className="text-sm font-medium text-muted-foreground w-4">{i + 1}</span>
             <Avatar className="h-8 w-8">
@@ -165,13 +143,8 @@ export function ActiveAgents({ agents }: { agents: Agent[] }) {
               <AvatarFallback className="text-xs">{getInitials(agent.handle)}</AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-<<<<<<< HEAD
-              <p className="font-medium text-sm">u/{agent.name}</p>
-              <p className="text-xs text-muted-foreground">{formatScore(agent.reputation)} reputation</p>
-=======
               <p className="font-medium text-sm">u/{agent.handle}</p>
               <p className="text-xs text-muted-foreground">{formatScore(agent.trustScore)} reputation</p>
->>>>>>> smoke-test-gemini
             </div>
           </Link>
         ))}
@@ -181,25 +154,15 @@ export function ActiveAgents({ agents }: { agents: Agent[] }) {
 }
 
 // Feed sidebar
-<<<<<<< HEAD
-export function FeedSidebar({ trendingPosts, popularIndustrys, activeAgents }: {
-  trendingPosts?: Post[];
-  popularIndustrys?: Industry[];
-=======
 export function FeedSidebar({ trendingPosts, popularIndustries, activeAgents }: {
   trendingPosts?: Post[];
   popularIndustries?: Industry[];
->>>>>>> smoke-test-gemini
   activeAgents?: Agent[];
 }) {
   return (
     <div className="space-y-4">
       {trendingPosts && <TrendingPosts posts={trendingPosts} />}
-<<<<<<< HEAD
-      {popularIndustrys && <PopularIndustrys industrys={popularIndustrys} />}
-=======
       {popularIndustries && <PopularIndustries industries={popularIndustries} />}
->>>>>>> smoke-test-gemini
       {activeAgents && <ActiveAgents agents={activeAgents} />}
       
       {/* Footer links */}
@@ -213,11 +176,7 @@ export function FeedSidebar({ trendingPosts, popularIndustries, activeAgents }: 
           <span>•</span>
           <Link href="/api" className="hover:text-foreground">API</Link>
         </div>
-<<<<<<< HEAD
-        <p className="text-xs text-muted-foreground mt-2">© 2025 AgentIn</p>
-=======
         <p className="text-xs text-muted-foreground mt-2">© 2025 Agentin</p>
->>>>>>> smoke-test-gemini
       </Card>
     </div>
   );

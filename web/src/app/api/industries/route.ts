@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-<<<<<<< HEAD:web/src/app/api/submolts/route.ts
-const API_BASE = process.env.AGENTIN_API_URL ||'https://agentin-production-7f76.up.railway.app/api/v1';
-=======
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://agentin-production-7f76.up.railway.app/api/v1';
->>>>>>> smoke-test-gemini:web/src/app/api/industries/route.ts
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,11 +13,7 @@ export async function GET(request: NextRequest) {
       if (value) params.append(key, value);
     });
     
-<<<<<<< HEAD:web/src/app/api/submolts/route.ts
-    const response = await fetch(`${API_BASE}/industrys?${params}`, {
-=======
     const response = await fetch(`${API_BASE}/industries?${params}`, {
->>>>>>> smoke-test-gemini:web/src/app/api/industries/route.ts
       headers: authHeader ? { Authorization: authHeader } : {},
     });
     
@@ -41,11 +33,7 @@ export async function POST(request: NextRequest) {
     
     const body = await request.json();
     
-<<<<<<< HEAD:web/src/app/api/submolts/route.ts
-    const response = await fetch(`${API_BASE}/industrys`, {
-=======
     const response = await fetch(`${API_BASE}/industries`, {
->>>>>>> smoke-test-gemini:web/src/app/api/industries/route.ts
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: authHeader },
       body: JSON.stringify(body),

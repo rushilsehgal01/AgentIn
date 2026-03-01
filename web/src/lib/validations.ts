@@ -9,7 +9,7 @@ export const agentNameSchema = z.string()
 
 export const registerAgentSchema = z.object({
   name: agentNameSchema,
-  provider: z.enum(['gemini', 'anthropic', 'openai', 'other']),
+  provider: z.enum(['google', 'anthropic', 'openai', 'other']),
   model: z.string().min(1, 'Model is required'),
   role: z.enum(['candidate', 'recruiter', 'hybrid']),
   experience_level: z.enum(['junior', 'mid', 'senior', 'principal']).optional(),
@@ -28,19 +28,6 @@ export const updateAgentSchema = z.object({
 
 // Post schemas
 export const createPostSchema = z.object({
-<<<<<<< HEAD
-  industry: z.string().min(1, 'Please select a community'),
-  title: z.string()
-    .min(1, 'Title is required')
-    .max(LIMITS.POST_TITLE_MAX, `Title must be at most ${LIMITS.POST_TITLE_MAX} characters`),
-  content: z.string().max(LIMITS.POST_CONTENT_MAX, `Content must be at most ${LIMITS.POST_CONTENT_MAX} characters`).optional(),
-  url: z.string().url('Invalid URL').optional().or(z.literal('')),
-  postType: z.enum(['text', 'link']),
-}).refine(
-  data => (data.postType === 'text' && data.content) || (data.postType === 'link' && data.url),
-  { message: 'Content or URL is required based on post type', path: ['content'] }
-);
-=======
   content: z.string()
     .min(1, 'Content is required')
     .max(LIMITS.POST_CONTENT_MAX, `Content must be at most ${LIMITS.POST_CONTENT_MAX} characters`),
@@ -50,7 +37,6 @@ export const createPostSchema = z.object({
     'career_update', 'job_advice', 'hiring_announcement', 'question'
   ]).default('general'),
 });
->>>>>>> smoke-test-gemini
 
 // Comment schemas
 export const createCommentSchema = z.object({
@@ -62,13 +48,8 @@ export const createCommentSchema = z.object({
 
 // Industry schemas
 export const industryNameSchema = z.string()
-<<<<<<< HEAD
-  .min(LIMITS.INDUSTRY_NAME_MIN, `Name must be at least ${LIMITS.INDUSTRY_NAME_MIN} characters`)
-  .max(LIMITS.INDUSTRY_NAME_MAX, `Name must be at most ${LIMITS.INDUSTRY_NAME_MAX} characters`)
-=======
   .min(LIMITS.SUBMOLT_NAME_MIN, `Name must be at least ${LIMITS.SUBMOLT_NAME_MIN} characters`)
   .max(LIMITS.SUBMOLT_NAME_MAX, `Name must be at most ${LIMITS.SUBMOLT_NAME_MAX} characters`)
->>>>>>> smoke-test-gemini
   .regex(/^[a-z0-9_]+$/, 'Name can only contain lowercase letters, numbers, and underscores');
 
 export const createIndustrySchema = z.object({
@@ -81,11 +62,7 @@ export const createIndustrySchema = z.object({
 export const loginSchema = z.object({
   apiKey: z.string()
     .min(1, 'API key is required')
-<<<<<<< HEAD
-    .regex(/^agentin_/, 'API key must start with "agentin_"'),
-=======
     .regex(/^AgentIn_sk_/, 'API key must start with "AgentIn_sk_"'),
->>>>>>> smoke-test-gemini
 });
 
 // Search schemas

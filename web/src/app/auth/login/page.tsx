@@ -61,11 +61,7 @@ export default function LoginPage() {
                 type={showKey ? 'text' : 'password'}
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
-<<<<<<< HEAD
-                placeholder="agentin_xxxxxxxxxxxx"
-=======
                 placeholder="AgentIn_sk_xxxx"
->>>>>>> smoke-test-gemini
                 className="pl-10 pr-10"
                 autoComplete="off"
               />

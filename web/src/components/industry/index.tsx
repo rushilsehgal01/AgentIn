@@ -2,28 +2,6 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-<<<<<<< HEAD
-import { cn, getIndustryUrl } from '@/lib/utils';
-import { Button, Card, Avatar, AvatarImage, AvatarFallback, Badge } from '@/components/ui';
-import { Plus, Users } from 'lucide-react';
-import type { Industry } from '@/types';
-
-interface IndustryListProps {
-  industries: Industry[];
-  isLoading?: boolean;
-}
-
-export function IndustryList({ industries, isLoading }: IndustryListProps) {
-  if (isLoading) {
-    return (
-      <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <Card key={i} className="p-4 animate-pulse">
-            <div className="h-12 bg-muted rounded mb-2" />
-            <div className="h-4 bg-muted rounded mb-2" />
-            <div className="h-4 bg-muted rounded w-2/3" />
-          </Card>
-=======
 import { cn, formatScore, getInitials, getIndustryUrl } from '@/lib/utils';
 import { useAuth } from '@/hooks';
 import { useSubscriptionStore } from '@/store';
@@ -121,100 +99,35 @@ export function IndustryCard({ industry, variant = 'default' }: IndustryCardProp
 }
 
 // Industry List
-<<<<<<<< HEAD:web/src/components/submolt/index.tsx
-export function IndustryList({ industrys, isLoading, variant = 'default' }: { industrys: Industry[]; isLoading?: boolean; variant?: 'default' | 'compact' }) {
-========
 export function IndustryList({ industries, isLoading, variant = 'default' }: { industries: Industry[]; isLoading?: boolean; variant?: 'default' | 'compact' }) {
->>>>>>>> smoke-test-gemini:web/src/components/industry/index.tsx
   if (isLoading) {
     return (
       <div className={cn('space-y-4', variant === 'compact' && 'space-y-1')}>
         {Array.from({ length: 5 }).map((_, i) => (
           <IndustryCardSkeleton key={i} variant={variant} />
->>>>>>> smoke-test-gemini
         ))}
       </div>
     );
   }
-<<<<<<< HEAD
-
-  if (industries.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-muted-foreground">No industries found</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-      {industries.map(industry => (
-        <Link key={industry.id} href={getIndustryUrl(industry.name)} className="group">
-          <Card className="p-4 hover:border-primary transition-colors h-full">
-            <div className="flex items-start justify-between mb-2">
-              <div>
-                <h3 className="font-semibold text-sm group-hover:text-primary transition-colors">
-                  i/{industry.name}
-                </h3>
-                {industry.displayName && (
-                  <p className="text-xs text-muted-foreground">{industry.displayName}</p>
-                )}
-              </div>
-            </div>
-            
-            {industry.description && (
-              <p className="text-xs text-muted-foreground mb-3 line-clamp-2">
-                {industry.description}
-              </p>
-            )}
-            
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Users className="h-3 w-3" />
-              <span>{industry.subscriberCount} subscribers</span>
-            </div>
-          </Card>
-        </Link>
-=======
   
-<<<<<<<< HEAD:web/src/components/submolt/index.tsx
-  if (industrys.length === 0) {
-    return (
-      <div className="text-center py-8">
-        <Hash className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
-        <p className="text-muted-foreground">No industrys found</p>
-========
   if (industries.length === 0) {
     return (
       <div className="text-center py-8">
         <Hash className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
         <p className="text-muted-foreground">No industries found</p>
->>>>>>>> smoke-test-gemini:web/src/components/industry/index.tsx
       </div>
     );
   }
   
   return (
     <div className={cn('space-y-4', variant === 'compact' && 'space-y-1')}>
-<<<<<<<< HEAD:web/src/components/submolt/index.tsx
-      {industrys.map(industry => (
-========
       {industries.map(industry => (
->>>>>>>> smoke-test-gemini:web/src/components/industry/index.tsx
         <IndustryCard key={industry.id} industry={industry} variant={variant} />
->>>>>>> smoke-test-gemini
       ))}
     </div>
   );
 }
 
-<<<<<<< HEAD
-export function CreateIndustryButton() {
-  return (
-    <Button>
-      <Plus className="h-4 w-4 mr-2" />
-      Create Industry
-    </Button>
-=======
 // Industry Card Skeleton
 export function IndustryCardSkeleton({ variant = 'default' }: { variant?: 'default' | 'compact' }) {
   if (variant === 'compact') {
@@ -247,30 +160,18 @@ export function IndustryCardSkeleton({ variant = 'default' }: { variant?: 'defau
 }
 
 // Sidebar Industry Widget
-<<<<<<<< HEAD:web/src/components/submolt/index.tsx
-export function SidebarIndustrys({ industrys, title = 'Communities' }: { industrys: Industry[]; title?: string }) {
-========
 export function SidebarIndustries({ industries, title = 'Communities' }: { industries: Industry[]; title?: string }) {
->>>>>>>> smoke-test-gemini:web/src/components/industry/index.tsx
   return (
     <Card>
       <div className="p-4 border-b">
         <h3 className="font-semibold text-sm">{title}</h3>
       </div>
       <div className="p-2">
-<<<<<<<< HEAD:web/src/components/submolt/index.tsx
-        <IndustryList industrys={industrys} variant="compact" />
-      </div>
-      <div className="p-2 border-t">
-        <Link href="/industrys">
-          <Button variant="ghost" className="w-full text-sm">View all industrys</Button>
-========
         <IndustryList industries={industries} variant="compact" />
       </div>
       <div className="p-2 border-t">
         <Link href="/industries">
           <Button variant="ghost" className="w-full text-sm">View all industries</Button>
->>>>>>>> smoke-test-gemini:web/src/components/industry/index.tsx
         </Link>
       </div>
     </Card>
@@ -284,16 +185,11 @@ export function CreateIndustryButton() {
   if (!isAuthenticated) return null;
   
   return (
-<<<<<<<< HEAD:web/src/components/submolt/index.tsx
-    <Link href="/industrys/create">
-========
     <Link href="/industries/create">
->>>>>>>> smoke-test-gemini:web/src/components/industry/index.tsx
       <Button className="w-full gap-2">
         <Plus className="h-4 w-4" />
         Create Industry
       </Button>
     </Link>
->>>>>>> smoke-test-gemini
   );
 }

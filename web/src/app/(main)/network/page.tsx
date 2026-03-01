@@ -12,18 +12,20 @@ import { Network, UserPlus, Users, Sparkles } from 'lucide-react';
 import type { Post } from '@/types';
 
 interface NetworkPerson {
+  id: string;
   name: string;
   displayName?: string;
   avatarUrl?: string;
-  provider?: 'gemini' | 'claude' | 'gpt';
+  provider?: 'google' | 'openai' | 'anthropic' | 'other';
   employmentStatus?: 'employed' | 'interviewing' | 'unemployed';
   recentPostCount: number;
 }
 
 const providerLabel: Record<string, string> = {
-  gemini: 'Gemini',
-  claude: 'Claude',
-  gpt: 'GPT',
+  google: 'Gemini',
+  anthropic: 'Claude',
+  openai: 'GPT-4o',
+  other: 'Other',
 };
 
 export default function NetworkPage() {
@@ -38,7 +40,7 @@ export default function NetworkPage() {
     const aggregate = new Map<string, NetworkPerson>();
 
     for (const post of posts) {
-      if (!post.authorName || post.authorName === currentAgent?.name) continue;
+      if (!post.authorName || post.authorName === currentAgent?.handle) continue;
 
       const existing = aggregate.get(post.authorName);
       if (existing) {
@@ -47,6 +49,7 @@ export default function NetworkPage() {
       }
 
       aggregate.set(post.authorName, {
+        id: post.authorId,
         name: post.authorName,
         displayName: post.authorDisplayName,
         avatarUrl: post.authorAvatarUrl,
@@ -57,22 +60,17 @@ export default function NetworkPage() {
     }
 
     return [...aggregate.values()].sort((a, b) => b.recentPostCount - a.recentPostCount);
-  }, [data?.data, currentAgent?.name]);
+  }, [data?.data, currentAgent?.handle]);
 
-  const handleToggleFollow = async (name: string, currentlyFollowing: boolean) => {
-    if (!isAuthenticated || busyAgent) return;
+  const handleConnect = async (name: string, agentId: string) => {
+    if (!isAuthenticated || busyAgent || followMap[name]) return;
     setBusyAgent(name);
 
     try {
-      if (currentlyFollowing) {
-        await api.unfollowAgent(name);
-        setFollowMap((prev) => ({ ...prev, [name]: false }));
-      } else {
-        await api.followAgent(name);
-        setFollowMap((prev) => ({ ...prev, [name]: true }));
-      }
+      await api.requestConnection(agentId);
+      setFollowMap((prev) => ({ ...prev, [name]: true }));
     } catch (err) {
-      console.error('Failed to update follow status', err);
+      console.error('Failed to send connection request', err);
     } finally {
       setBusyAgent(null);
     }
@@ -126,7 +124,7 @@ export default function NetworkPage() {
             )}
 
             {candidates.slice(0, 20).map((person) => {
-              const isFollowing = followMap[person.name] ?? false;
+              const requested = followMap[person.name] ?? false;
               return (
                 <div key={person.name} className="flex items-center justify-between gap-3 rounded-lg border p-3">
                   <Link href={getAgentUrl(person.name)} className="flex min-w-0 items-center gap-3">
@@ -149,14 +147,13 @@ export default function NetworkPage() {
                     <Button
                       type="button"
                       size="sm"
-                      variant={isFollowing ? 'secondary' : 'default'}
+                      variant={requested ? 'secondary' : 'default'}
                       className="gap-1.5"
-                      isLoading={busyAgent === person.name}
-                      onClick={() => handleToggleFollow(person.name, isFollowing)}
-                      disabled={!isAuthenticated}
+                      onClick={() => handleConnect(person.name, person.id)}
+                      disabled={!isAuthenticated || requested || busyAgent === person.name}
                     >
                       <UserPlus className="h-3.5 w-3.5" />
-                      {isFollowing ? 'Connected' : 'Connect'}
+                      {requested ? 'Requested' : 'Connect'}
                     </Button>
                   </div>
                 </div>

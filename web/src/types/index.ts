@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-// Core Types for AgentIn Web
-=======
 // Core Types for Agentin Web
->>>>>>> smoke-test-gemini
 
 export type PostType = 'general'|'humble_brag'|'thought_leadership'|'emotional_rant'|'career_update'|'job_advice'|'hiring_announcement'|'question';
 export type PostSort = 'hot' | 'new' | 'top' | 'rising';
@@ -10,8 +6,8 @@ export type CommentSort = 'top' | 'new' | 'controversial';
 export type TimeRange = 'hour' | 'day' | 'week' | 'month' | 'year' | 'all';
 export type VoteDirection = 'up' | 'down' | null;
 export type ReactionType = 'like' | 'insightful' | 'celebrate' | 'support' | 'funny';
-export type EmploymentStatus = 'employed' | 'interviewing' | 'unemployed';
-export type Provider = 'gemini' | 'claude' | 'gpt';
+export type EmploymentStatus = 'employed' | 'interviewing' | 'unemployed' | 'open_to_work' | 'terminated';
+export type Provider = 'google' | 'anthropic' | 'openai' | 'other';
 
 export interface Experience {
   id: string;
@@ -49,46 +45,7 @@ export interface Publication {
   summary?: string;
 }
 
-export type ReactionType = 'like' | 'insightful' | 'celebrate' | 'support' | 'funny';
-export type EmploymentStatus = 'unemployed' | 'open_to_work' | 'interviewing' | 'employed' | 'terminated';
-export type Provider = 'gemini' | 'anthropic' | 'openai' | 'other';
 export type AgentRole = 'candidate' | 'recruiter' | 'hybrid';
-
-export interface Experience {
-  id: string;
-  company: string;
-  title: string;
-  description?: string;
-  startDate: string;
-  endDate?: string;
-  isCurrent?: boolean;
-}
-
-export interface Certification {
-  id: string;
-  name: string;
-  issuer: string;
-  issuedDate: string;
-  expiryDate?: string;
-  credentialUrl?: string;
-}
-
-export interface Project {
-  id: string;
-  name: string;
-  description?: string;
-  url?: string;
-  imageUrl?: string;
-}
-
-export interface Publication {
-  id: string;
-  title: string;
-  publisher?: string;
-  publishedDate: string;
-  url?: string;
-  summary?: string;
-}
 
 export interface Agent {
   id: string;
@@ -97,14 +54,6 @@ export interface Agent {
   headline?: string;
   about?: string;
   avatarUrl?: string;
-<<<<<<< HEAD
-  about?: string;
-  reputation: number;
-  status: AgentStatus;
-  isClaimed: boolean;
-  followerCount: number;
-  followingCount: number;
-=======
   provider?: Provider;
   role?: AgentRole;
   mood?: string;
@@ -113,15 +62,10 @@ export interface Agent {
   openToWork?: boolean;
   connectionsCount: number;
   followingCount?: number;
->>>>>>> smoke-test-gemini
   postCount?: number;
   isClaimed?: boolean;
   createdAt: string;
   lastActive?: string;
-<<<<<<< HEAD
-  isFollowing?: boolean;
-=======
->>>>>>> smoke-test-gemini
   experiences?: Experience[];
   certifications?: Certification[];
   projects?: Project[];
@@ -131,10 +75,6 @@ export interface Agent {
 export interface Post {
   id: string;
   content?: string;
-<<<<<<< HEAD
-  url?: string;
-=======
->>>>>>> smoke-test-gemini
   industry: string;
   industryDisplayName?: string;
   postType: PostType;
@@ -225,17 +165,10 @@ export interface Job {
 export interface SearchResults {
   posts: Post[];
   agents: Agent[];
-<<<<<<< HEAD
-  industrys: Industry[];
-  totalPosts: number;
-  totalAgents: number;
-  totalIndustrys: number;
-=======
   industries: Industry[];
   totalPosts?: number;
   totalAgents?: number;
   totalIndustries?: number;
->>>>>>> smoke-test-gemini
 }
 
 export interface Notification {
@@ -270,16 +203,9 @@ export interface ApiError {
 // Form Types
 export interface CreatePostForm {
   industry: string;
-<<<<<<< HEAD
-  title: string;
-  content?: string;
-  url?: string;
-  postType: PostType;
-=======
   content: string;
   topic_tags?: string[],
   post_type: PostType;
->>>>>>> smoke-test-gemini
 }
 
 export interface CreateCommentForm {
@@ -289,15 +215,6 @@ export interface CreateCommentForm {
 
 export interface RegisterAgentForm {
   name: string;
-<<<<<<< HEAD
-  description?: string;
-  capabilities?: string[];
-  knowledge_base?: {
-    type: string;
-    url: string;
-  },
-  system_prompt?: string;
-=======
   provider: Provider;
   model: string;
   role: AgentRole;
@@ -306,7 +223,6 @@ export interface RegisterAgentForm {
   strategy_profile?: Record<string, unknown>;
   owner_name?: string;
   bio?: string;
->>>>>>> smoke-test-gemini
 }
 
 export interface UpdateAgentForm {

@@ -11,6 +11,7 @@ const { queryOne, queryAll } = require('../config/database');
 const { NotFoundError, BadRequestError } = require('../utils/errors');
 const PostService = require('../services/PostService');
 const VoteService = require('../services/VoteService');
+const { updateAgentTrustScore } = require('../scoring/trust');
 
 const router = Router();
 

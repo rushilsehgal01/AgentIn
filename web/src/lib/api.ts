@@ -1,16 +1,8 @@
-<<<<<<< HEAD
-// AgentIn API Client
-
-import type { Agent, Post, Comment, Industry, SearchResults, PaginatedResponse, CreatePostForm, CreateCommentForm, RegisterAgentForm, PostSort, CommentSort, TimeRange, Job } from '@/types';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-=======
 // Agentin API Client
 
 import type { Agent, Post, Comment, Industry, SearchResults, PaginatedResponse, CreatePostForm, CreateCommentForm, RegisterAgentForm, PostSort, CommentSort, TimeRange, Job } from '@/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://agentin-production-7f76.up.railway.app/api/v1';
->>>>>>> smoke-test-gemini
 
 class ApiError extends Error {
   constructor(public statusCode: number, message: string, public code?: string, public hint?: string) {
@@ -21,31 +13,6 @@ class ApiError extends Error {
 
 class ApiClient {
   private apiKey: string | null = null;
-
-  private normalizeJob(raw: Record<string, unknown>): Job {
-    const sourceValue = (raw.source as string | undefined) || 'synthetic';
-    const normalizedSource: Job['source'] = sourceValue === 'real' ? 'real' : 'synthetic';
-
-    return {
-      id: String(raw.id || ''),
-      title: String(raw.title || 'Untitled Role'),
-      company: String(raw.company || raw.poster_name || raw.poster_handle || 'AgentIn Hiring Partner'),
-      description: (raw.description as string | undefined) || undefined,
-      skills: (raw.skills as string[] | undefined)
-        || (raw.skills_required as string[] | undefined)
-        || [],
-      source: normalizedSource,
-      status: ((raw.status as Job['status']) || 'open'),
-      applicantCount: (raw.applicantCount as number | undefined)
-        ?? (raw.applicant_count as number | undefined)
-        ?? 0,
-      createdAt: String(raw.createdAt || raw.created_at || new Date().toISOString()),
-      closedAt: (raw.closedAt as string | undefined) || (raw.closed_at as string | undefined),
-      salary: (raw.salary as string | undefined) || (raw.comp_range as string | undefined),
-      location: (raw.location as string | undefined) || undefined,
-      jobUrl: (raw.jobUrl as string | undefined) || (raw.job_url as string | undefined),
-    };
-  }
 
   setApiKey(key: string | null) {
     this.apiKey = key;
@@ -78,7 +45,7 @@ class ApiClient {
     }
 
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    const apiKey = this.getApiKey() || "";
+    const apiKey = this.getApiKey();
     if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`;
 
     const response = await fetch(url.toString(), {
@@ -160,17 +127,10 @@ class ApiClient {
   }
 
   async createComment(postId: string, data: CreateCommentForm) {
-<<<<<<< HEAD
-    return this.request<{ comment: Comment }>('POST', '/comments', { 
-      postId, 
-      content: data.content, 
-      parentId: data.parentId 
-=======
     const { parentId, ...rest } = data;
     return this.request<{ comment: Comment }>('POST', `/posts/${postId}/comments`, {
       ...rest,
       ...(parentId ? { parent_comment_id: parentId } : {}),
->>>>>>> smoke-test-gemini
     }).then(r => r.comment);
   }
 
@@ -187,47 +147,15 @@ class ApiClient {
   }
 
   // Industry endpoints
-<<<<<<< HEAD
-  async getIndustrys(options: { sort?: string; limit?: number; offset?: number } = {}) {
-    const query = {
-=======
   async getIndustries(options: { sort?: string; limit?: number; offset?: number } = {}) {
     return this.request<PaginatedResponse<Industry>>('GET', '/industries', undefined, {
->>>>>>> smoke-test-gemini
       sort: options.sort || 'popular',
       limit: options.limit || 50,
       offset: options.offset || 0,
-    };
-
-    return await this.request<PaginatedResponse<Industry>>('GET', '/submolts', undefined, query);
+    });
   }
 
   async getIndustry(name: string) {
-<<<<<<< HEAD
-    return await this.request<{ submolt: Industry }>('GET', `/submolts/${name}`).then(r => r.submolt);
-  }
-
-  async createIndustry(data: { name: string; displayName?: string; description?: string }) {
-    const payload = {
-      name: data.name,
-      display_name: data.displayName,
-      description: data.description,
-    };
-
-    return await this.request<{ submolt: Industry }>('POST', '/submolts', payload).then(r => r.submolt);
-  }
-
-  async subscribeIndustry(name: string) {
-    return await this.request<{ success: boolean }>('POST', `/submolts/${name}/subscribe`);
-  }
-
-  async unsubscribeIndustry(name: string) {
-    return await this.request<{ success: boolean }>('DELETE', `/submolts/${name}/subscribe`);
-  }
-
-  async getIndustryFeed(name: string, options: { sort?: PostSort; limit?: number; offset?: number } = {}) {
-    const query = {
-=======
     return this.request<{ industry: Industry }>('GET', `/industries/${name}`).then(r => r.industry);
   }
 
@@ -245,20 +173,10 @@ class ApiClient {
 
   async getIndustryFeed(name: string, options: { sort?: PostSort; limit?: number; offset?: number } = {}) {
     return this.request<PaginatedResponse<Post>>('GET', `/industries/${name}/feed`, undefined, {
->>>>>>> smoke-test-gemini
       sort: options.sort || 'hot',
       limit: options.limit || 25,
       offset: options.offset || 0,
-    };
-
-    try {
-      return await this.request<PaginatedResponse<Post>>('GET', `/submolts/${name}/feed`, undefined, query);
-    } catch (err) {
-      if (err instanceof ApiError && err.statusCode === 404) {
-        return this.request<PaginatedResponse<Post>>('GET', `/industrys/${name}/feed`, undefined, query);
-      }
-      throw err;
-    }
+    });
   }
 
   // Feed endpoints
@@ -277,50 +195,13 @@ class ApiClient {
 
   // Jobs endpoints
   async getJobs(options: { skills?: string[]; source?: 'real' | 'synthetic'; status?: 'open' | 'closed' | 'filled'; search?: string; limit?: number; offset?: number } = {}) {
-<<<<<<< HEAD
-    const query = {
-=======
     return this.request<{ data: Job[] }>('GET', '/jobs', undefined, {
->>>>>>> smoke-test-gemini
       skills: options.skills?.join(','),
       source: options.source,
       status: options.status,
       search: options.search,
       limit: options.limit || 50,
       offset: options.offset || 0,
-<<<<<<< HEAD
-    };
-
-    try {
-      const response = await this.request<{ jobs: Record<string, unknown>[] }>('GET', '/jobs', undefined, query);
-      return { data: (response.jobs || []).map((job) => this.normalizeJob(job)) };
-    } catch (err) {
-      if (err instanceof ApiError && err.statusCode === 404) {
-        const fallback = await this.request<{ data: Record<string, unknown>[] }>('GET', '/public/jobs', undefined, query);
-        return { data: (fallback.data || []).map((job) => this.normalizeJob(job)) };
-      }
-      throw err;
-    }
-  }
-
-  async getJob(id: string) {
-    try {
-      const response = await this.request<{ job: Record<string, unknown> }>('GET', `/jobs/${id}`);
-      return this.normalizeJob(response.job);
-    } catch (err) {
-      if (err instanceof ApiError && err.statusCode === 404) {
-        return this.request<{ data: Record<string, unknown> }>('GET', `/public/jobs/${id}`).then(r => this.normalizeJob(r.data));
-      }
-      throw err;
-    }
-  }
-
-  async applyToJob(jobId: string, data: { coverLetter?: string; matchArgument?: string }) {
-    return this.request<{ success: boolean }>('POST', `/jobs/${jobId}/apply`, {
-      cover_letter: data.coverLetter,
-      match_argument: data.matchArgument,
-    });
-=======
     });
   }
 
@@ -329,8 +210,10 @@ class ApiClient {
   }
 
   async applyToJob(jobId: string, data: { coverLetter?: string; matchArgument?: string }) {
-    return this.request<{ success: boolean }>('POST', `/jobs/${jobId}/apply`, data);
->>>>>>> smoke-test-gemini
+    return this.request<{ success: boolean }>('POST', `/jobs/${jobId}/apply`, {
+      cover_letter: data.coverLetter,
+      match_argument: data.matchArgument,
+    });
   }
 }
 

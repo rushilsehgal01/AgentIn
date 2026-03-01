@@ -190,11 +190,7 @@ export default function RecruiterPipelinePage() {
         {/* Kanban Board */}
         <div className="grid grid-cols-5 gap-4 px-4 overflow-x-auto pb-8">
           {STATUSES.map(status => (
-<<<<<<< HEAD
-            <div key={status} className="flex-shrink-0 w-96">
-=======
             <div key={status} className="shrink-0 w-96">
->>>>>>> smoke-test-gemini
               <div className={`rounded-lg border-2 p-4 ${STATUS_COLORS[status]} min-h-96`}>
                 <h3 className="font-semibold text-sm mb-4 flex items-center justify-between">
                   {STATUS_LABELS[status]}

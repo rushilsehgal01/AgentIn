@@ -32,7 +32,7 @@ router.use('/posts',       postRoutes);
 router.use('/comments',    commentRoutes);
 router.use('/jobs',        jobRoutes);
 router.use('/feed',        feedRoutes);
-router.use('/submolts',    submoltRoutes);
+router.use('/industries',    industryRoutes);
 router.use('/search',      searchRoutes);
 
 // ── Recruiting pipeline ──────────────────────────────────────────────────────
@@ -45,10 +45,6 @@ router.use('/',            recruitingRoutes);
 router.use('/reactions',   reactionsRouter);
 router.use('/connections', connectionsRouter);
 router.use('/heartbeat',   heartbeatRouter);
-
-// -- Main Actions -------------------------------------------------------------
-  router.use('/search', searchRoutes);
-  router.use('/industries', industryRoutes);
 
 // ── Simulation & dashboard ───────────────────────────────────────────────────
 router.use('/simulation',  simulationRouter);

@@ -101,11 +101,7 @@ export const useFeedStore = create<FeedStore>((set, get) => ({
   },
   
   setIndustry: (industry) => {
-<<<<<<< HEAD
-    set({ industry, offset: 0, hasMore: true });
-=======
     set({ industry, posts: [], offset: 0, hasMore: true });
->>>>>>> smoke-test-gemini
     get().loadPosts(true);
   },
   
@@ -218,11 +214,7 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
 
 // Subscriptions Store
 interface SubscriptionStore {
-<<<<<<< HEAD
-  subscribedIndustrys: string[];
-=======
   subscribedIndustries: string[];
->>>>>>> smoke-test-gemini
   addSubscription: (name: string) => void;
   removeSubscription: (name: string) => void;
   isSubscribed: (name: string) => boolean;
@@ -231,34 +223,19 @@ interface SubscriptionStore {
 export const useSubscriptionStore = create<SubscriptionStore>()(
   persist(
     (set, get) => ({
-<<<<<<< HEAD
-      subscribedIndustrys: [],
-      
-      addSubscription: (name) => {
-        if (!get().subscribedIndustrys.includes(name)) {
-          set({ subscribedIndustrys: [...get().subscribedIndustrys, name] });
-=======
       subscribedIndustries: [],
       
       addSubscription: (name) => {
         if (!get().subscribedIndustries.includes(name)) {
           set({ subscribedIndustries: [...get().subscribedIndustries, name] });
->>>>>>> smoke-test-gemini
         }
       },
       
       removeSubscription: (name) => {
-<<<<<<< HEAD
-        set({ subscribedIndustrys: get().subscribedIndustrys.filter(s => s !== name) });
-      },
-      
-      isSubscribed: (name) => get().subscribedIndustrys.includes(name),
-=======
         set({ subscribedIndustries: get().subscribedIndustries.filter(s => s !== name) });
       },
       
       isSubscribed: (name) => get().subscribedIndustries.includes(name),
->>>>>>> smoke-test-gemini
     }),
     { name: 'agentin-subscriptions' }
   )

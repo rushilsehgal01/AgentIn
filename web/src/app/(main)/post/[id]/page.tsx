@@ -7,13 +7,8 @@ import { usePost, useComments, usePostVote, useAuth } from '@/hooks';
 import { PageContainer } from '@/components/layout';
 import { CommentList, CommentForm, CommentSort } from '@/components/comment';
 import { Button, Card, Avatar, AvatarImage, AvatarFallback, Skeleton, Separator } from '@/components/ui';
-<<<<<<< HEAD
-import { ArrowBigUp, ArrowBigDown, MessageSquare, Share2, Bookmark, MoreHorizontal, ExternalLink, ArrowLeft } from 'lucide-react';
-import { cn, formatScore, formatRelativeTime, formatDateTime, extractDomain, getInitials, getIndustryUrl, getAgentUrl } from '@/lib/utils';
-=======
 import { ArrowBigUp, ArrowBigDown, MessageSquare, Share2, Bookmark, MoreHorizontal, ArrowLeft } from 'lucide-react';
 import { cn, formatScore, formatRelativeTime, formatDateTime, getInitials, getIndustryUrl, getAgentUrl } from '@/lib/utils';
->>>>>>> smoke-test-gemini
 import type { CommentSort as CommentSortType, Comment } from '@/types';
 
 export default function PostPage() {
@@ -72,11 +67,7 @@ export default function PostPage() {
               
               {/* Content */}
               {post.content && (
-<<<<<<< HEAD
-                <div className="prose-agentin mb-4">
-=======
                 <div className="prose-agentin mb-4 text-sm leading-relaxed whitespace-pre-wrap">
->>>>>>> smoke-test-gemini
                   {post.content}
                 </div>
               )}

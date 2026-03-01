@@ -46,13 +46,8 @@ export function AgentCard({ agent, variant = 'default', showFollowButton = true 
           <AvatarFallback className="text-xs">{getInitials(agent.handle)}</AvatarFallback>
         </Avatar>
         <div className="flex-1 min-w-0">
-<<<<<<< HEAD
-          <p className="font-medium text-sm truncate">{agent.displayName || agent.name}</p>
-          <p className="text-xs text-muted-foreground">{formatScore(agent.reputation)} reputation</p>
-=======
           <p className="font-medium text-sm truncate">{agent.displayName || agent.handle}</p>
           <p className="text-xs text-muted-foreground">{formatScore(agent.trustScore)} trust score</p>
->>>>>>> smoke-test-gemini
         </div>
         {showFollowButton && isAuthenticated && !isOwnProfile && (
           <Button size="sm" variant={connected ? 'secondary' : 'default'} onClick={handleConnect} disabled={isLoading || connected} className="h-7 px-2">
@@ -86,11 +81,7 @@ export function AgentCard({ agent, variant = 'default', showFollowButton = true 
             <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
                 <Award className="h-3 w-3" />
-<<<<<<< HEAD
-                <span className={cn(agent.reputation > 0 && 'text-upvote')}>{formatScore(agent.reputation)}</span> reputation
-=======
                 <span className={cn(agent.trustScore > 0 && 'text-upvote')}>{formatScore(agent.trustScore)}</span> trust score
->>>>>>> smoke-test-gemini
               </span>
               <span className="flex items-center gap-1">
                 <Users className="h-3 w-3" />
@@ -175,26 +166,16 @@ export function AgentCardSkeleton({ variant = 'default' }: { variant?: 'default'
 }
 
 // Agent Mini Card (for showing in lists)
-<<<<<<< HEAD
-export function AgentMiniCard({ agent }: { agent: Pick<Agent, 'name' | 'displayName' | 'avatarUrl' | 'reputation'> }) {
-=======
 export function AgentMiniCard({ agent }: { agent: Pick<Agent, 'handle' | 'displayName' | 'avatarUrl' | 'trustScore'> }) {
->>>>>>> smoke-test-gemini
   return (
     <Link href={getAgentUrl(agent.handle)} className="flex items-center gap-2 p-1.5 rounded hover:bg-muted transition-colors">
       <Avatar className="h-6 w-6">
         <AvatarImage src={agent.avatarUrl} />
         <AvatarFallback className="text-[10px]">{getInitials(agent.handle)}</AvatarFallback>
       </Avatar>
-<<<<<<< HEAD
-      <span className="text-sm font-medium">{agent.displayName || agent.name}</span>
-      <span className={cn('text-xs', agent.reputation > 0 ? 'text-upvote' : 'text-muted-foreground')}>
-        {formatScore(agent.reputation)}
-=======
       <span className="text-sm font-medium">{agent.displayName || agent.handle}</span>
       <span className={cn('text-xs', agent.trustScore > 0 ? 'text-upvote' : 'text-muted-foreground')}>
         {formatScore(agent.trustScore)}
->>>>>>> smoke-test-gemini
       </span>
     </Link>
   );
@@ -249,13 +230,8 @@ export function AgentLeaderboard({ agents, title = 'Top Agents' }: { agents: Age
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{agent.displayName || agent.handle}</p>
             </div>
-<<<<<<< HEAD
-            <span className={cn('text-sm font-medium', agent.reputation > 0 && 'text-upvote')}>
-              {formatScore(agent.reputation)}
-=======
             <span className={cn('text-sm font-medium', agent.trustScore > 0 && 'text-upvote')}>
               {formatScore(agent.trustScore)}
->>>>>>> smoke-test-gemini
             </span>
           </Link>
         ))}

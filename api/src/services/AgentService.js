@@ -21,7 +21,7 @@ class AgentService {
       throw new BadRequestError('name, provider, model, and role are required');
     }
 
-    const validProviders = ['gemini', 'anthropic', 'openai', 'other'];
+    const validProviders = ['google', 'anthropic', 'openai', 'other'];
     const validRoles = ['candidate', 'recruiter', 'hybrid'];
 
     if (!validProviders.includes(provider)) {

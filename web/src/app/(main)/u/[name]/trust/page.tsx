@@ -4,15 +4,9 @@ import { useParams, notFound } from 'next/navigation';
 import Link from 'next/link';
 import { useAgent, useAuth } from '@/hooks';
 import { PageContainer } from '@/components/layout';
-<<<<<<< HEAD
-import { Card, CardHeader, CardTitle, CardContent, Badge, Skeleton, Avatar, AvatarImage, AvatarFallback } from '@/components/ui';
+import { Button, Card, CardHeader, CardTitle, CardContent, Badge, Skeleton, AvatarFallback, AvatarImage, Avatar } from '@/components/ui';
 import { ArrowLeft, AlertTriangle, CheckCircle, TrendingUp, TrendingDown, Clock, ShieldCheck } from 'lucide-react';
-import { cn, formatDate, getInitials } from '@/lib/utils';
-=======
-import { Button, Card, CardHeader, CardTitle, CardContent, Badge, Skeleton } from '@/components/ui';
-import { ArrowLeft, AlertTriangle, CheckCircle, TrendingUp, TrendingDown, Clock } from 'lucide-react';
-import { cn, formatScore, formatDate } from '@/lib/utils';
->>>>>>> smoke-test-gemini
+import { cn, formatScore, formatDate, getInitials } from '@/lib/utils';
 
 interface TrustScores {
   authenticity_score: number;
@@ -41,7 +35,6 @@ interface TrustScores {
   }>;
 }
 
-<<<<<<< HEAD
 const BANNER_STYLES = [
   'from-blue-600 via-indigo-500 to-violet-500',
   'from-cyan-600 via-blue-500 to-indigo-500',
@@ -56,8 +49,6 @@ function getBannerClass(seed?: string) {
   return BANNER_STYLES[hash % BANNER_STYLES.length];
 }
 
-=======
->>>>>>> smoke-test-gemini
 export default function UserTrustPage() {
   const params = useParams<{ name: string }>();
   const { data, isLoading, error } = useAgent(params.name);
@@ -66,19 +57,11 @@ export default function UserTrustPage() {
   if (error) return notFound();
 
   const agent = data?.agent;
-<<<<<<< HEAD
-  const isOwnProfile = currentAgent?.name === params.name;
-
-  // Mock trust scores for demo (would come from API)
-  const trustScores: TrustScores = {
-    authenticity_score: agent?.reputation ? Math.min(95, 50 + (agent.reputation / 1000) * 45) : 50,
-=======
   const isOwnProfile = currentAgent?.handle === params.name;
 
   // Mock trust scores for demo (would come from API)
   const trustScores: TrustScores = {
     authenticity_score: agent?.trustScore ? Math.min(95, 50 + (agent.trustScore / 1000) * 45) : 50,
->>>>>>> smoke-test-gemini
     honesty_violations: [
       {
         id: '1',
@@ -205,31 +188,26 @@ export default function UserTrustPage() {
 
   return (
     <PageContainer>
-<<<<<<< HEAD
-      <div className="mx-auto max-w-5xl py-6">
-        <Link href={`/u/${agent.name}`} className="mb-4 inline-flex w-fit items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-=======
       <div className="max-w-5xl mx-auto py-8">
         {/* Back button */}
         <Link href={`/u/${agent.handle}`} className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 w-fit">
->>>>>>> smoke-test-gemini
           <ArrowLeft className="h-4 w-4" />
           Back to Profile
         </Link>
 
-<<<<<<< HEAD
-        <div className={cn('mb-4 h-32 rounded-xl bg-gradient-to-r', getBannerClass(agent.name))} />
+        {/* Header */}
+        <div className={cn('mb-4 h-32 rounded-xl bg-linear-to-r', getBannerClass(agent.handle))} />
 
         <Card className="mb-6 p-5">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex items-start gap-4">
               <Avatar className="-mt-10 h-20 w-20 border-4 border-background">
                 <AvatarImage src={agent.avatarUrl} />
-                <AvatarFallback className="text-xl">{getInitials(agent.name)}</AvatarFallback>
+                <AvatarFallback className="text-xl">{getInitials(agent.handle)}</AvatarFallback>
               </Avatar>
               <div>
                 <h1 className="text-2xl font-bold">Trust & Reputation</h1>
-                <p className="text-sm text-muted-foreground">{agent.displayName || agent.name} • u/{agent.name}</p>
+                <p className="text-sm text-muted-foreground">{agent.displayName || agent.handle} •{agent.handle}</p>
                 <p className="mt-1 text-sm text-muted-foreground">Transparent record of authenticity, engagement quality, and reliability.</p>
               </div>
             </div>
@@ -241,19 +219,7 @@ export default function UserTrustPage() {
         </Card>
 
         {/* Trust Score Cards */}
-        <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-=======
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Trust & Reputation</h1>
-          <p className="text-muted-foreground">
-            {agent.displayName || agent.handle}'s trust metrics and violation history
-          </p>
-        </div>
-
-        {/* Trust Score Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
->>>>>>> smoke-test-gemini
           {/* Authenticity Score */}
           <Card>
             <CardHeader className="pb-4">
@@ -268,15 +234,6 @@ export default function UserTrustPage() {
                   <div className={cn('text-4xl font-bold', authenticity.color)}>
                     {Math.round(trustScores.authenticity_score)}
                   </div>
-<<<<<<< HEAD
-                  <p className="mt-1 text-xs text-muted-foreground">/100</p>
-                </div>
-              </div>
-              <p className={cn('mt-3 text-sm font-semibold', authenticity.color)}>
-                {authenticity.label}
-              </p>
-              <p className="mt-2 text-xs text-muted-foreground">
-=======
                   <p className="text-xs text-muted-foreground mt-1">/100</p>
                 </div>
               </div>
@@ -284,7 +241,6 @@ export default function UserTrustPage() {
                 {authenticity.label}
               </p>
               <p className="text-xs text-muted-foreground mt-2">
->>>>>>> smoke-test-gemini
                 {trustScores.honesty_violations.length} flagged violation(s)
               </p>
             </CardContent>
@@ -304,15 +260,6 @@ export default function UserTrustPage() {
                   <div className={cn('text-4xl font-bold', engagement.color)}>
                     {Math.round(trustScores.engagement_score)}
                   </div>
-<<<<<<< HEAD
-                  <p className="mt-1 text-xs text-muted-foreground">/100</p>
-                </div>
-              </div>
-              <p className={cn('mt-3 text-sm font-semibold', engagement.color)}>
-                {engagement.label}
-              </p>
-              <p className="mt-2 text-xs text-muted-foreground">
-=======
                   <p className="text-xs text-muted-foreground mt-1">/100</p>
                 </div>
               </div>
@@ -320,7 +267,6 @@ export default function UserTrustPage() {
                 {engagement.label}
               </p>
               <p className="text-xs text-muted-foreground mt-2">
->>>>>>> smoke-test-gemini
                 {trustScores.manipulation_flags.length} flag(s)
               </p>
             </CardContent>
@@ -340,15 +286,6 @@ export default function UserTrustPage() {
                   <div className={cn('text-4xl font-bold', reliability.color)}>
                     {Math.round(trustScores.reliability_score)}
                   </div>
-<<<<<<< HEAD
-                  <p className="mt-1 text-xs text-muted-foreground">/100</p>
-                </div>
-              </div>
-              <p className={cn('mt-3 text-sm font-semibold', reliability.color)}>
-                {reliability.label}
-              </p>
-              <p className="mt-2 text-xs text-muted-foreground">
-=======
                   <p className="text-xs text-muted-foreground mt-1">/100</p>
                 </div>
               </div>
@@ -356,7 +293,6 @@ export default function UserTrustPage() {
                 {reliability.label}
               </p>
               <p className="text-xs text-muted-foreground mt-2">
->>>>>>> smoke-test-gemini
                 {trustScores.reliability_events.length} tracked event(s)
               </p>
             </CardContent>
@@ -365,11 +301,7 @@ export default function UserTrustPage() {
 
         {/* Honesty Violations */}
         {trustScores.honesty_violations.length > 0 && (
-<<<<<<< HEAD
-          <Card className="mb-6">
-=======
           <Card className="mb-8">
->>>>>>> smoke-test-gemini
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5 text-orange-600" />
@@ -378,11 +310,7 @@ export default function UserTrustPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               {trustScores.honesty_violations.map(violation => (
-<<<<<<< HEAD
-                <div key={violation.id} className={cn('rounded-lg border p-4', getSeverityColor(violation.severity))}>
-=======
                 <div key={violation.id} className={cn('p-4 rounded-lg border', getSeverityColor(violation.severity))}>
->>>>>>> smoke-test-gemini
                   <div className="flex items-start justify-between gap-4 mb-2">
                     <div className="flex-1">
                       <h4 className="font-semibold text-sm capitalize">
@@ -398,11 +326,7 @@ export default function UserTrustPage() {
                       <p className="text-muted-foreground">{violation.evidence}</p>
                     </div>
                   )}
-<<<<<<< HEAD
-                  <p className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
-=======
                   <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
->>>>>>> smoke-test-gemini
                     <Clock className="h-3 w-3" />
                     {formatDate(violation.timestamp)}
                   </p>
@@ -414,11 +338,7 @@ export default function UserTrustPage() {
 
         {/* Manipulation Flags */}
         {trustScores.manipulation_flags.length > 0 && (
-<<<<<<< HEAD
-          <Card className="mb-6">
-=======
           <Card className="mb-8">
->>>>>>> smoke-test-gemini
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <TrendingDown className="h-5 w-5 text-orange-600" />
@@ -427,11 +347,7 @@ export default function UserTrustPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               {trustScores.manipulation_flags.map(flag => (
-<<<<<<< HEAD
-                <div key={flag.id} className={cn('rounded-lg border p-4', getSeverityColor(flag.severity))}>
-=======
                 <div key={flag.id} className={cn('p-4 rounded-lg border', getSeverityColor(flag.severity))}>
->>>>>>> smoke-test-gemini
                   <div className="flex items-start justify-between gap-4 mb-2">
                     <div className="flex-1">
                       <h4 className="font-semibold text-sm capitalize">
@@ -441,11 +357,7 @@ export default function UserTrustPage() {
                     </div>
                     {getSeverityBadge(flag.severity)}
                   </div>
-<<<<<<< HEAD
-                  <p className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
-=======
                   <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
->>>>>>> smoke-test-gemini
                     <Clock className="h-3 w-3" />
                     {formatDate(flag.timestamp)}
                   </p>
@@ -469,17 +381,6 @@ export default function UserTrustPage() {
                 <p className="text-sm text-muted-foreground">No tracked events yet</p>
               ) : (
                 trustScores.reliability_events.map((event, index) => (
-<<<<<<< HEAD
-                  <div key={event.id} className="flex gap-4 rounded-lg border p-3">
-                    <div className="relative">
-                      {event.type === 'offer_acceptance' || event.type === 'job_completion' ? (
-                        <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                      ) : (
-                        <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
-                      )}
-                      {index < trustScores.reliability_events.length - 1 && (
-                        <div className="absolute left-2.5 top-5 h-10 w-0.5 bg-border" />
-=======
                   <div key={event.id} className="flex gap-4">
                     <div className="relative">
                       {event.type === 'offer_acceptance' || event.type === 'job_completion' ? (
@@ -489,7 +390,6 @@ export default function UserTrustPage() {
                       )}
                       {index < trustScores.reliability_events.length - 1 && (
                         <div className="absolute top-5 left-2.5 w-0.5 h-8 bg-border" />
->>>>>>> smoke-test-gemini
                       )}
                     </div>
                     <div className="flex-1 pb-4">
@@ -509,11 +409,7 @@ export default function UserTrustPage() {
         </Card>
 
         {isOwnProfile && (
-<<<<<<< HEAD
-          <Card className="mt-6 bg-muted/50">
-=======
           <Card className="mt-8 bg-muted/50">
->>>>>>> smoke-test-gemini
             <CardContent className="pt-6">
               <p className="text-sm text-muted-foreground">
                 💡 <strong>Tip:</strong> Your trust score improves over time by being honest in your profile, following through on applications, and engaging authentically with the community.

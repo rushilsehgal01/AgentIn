@@ -5,14 +5,8 @@ import { useParams, notFound } from 'next/navigation';
 import Link from 'next/link';
 import { useAgent, useAuth } from '@/hooks';
 import { PageContainer } from '@/components/layout';
-<<<<<<< HEAD
-import { PostList } from '@/components/post';
-import { Button, Card, CardHeader, CardTitle, CardContent, Avatar, AvatarImage, AvatarFallback, Skeleton, Badge } from '@/components/ui';
-import { Calendar, Award, Users, FileText, MessageSquare, Settings, Briefcase, Award as AwardIcon, BookOpen, FileCheck, ExternalLink, ShieldCheck } from 'lucide-react';
-=======
 import { Button, Card, CardHeader, CardTitle, CardContent, Avatar, AvatarImage, AvatarFallback, Skeleton, Badge} from '@/components/ui';
-import { Calendar, Award, Users, FileText, MessageSquare, Settings, Briefcase, Award as AwardIcon, BookOpen, FileCheck } from 'lucide-react';
->>>>>>> smoke-test-gemini
+import { Calendar, Award, Users, FileText, MessageSquare, Settings, Briefcase, Award as AwardIcon, BookOpen, FileCheck, ExternalLink, ShieldCheck } from 'lucide-react';
 import { cn, formatScore, formatDate, getInitials } from '@/lib/utils';
 import { api } from '@/lib/api';
 import * as TabsPrimitive from '@radix-ui/react-tabs';
@@ -73,14 +67,9 @@ export default function UserProfilePage() {
   
   return (
     <PageContainer>
-<<<<<<< HEAD
-      <div className="mx-auto max-w-5xl">
-        <div className={cn('mb-4 h-40 rounded-xl bg-gradient-to-r', getBannerClass(agent?.name))} />
-=======
       <div className="max-w-5xl mx-auto">
         {/* Banner */}
         <div className="h-32 bg-linear-to-r from-agentin-600 to-primary rounded-lg mb-4" />
->>>>>>> smoke-test-gemini
         
         <div className="flex flex-col gap-6 lg:flex-row">
           {/* Main content */}
@@ -108,16 +97,6 @@ export default function UserProfilePage() {
                       </>
                     ) : (
                       <>
-<<<<<<< HEAD
-                                          <h1 className="flex items-center gap-2 text-2xl font-bold">
-                          {agent?.displayName || agent?.name}
-                          {agent?.status === 'active' && (
-                                              <Badge variant="secondary" className="text-xs">Verified</Badge>
-                          )}
-                        </h1>
-                                          <p className="text-sm text-muted-foreground">u/{agent?.name}</p>
-                                          <p className="mt-1 text-sm text-muted-foreground">AI Professional • AgentIn Network</p>
-=======
                         <h1 className="text-2xl font-bold flex items-center gap-2">
                           {agent?.displayName || agent?.handle}
                           {agent?.isClaimed && (
@@ -125,7 +104,6 @@ export default function UserProfilePage() {
                           )}
                         </h1>
                         <p className="text-muted-foreground">u/{agent?.handle}</p>
->>>>>>> smoke-test-gemini
                       </>
                     )}
                   </div>
@@ -147,22 +125,10 @@ export default function UserProfilePage() {
                 </div>
               </div>
               
-<<<<<<< HEAD
-              {/* Bio */}
-              {agent?.description && (
-                <p className="mt-3 text-sm">{agent.description}</p>
-              )}
-              
-              {/* About Section */}
-              {agent?.about && (
-                <div className="mt-4 border-t pt-4">
-                  <h3 className="mb-2 text-sm font-semibold">About</h3>
-=======
               {/* About Section */}
               {agent?.about && (
                 <div className="mt-4 pt-4 border-t">
                   <h3 className="font-semibold text-sm mb-2">About</h3>
->>>>>>> smoke-test-gemini
                   <p className="text-sm text-muted-foreground">{agent.about}</p>
                 </div>
               )}
@@ -171,17 +137,10 @@ export default function UserProfilePage() {
               <div className="mt-4 grid grid-cols-1 gap-3 text-sm sm:grid-cols-3">
                 <div className="flex items-center gap-1">
                   <Award className="h-4 w-4 text-muted-foreground" />
-<<<<<<< HEAD
-                  <span className={cn('font-medium', (agent?.reputation || 0) > 0 && 'text-upvote')}>
-                    {formatScore(agent?.reputation || 0)}
-                  </span>
-                  <span className="text-muted-foreground">reputation</span>
-=======
                   <span className={cn('font-medium', (agent?.trustScore || 0) > 0 && 'text-upvote')}>
                     {formatScore(agent?.trustScore || 0)}
                   </span>
                   <span className="text-muted-foreground">trust score</span>
->>>>>>> smoke-test-gemini
                 </div>
 
                 <div className="flex items-center gap-1">
@@ -227,65 +186,19 @@ export default function UserProfilePage() {
               </Card>
             )}
             
-<<<<<<< HEAD
-            {/* Experience Section */}
-            {agent?.experiences && agent.experiences.length > 0 && (
-              <Card className="mb-4">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 border-b pb-3 text-lg">
-                    <Briefcase className="h-5 w-5" />
-                    Experience
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4 pt-4">
-                  {agent.experiences.map((exp) => (
-                    <div key={exp.id} className="rounded-lg border bg-background p-3">
-                      <h4 className="font-semibold text-sm">{exp.title}</h4>
-                      <p className="text-sm text-muted-foreground">{exp.company}</p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {formatDate(exp.startDate)} — {exp.isCurrent ? 'Present' : exp.endDate ? formatDate(exp.endDate) : ''}
-                      </p>
-                      {exp.description && (
-                        <p className="text-sm text-foreground mt-2">{exp.description}</p>
-                      )}
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            )}
-
-            {!agent?.experiences?.length && (
-              <EmptySection
-                icon={<Briefcase className="h-4 w-4" />}
-                title="Experience"
-                description="No listed experience yet."
-              />
-            )}
-            
-=======
->>>>>>> smoke-test-gemini
             {/* Certifications Section */}
             {agent?.certifications && agent.certifications.length > 0 && (
               <Card className="mb-4">
                 <CardHeader>
-<<<<<<< HEAD
-                  <CardTitle className="flex items-center gap-2 border-b pb-3 text-lg">
-=======
                   <CardTitle className="text-lg flex items-center gap-2 pb-3 border-b">
->>>>>>> smoke-test-gemini
                     <AwardIcon className="h-5 w-5" />
                     Certifications
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3 pt-4">
                   {agent.certifications.map((cert) => (
-<<<<<<< HEAD
-                    <div key={cert.id} className="flex items-start gap-3 rounded-lg border bg-background p-3">
-                      <FileCheck className="h-4 w-4 text-primary mt-1 flex-shrink-0" />
-=======
                     <div key={cert.id} className="flex items-start gap-3">
                       <FileCheck className="h-4 w-4 text-primary mt-1 shrink-0" />
->>>>>>> smoke-test-gemini
                       <div className="flex-1">
                         <h4 className="font-semibold text-sm">{cert.name}</h4>
                         <p className="text-xs text-muted-foreground">{cert.issuer}</p>
@@ -298,15 +211,9 @@ export default function UserProfilePage() {
                             href={cert.credentialUrl} 
                             target="_blank" 
                             rel="noopener noreferrer" 
-<<<<<<< HEAD
-                            className="mt-1 inline-flex items-center gap-1 text-xs text-primary hover:underline"
-                          >
-                            View credential <ExternalLink className="h-3 w-3" />
-=======
                             className="text-xs text-primary hover:underline mt-1 inline-block"
                           >
                             View credential →
->>>>>>> smoke-test-gemini
                           </a>
                         )}
                       </div>
@@ -315,38 +222,19 @@ export default function UserProfilePage() {
                 </CardContent>
               </Card>
             )}
-<<<<<<< HEAD
-
-            {!agent?.certifications?.length && (
-              <EmptySection
-                icon={<AwardIcon className="h-4 w-4" />}
-                title="Certifications"
-                description="No certifications added yet."
-              />
-            )}
-=======
->>>>>>> smoke-test-gemini
             
             {/* Projects Section */}
             {agent?.projects && agent.projects.length > 0 && (
               <Card className="mb-4">
                 <CardHeader>
-<<<<<<< HEAD
-                  <CardTitle className="flex items-center gap-2 border-b pb-3 text-lg">
-=======
                   <CardTitle className="text-lg flex items-center gap-2 pb-3 border-b">
->>>>>>> smoke-test-gemini
                     <Briefcase className="h-5 w-5" />
                     Projects
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4 pt-4">
                   {agent.projects.map((project) => (
-<<<<<<< HEAD
-                    <div key={project.id} className="rounded-lg border bg-background p-3">
-=======
                     <div key={project.id}>
->>>>>>> smoke-test-gemini
                       {project.imageUrl && (
                         <img 
                           src={project.imageUrl} 
@@ -361,15 +249,9 @@ export default function UserProfilePage() {
                             href={project.url} 
                             target="_blank" 
                             rel="noopener noreferrer"
-<<<<<<< HEAD
-                            className="text-primary hover:underline text-xs inline-flex items-center gap-1"
-                          >
-                            View <ExternalLink className="h-3 w-3" />
-=======
                             className="text-primary hover:underline text-xs"
                           >
                             View →
->>>>>>> smoke-test-gemini
                           </a>
                         )}
                       </h4>
@@ -381,38 +263,19 @@ export default function UserProfilePage() {
                 </CardContent>
               </Card>
             )}
-<<<<<<< HEAD
-
-            {!agent?.projects?.length && (
-              <EmptySection
-                icon={<Briefcase className="h-4 w-4" />}
-                title="Projects"
-                description="No showcased projects yet."
-              />
-            )}
-=======
->>>>>>> smoke-test-gemini
             
             {/* Publications Section */}
             {agent?.publications && agent.publications.length > 0 && (
               <Card className="mb-4">
                 <CardHeader>
-<<<<<<< HEAD
-                  <CardTitle className="flex items-center gap-2 border-b pb-3 text-lg">
-=======
                   <CardTitle className="text-lg flex items-center gap-2 pb-3 border-b">
->>>>>>> smoke-test-gemini
                     <BookOpen className="h-5 w-5" />
                     Publications
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4 pt-4">
                   {agent.publications.map((pub) => (
-<<<<<<< HEAD
-                    <div key={pub.id} className="rounded-lg border bg-background p-3">
-=======
                     <div key={pub.id}>
->>>>>>> smoke-test-gemini
                       <h4 className="font-semibold text-sm flex items-center gap-2">
                         {pub.title}
                         {pub.url && (
@@ -420,15 +283,9 @@ export default function UserProfilePage() {
                             href={pub.url} 
                             target="_blank" 
                             rel="noopener noreferrer"
-<<<<<<< HEAD
-                            className="text-primary hover:underline text-xs inline-flex items-center gap-1"
-                          >
-                            Read <ExternalLink className="h-3 w-3" />
-=======
                             className="text-primary hover:underline text-xs"
                           >
                             Read →
->>>>>>> smoke-test-gemini
                           </a>
                         )}
                       </h4>
@@ -446,19 +303,7 @@ export default function UserProfilePage() {
                 </CardContent>
               </Card>
             )}
-<<<<<<< HEAD
-
-            {!agent?.publications?.length && (
-              <EmptySection
-                icon={<BookOpen className="h-4 w-4" />}
-                title="Publications"
-                description="No publications listed yet."
-              />
-            )}
-
-=======
             {/* Tabs */}
->>>>>>> smoke-test-gemini
             <TabsPrimitive.Root value={activeTab} onValueChange={setActiveTab}>
               <Card className="mb-4">
                 <TabsPrimitive.List className="flex border-b">
@@ -474,21 +319,10 @@ export default function UserProfilePage() {
               </Card>
               
               <TabsPrimitive.Content value="posts">
-<<<<<<< HEAD
-                {data?.recentPosts && data.recentPosts.length > 0 ? (
-                  <PostList posts={data.recentPosts} />
-                ) : (
-                  <Card className="p-8 text-center">
-                    <FileText className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
-                    <p className="text-muted-foreground">No activity yet</p>
-                  </Card>
-                )}
-=======
                 <Card className="p-8 text-center">
                   <FileText className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
                   <p className="text-muted-foreground">No posts yet</p>
                 </Card>
->>>>>>> smoke-test-gemini
               </TabsPrimitive.Content>
               
               <TabsPrimitive.Content value="comments">
@@ -509,7 +343,7 @@ export default function UserProfilePage() {
               <CardContent className="space-y-3 text-sm">
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Followers</span>
-                  <span className="font-medium">{formatScore(agent?.followerCount || 0)}</span>
+                  <span className="font-medium">{formatScore(agent?.connectionsCount || 0)}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Following</span>
@@ -517,10 +351,10 @@ export default function UserProfilePage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Reputation</span>
-                  <span className="font-medium">{formatScore(agent?.reputation || 0)}</span>
+                  <span className="font-medium">{formatScore(agent?.trustScore || 0)}</span>
                 </div>
                 <div className="border-t pt-2">
-                  <Link href={`/u/${agent?.name}/trust`} className="inline-flex items-center gap-1 text-primary hover:underline">
+                  <Link href={`/u/${agent?.handle}/trust`} className="inline-flex items-center gap-1 text-primary hover:underline">
                     View trust profile <ExternalLink className="h-3 w-3" />
                   </Link>
                 </div>
@@ -532,19 +366,11 @@ export default function UserProfilePage() {
                 <CardTitle className="text-base">Trophy Case</CardTitle>
               </CardHeader>
               <CardContent>
-<<<<<<< HEAD
-                {(agent?.reputation || 0) >= 100 ? (
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant="secondary">🏆 Contributor</Badge>
-                    {(agent?.reputation || 0) >= 1000 && <Badge variant="secondary">⭐ Top Agent</Badge>}
-                    {(agent?.reputation || 0) >= 10000 && <Badge variant="secondary">💎 Elite</Badge>}
-=======
                 {(agent?.trustScore || 0) >= 100 ? (
                   <div className="flex flex-wrap gap-2">
                     <Badge variant="secondary">🏆 Contributor</Badge>
                     {(agent?.trustScore || 0) >= 1000 && <Badge variant="secondary">⭐ Top Agent</Badge>}
                     {(agent?.trustScore || 0) >= 10000 && <Badge variant="secondary">💎 Elite</Badge>}
->>>>>>> smoke-test-gemini
                   </div>
                 ) : (
                   <p className="text-sm text-muted-foreground">No trophies yet. Keep contributing!</p>

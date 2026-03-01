@@ -9,10 +9,7 @@ import { PostCard } from '@/components/post';
 import { Input, Card, CardHeader, CardTitle, CardContent, Avatar, AvatarImage, AvatarFallback, Skeleton, Badge } from '@/components/ui';
 import { Search, Users, Hash, FileText, X } from 'lucide-react';
 import { cn, formatScore, getInitials, getAgentUrl, getIndustryUrl } from '@/lib/utils';
-<<<<<<< HEAD
-=======
 import type { Agent } from '@/types';
->>>>>>> smoke-test-gemini
 import * as TabsPrimitive from '@radix-ui/react-tabs';
 
 export default function SearchPage() {
@@ -31,11 +28,7 @@ export default function SearchPage() {
     }
   }, [debouncedQuery, router]);
   
-<<<<<<< HEAD
-  const totalResults = (data?.posts?.length || 0) + (data?.agents?.length || 0) + (data?.industrys?.length || 0);
-=======
   const totalResults = (data?.posts?.length || 0) + (data?.agents?.length || 0) + (data?.industries?.length || 0);
->>>>>>> smoke-test-gemini
   
   return (
     <PageContainer>
@@ -46,11 +39,7 @@ export default function SearchPage() {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <input
               type="text"
-<<<<<<< HEAD
-              placeholder="Search posts, agents, and industrys..."
-=======
               placeholder="Search posts, agents, and industries..."
->>>>>>> smoke-test-gemini
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="w-full h-12 pl-12 pr-12 rounded-lg border bg-background text-lg focus:outline-none focus:ring-2 focus:ring-ring"
@@ -85,17 +74,10 @@ export default function SearchPage() {
                     Agents
                     {data?.agents && <Badge variant="secondary" className="text-xs">{data.agents.length}</Badge>}
                   </TabsPrimitive.Trigger>
-<<<<<<< HEAD
-                  <TabsPrimitive.Trigger value="industrys" className={cn('flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors', activeTab === 'industrys' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground')}>
-                    <Hash className="h-4 w-4" />
-                    Industrys
-                    {data?.industrys && <Badge variant="secondary" className="text-xs">{data.industrys.length}</Badge>}
-=======
                   <TabsPrimitive.Trigger value="industries" className={cn('flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors', activeTab === 'industries' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground')}>
                     <Hash className="h-4 w-4" />
                     Industries
                     {data?.industries && <Badge variant="secondary" className="text-xs">{data.industries.length}</Badge>}
->>>>>>> smoke-test-gemini
                   </TabsPrimitive.Trigger>
                 </TabsPrimitive.List>
               </Card>
@@ -128,34 +110,16 @@ export default function SearchPage() {
                       </Card>
                     )}
                     
-<<<<<<< HEAD
-                    {/* Industrys section */}
-                    {data?.industrys && data.industrys.length > 0 && (
-                      <Card>
-                        <CardHeader className="pb-2">
-                          <CardTitle className="text-base flex items-center gap-2">
-                            <Hash className="h-4 w-4" /> Industrys
-=======
                     {/* Industries section */}
                     {data?.industries && data.industries.length > 0 && (
                       <Card>
                         <CardHeader className="pb-2">
                           <CardTitle className="text-base flex items-center gap-2">
                             <Hash className="h-4 w-4" /> Industries
->>>>>>> smoke-test-gemini
                           </CardTitle>
                         </CardHeader>
                         <CardContent>
                           <div className="grid gap-2">
-<<<<<<< HEAD
-                            {data.industrys.slice(0, 3).map(industry => (
-                              <IndustryResult key={industry.id} industry={industry} />
-                            ))}
-                          </div>
-                          {data.industrys.length > 3 && (
-                            <button onClick={() => setActiveTab('industrys')} className="mt-2 text-sm text-primary hover:underline">
-                              View all {data.industrys.length} industrys →
-=======
                             {data.industries.slice(0, 3).map(industry => (
                               <IndustryResult key={industry.id} industry={industry} />
                             ))}
@@ -163,7 +127,6 @@ export default function SearchPage() {
                           {data.industries.length > 3 && (
                             <button onClick={() => setActiveTab('industries')} className="mt-2 text-sm text-primary hover:underline">
                               View all {data.industries.length} industries →
->>>>>>> smoke-test-gemini
                             </button>
                           )}
                         </CardContent>
@@ -207,30 +170,17 @@ export default function SearchPage() {
                     )}
                   </TabsPrimitive.Content>
                   
-<<<<<<< HEAD
-                  <TabsPrimitive.Content value="industrys" className="space-y-2">
-                    {data?.industrys && data.industrys.length > 0 ? (
-                      <Card>
-                        <CardContent className="pt-4">
-                          <div className="grid gap-2">
-                            {data.industrys.map(industry => <IndustryResult key={industry.id} industry={industry} />)}
-=======
                   <TabsPrimitive.Content value="industries" className="space-y-2">
                     {data?.industries && data.industries.length > 0 ? (
                       <Card>
                         <CardContent className="pt-4">
                           <div className="grid gap-2">
                             {data.industries.map(industry => <IndustryResult key={industry.id} industry={industry} />)}
->>>>>>> smoke-test-gemini
                           </div>
                         </CardContent>
                       </Card>
                     ) : (
-<<<<<<< HEAD
-                      <NoResults query={debouncedQuery} type="industrys" />
-=======
                       <NoResults query={debouncedQuery} type="industries" />
->>>>>>> smoke-test-gemini
                     )}
                   </TabsPrimitive.Content>
                 </>
@@ -249,11 +199,7 @@ export default function SearchPage() {
   );
 }
 
-<<<<<<< HEAD
-function AgentResult({ agent }: { agent: { id: string; name: string; displayName?: string; avatarUrl?: string; reputation: number; description?: string } }) {
-=======
 function AgentResult({ agent }: { agent: Agent }) {
->>>>>>> smoke-test-gemini
   return (
     <Link href={getAgentUrl(agent.handle)} className="flex items-center gap-3 p-2 rounded-md hover:bg-muted transition-colors">
       <Avatar className="h-10 w-10">
@@ -261,13 +207,8 @@ function AgentResult({ agent }: { agent: Agent }) {
         <AvatarFallback>{getInitials(agent.handle)}</AvatarFallback>
       </Avatar>
       <div className="flex-1 min-w-0">
-<<<<<<< HEAD
-        <p className="font-medium truncate">{agent.displayName || agent.name}</p>
-        <p className="text-sm text-muted-foreground">u/{agent.name} • {formatScore(agent.reputation)} reputation</p>
-=======
         <p className="font-medium truncate">{agent.displayName || agent.handle}</p>
         <p className="text-sm text-muted-foreground">u/{agent.handle} • {formatScore(agent.trustScore)} reputation</p>
->>>>>>> smoke-test-gemini
       </div>
     </Link>
   );

@@ -3,13 +3,9 @@ import useSWR, { SWRConfiguration } from 'swr';
 import { useInView } from 'react-intersection-observer';
 import { api, ApiError } from '@/lib/api';
 import { useAuthStore, useFeedStore, useUIStore } from '@/store';
-<<<<<<< HEAD
-import type { Post, Comment, Agent, Industry, PostSort, CommentSort, Job } from '@/types';
-import { agentNameSchema } from '@/lib/validations';
-=======
 import type { Post, Comment, Agent, Industry, PostSort, CommentSort } from '@/types';
->>>>>>> smoke-test-gemini
 import { debounce } from '@/lib/utils';
+import { agentNameSchema } from '@/lib/validations';
 
 // SWR fetcher
 const fetcher = <T>(fn: () => Promise<T>) => fn();
@@ -106,11 +102,7 @@ export function useIndustry(name: string, config?: SWRConfiguration) {
 }
 
 export function useIndustries(config?: SWRConfiguration) {
-<<<<<<< HEAD
-  return useSWR<{ data: Industry[] }>(['industrys'], () => api.getIndustrys(), config);
-=======
   return useSWR<{ data: Industry[] }>(['industries'], () => api.getIndustries(), config);
->>>>>>> smoke-test-gemini
 }
 
 // Search hook

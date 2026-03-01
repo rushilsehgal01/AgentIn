@@ -3,9 +3,9 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { cn, formatScore, formatRelativeTime, getInitials, getAgentUrl } from '@/lib/utils';
-import { useAuth, useToggle } from '@/hooks';
+import { useCommentVote, useAuth, useToggle } from '@/hooks';
 import { Button, Avatar, AvatarImage, AvatarFallback, Textarea, Skeleton } from '@/components/ui';
-import { MessageSquare, MoreHorizontal, ChevronDown, ChevronUp, Flag, Trash2, Edit2, Reply } from 'lucide-react';
+import { ArrowBigUp, ArrowBigDown, MessageSquare, MoreHorizontal, ChevronDown, ChevronUp, Flag, Trash2, Edit2, Reply } from 'lucide-react';
 import { api } from '@/lib/api';
 import type { Comment, CreateCommentForm } from '@/types';
 
@@ -18,21 +18,22 @@ interface CommentProps {
 
 export function CommentItem({ comment, postId, onReply, onDelete }: CommentProps) {
   const { agent, isAuthenticated } = useAuth();
+  const { vote, isVoting } = useCommentVote(comment.id);
   const [isCollapsed, toggleCollapsed] = useToggle(false);
   const [isReplying, setIsReplying] = React.useState(false);
   const [showMenu, setShowMenu] = React.useState(false);
   const [replyContent, setReplyContent] = React.useState('');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-<<<<<<< HEAD
-
-  const isAuthor = agent?.name === comment.authorName;
-=======
   
   const isUpvoted = comment.userVote === 'up';
   const isDownvoted = comment.userVote === 'down';
   const isAuthor = agent?.handle === comment.authorName;
->>>>>>> smoke-test-gemini
   const hasReplies = comment.replies && comment.replies.length > 0;
+  
+  const handleVote = async (direction: 'up' | 'down') => {
+    if (!isAuthenticated) return;
+    await vote(direction);
+  };
   
   const handleReply = async () => {
     if (!replyContent.trim() || isSubmitting) return;
@@ -79,18 +80,11 @@ export function CommentItem({ comment, postId, onReply, onDelete }: CommentProps
       {/* Content */}
       {!isCollapsed && (
         <>
-          <div className="prose-agentin text-sm py-1">
+          <div className="prose-moltbook text-sm py-1">
             {comment.content}
           </div>
           
           {/* Actions */}
-<<<<<<< HEAD
-          <div className="mt-1 flex items-center gap-1 text-xs">
-            <span className={cn('rounded-md px-2 py-1 text-muted-foreground', comment.score > 0 && 'text-reputation-positive', comment.score < 0 && 'text-reputation-negative')}>
-              {formatScore(comment.score)} reactions
-            </span>
-
-=======
           <div className="flex items-center gap-1 mt-1">
             <div className="flex items-center gap-0.5">
               <button
@@ -112,16 +106,15 @@ export function CommentItem({ comment, postId, onReply, onDelete }: CommentProps
               </button>
             </div>
             
->>>>>>> smoke-test-gemini
             {isAuthenticated && (
-              <button onClick={() => setIsReplying(!isReplying)} className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-muted">
+              <button onClick={() => setIsReplying(!isReplying)} className="flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground hover:bg-muted rounded">
                 <Reply className="h-3.5 w-3.5" />
                 Reply
               </button>
             )}
             
             <div className="relative">
-              <button onClick={() => setShowMenu(!showMenu)} className="rounded-md p-1 text-muted-foreground hover:bg-muted">
+              <button onClick={() => setShowMenu(!showMenu)} className="p-1 text-muted-foreground hover:bg-muted rounded">
                 <MoreHorizontal className="h-4 w-4" />
               </button>
               
@@ -152,7 +145,7 @@ export function CommentItem({ comment, postId, onReply, onDelete }: CommentProps
                 value={replyContent}
                 onChange={(e) => setReplyContent(e.target.value)}
                 placeholder="Write a reply..."
-                className="min-h-[80px] text-sm"
+                className="min-h-20 text-sm"
               />
               <div className="flex justify-end gap-2 mt-2">
                 <Button variant="ghost" size="sm" onClick={() => setIsReplying(false)}>Cancel</Button>
@@ -291,7 +284,7 @@ export function CommentForm({ postId, parentId, onSubmit, onCancel }: { postId: 
         value={content}
         onChange={(e) => setContent(e.target.value)}
         placeholder="What are your thoughts?"
-        className="min-h-[100px]"
+        className="min-h-25"
       />
       <div className="flex justify-end gap-2 mt-2">
         {onCancel && <Button type="button" variant="ghost" onClick={onCancel}>Cancel</Button>}
