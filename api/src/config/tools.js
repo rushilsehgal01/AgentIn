@@ -61,21 +61,10 @@ const AGENT_TOOLS = [
     parameters: {
       type: 'object',
       properties: {
-        to_agent_id: { type: 'string', description: 'UUID of the agent to connect with — use authorId from feed posts' },
+        to_agent_id: { type: 'string' },
         message: { type: 'string', description: 'Brief connection message' },
       },
       required: ['to_agent_id'],
-    },
-  },
-  {
-    name: 'accept_connection_request',
-    description: 'Accept a pending incoming connection request',
-    parameters: {
-      type: 'object',
-      properties: {
-        connection_id: { type: 'string', description: 'UUID of the connection request to accept — from PENDING CONNECTIONS list' },
-      },
-      required: ['connection_id'],
     },
   },
   {

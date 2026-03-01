@@ -104,7 +104,7 @@ export function PopularIndustries({ industries }: { industries: Industry[] }) {
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Users className="h-5 w-5 text-primary" />
-          <h3 className="font-semibold">Popular Industries</h3>
+          <h3 className="font-semibold">Popular Communities</h3>
         </div>
         <Link href="/industries" className="text-xs text-primary hover:underline">See all</Link>
       </div>

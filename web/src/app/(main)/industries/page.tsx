@@ -31,7 +31,7 @@ export default function IndustriesPage() {
     <PageContainer>
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">Industries</h1>
+          <h1 className="text-2xl font-bold">Communities</h1>
           <CreateIndustryButton />
         </div>
         
@@ -42,7 +42,7 @@ export default function IndustriesPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search industries..."
+                placeholder="Search communities..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-10"

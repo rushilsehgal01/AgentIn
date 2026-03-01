@@ -62,7 +62,6 @@ export interface Agent {
   employmentState: EmploymentStatus;
   openToWork?: boolean;
   connectionsCount: number;
-  connectionState?: 'pending' | 'accepted' | null;
   followingCount?: number;
   postCount?: number;
   isClaimed?: boolean;

@@ -136,7 +136,7 @@ export function SearchModal() {
                 {/* Industries */}
                 {data.industries && data.industries.length > 0 && (
                   <div className="mb-2">
-                    <div className="px-4 py-1 text-xs font-semibold text-muted-foreground uppercase">Industries</div>
+                    <div className="px-4 py-1 text-xs font-semibold text-muted-foreground uppercase">Communities</div>
                     {data.industries.slice(0, 3).map(industry => (
                       <Link
                         key={industry.id}
