@@ -1,10 +1,20 @@
 /**
  * Authentication middleware
  */
-
-const { extractToken, validateApiKey } = require('../utils/auth');
-const { UnauthorizedError, ForbiddenError } = require('../utils/errors');
+const { extractToken } = require('../utils/auth');
+const { UnauthorizedError } = require('../utils/errors');
 const AgentService = require('../services/AgentService');
+
+/**
+ * Validate AgentIn API key format
+ * Must start with AgentIn_sk_ followed by 64 hex characters
+ */
+function validateApiKey(token) {
+  if (!token || typeof token !== 'string') return false;
+  if (!token.startsWith('AgentIn_sk_')) return false;
+  const body = token.slice('AgentIn_sk_'.length);
+  return /^[0-9a-f]{64}$/i.test(body);
+}
 
 /**
  * Require authentication
@@ -14,66 +24,34 @@ async function requireAuth(req, res, next) {
   try {
     const authHeader = req.headers.authorization;
     const token = extractToken(authHeader);
-    
+
     if (!token) {
       throw new UnauthorizedError(
         'No authorization token provided',
         "Add 'Authorization: Bearer YOUR_API_KEY' header"
       );
     }
-    
+
     if (!validateApiKey(token)) {
       throw new UnauthorizedError(
         'Invalid token format',
-        'Token should start with "moltbook_" followed by 64 hex characters'
+        'Token should start with "AgentIn_sk_" followed by 64 hex characters'
       );
     }
-    
+
     const agent = await AgentService.findByApiKey(token);
-    
+
     if (!agent) {
       throw new UnauthorizedError(
         'Invalid or expired token',
-        'Check your API key or register for a new one'
+        'Check your API key or register a new agent'
       );
     }
-    
-    // Attach agent to request (without sensitive data)
-    req.agent = {
-      id: agent.id,
-      name: agent.name,
-      displayName: agent.display_name,
-      description: agent.description,
-      karma: agent.karma,
-      status: agent.status,
-      isClaimed: agent.is_claimed,
-      createdAt: agent.created_at
-    };
-    req.token = token;
-    
-    next();
-  } catch (error) {
-    next(error);
-  }
-}
 
-/**
- * Require claimed status
- * Must be used after requireAuth
- */
-async function requireClaimed(req, res, next) {
-  try {
-    if (!req.agent) {
-      throw new UnauthorizedError('Authentication required');
-    }
-    
-    if (!req.agent.isClaimed) {
-      throw new ForbiddenError(
-        'Agent not yet claimed',
-        'Have your human visit the claim URL and verify via tweet'
-      );
-    }
-    
+    // Attach full agent to request
+    req.agent = agent;
+    req.token = token;
+
     next();
   } catch (error) {
     next(error);
@@ -88,35 +66,19 @@ async function optionalAuth(req, res, next) {
   try {
     const authHeader = req.headers.authorization;
     const token = extractToken(authHeader);
-    
+
     if (!token || !validateApiKey(token)) {
       req.agent = null;
       req.token = null;
       return next();
     }
-    
+
     const agent = await AgentService.findByApiKey(token);
-    
-    if (agent) {
-      req.agent = {
-        id: agent.id,
-        name: agent.name,
-        displayName: agent.display_name,
-        description: agent.description,
-        karma: agent.karma,
-        status: agent.status,
-        isClaimed: agent.is_claimed,
-        createdAt: agent.created_at
-      };
-      req.token = token;
-    } else {
-      req.agent = null;
-      req.token = null;
-    }
-    
+    req.agent = agent || null;
+    req.token = agent ? token : null;
+
     next();
   } catch (error) {
-    // On error, continue without auth
     req.agent = null;
     req.token = null;
     next();
@@ -125,6 +87,5 @@ async function optionalAuth(req, res, next) {
 
 module.exports = {
   requireAuth,
-  requireClaimed,
   optionalAuth
 };
