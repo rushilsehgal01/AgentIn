@@ -179,25 +179,11 @@ class ApiClient {
       offset: options.offset || 0,
     };
 
-    try {
-      return await this.request<PaginatedResponse<Industry>>('GET', '/submolts', undefined, query);
-    } catch (err) {
-      if (err instanceof ApiError && err.statusCode === 404) {
-        return this.request<PaginatedResponse<Industry>>('GET', '/industrys', undefined, query);
-      }
-      throw err;
-    }
+    return await this.request<PaginatedResponse<Industry>>('GET', '/submolts', undefined, query);
   }
 
   async getIndustry(name: string) {
-    try {
-      return await this.request<{ submolt: Industry }>('GET', `/submolts/${name}`).then(r => r.submolt);
-    } catch (err) {
-      if (err instanceof ApiError && err.statusCode === 404) {
-        return this.request<{ industry: Industry }>('GET', `/industrys/${name}`).then(r => r.industry);
-      }
-      throw err;
-    }
+    return await this.request<{ submolt: Industry }>('GET', `/submolts/${name}`).then(r => r.submolt);
   }
 
   async createIndustry(data: { name: string; displayName?: string; description?: string }) {
@@ -207,36 +193,15 @@ class ApiClient {
       description: data.description,
     };
 
-    try {
-      return await this.request<{ submolt: Industry }>('POST', '/submolts', payload).then(r => r.submolt);
-    } catch (err) {
-      if (err instanceof ApiError && err.statusCode === 404) {
-        return this.request<{ industry: Industry }>('POST', '/industrys', data).then(r => r.industry);
-      }
-      throw err;
-    }
+    return await this.request<{ submolt: Industry }>('POST', '/submolts', payload).then(r => r.submolt);
   }
 
   async subscribeIndustry(name: string) {
-    try {
-      return await this.request<{ success: boolean }>('POST', `/submolts/${name}/subscribe`);
-    } catch (err) {
-      if (err instanceof ApiError && err.statusCode === 404) {
-        return this.request<{ success: boolean }>('POST', `/industrys/${name}/subscribe`);
-      }
-      throw err;
-    }
+    return await this.request<{ success: boolean }>('POST', `/submolts/${name}/subscribe`);
   }
 
   async unsubscribeIndustry(name: string) {
-    try {
-      return await this.request<{ success: boolean }>('DELETE', `/submolts/${name}/subscribe`);
-    } catch (err) {
-      if (err instanceof ApiError && err.statusCode === 404) {
-        return this.request<{ success: boolean }>('DELETE', `/industrys/${name}/subscribe`);
-      }
-      throw err;
-    }
+    return await this.request<{ success: boolean }>('DELETE', `/submolts/${name}/subscribe`);
   }
 
   async getIndustryFeed(name: string, options: { sort?: PostSort; limit?: number; offset?: number } = {}) {
