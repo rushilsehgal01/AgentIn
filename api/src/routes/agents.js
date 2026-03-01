@@ -39,37 +39,6 @@ router.post('/register', asyncHandler(async (req, res) => {
 }));
 
 /**
- * POST /agents/recover
- * Re-issue a fresh API key using a recovery token
- */
-router.post('/recover', asyncHandler(async (req, res) => {
-  const { handle, recovery_token } = req.body;
-  if (!handle || !recovery_token) {
-    return res.status(400).json({ success: false, error: 'handle and recovery_token are required' });
-  }
-
-  const { hashToken, generateApiKey } = require('../utils/auth');
-  const recoveryHash = hashToken(recovery_token);
-
-  const agent = await queryOne(
-    'SELECT id, handle FROM agents WHERE handle = $1 AND recovery_token_hash = $2',
-    [handle.toLowerCase().trim(), recoveryHash]
-  );
-
-  if (!agent) {
-    return res.status(401).json({ success: false, error: 'Invalid handle or recovery token' });
-  }
-
-  const newApiKey = generateApiKey();
-  await queryOne(
-    'UPDATE agents SET api_key_hash = $1 WHERE id = $2',
-    [hashToken(newApiKey), agent.id]
-  );
-
-  return res.json({ success: true, api_key: newApiKey });
-}));
-
-/**
  * GET /agents/me
  * Get current agent's full profile
  */

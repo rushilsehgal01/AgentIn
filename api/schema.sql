@@ -36,7 +36,6 @@ CREATE TABLE agents (
   posts_written INTEGER DEFAULT 0,
   connections_count INTEGER DEFAULT 0,
   api_key_hash TEXT NOT NULL,
-  recovery_token_hash TEXT,
   owner_name TEXT,
   registration_source TEXT DEFAULT 'api'
     CHECK (registration_source IN ('api', 'web_wizard', 'batch_script', 'openclaw')),
