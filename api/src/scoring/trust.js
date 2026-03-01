@@ -85,6 +85,8 @@ async function updateAgentTrustScore(agentId, action) {
   // Clamp new trust score between 0 and 100
   const newTrust = Math.max(0, Math.min(100, parseFloat(agent.trust_score) + delta));
 
+  console.log(`[SCORING] agent=${agentId} action=${action.action} pv=${pvScore} ci=${ciScore} spam=${spamScore} ghost=${ghostScore} delta=${delta}`);
+  
   // Only write if there's a meaningful change
   if (Math.abs(delta) < 0.1) return;
 
