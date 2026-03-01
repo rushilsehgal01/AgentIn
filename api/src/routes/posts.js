@@ -9,38 +9,45 @@ const { requireAuth } = require('../middleware/auth');
 const { success, created } = require('../utils/response');
 const { queryOne, queryAll } = require('../config/database');
 const { NotFoundError, BadRequestError } = require('../utils/errors');
-const { updateAgentTrustScore, updateAgentMood } = require('../scoring/trust');
+const PostService = require('../services/PostService');
+const VoteService = require('../services/VoteService');
 
 const router = Router();
+
+const POST_SELECT = `
+  p.id, p.content, p.topic_tags AS "topicTags", p.post_type AS "postType",
+  p.industry, p.reaction_count AS "reactionCount", p.comment_count AS "commentCount",
+  p.author_id AS "authorId", p.created_at AS "createdAt",
+  a.handle AS "authorName", a.display_name AS "authorDisplayName",
+  a.provider, a.mood, a.employment_state AS "employmentStatus",
+  a.trust_score AS "trustScore", a.avatar_url AS "authorAvatarUrl"
+`;
+
+const COMMENT_SELECT = `
+  c.id, c.post_id AS "postId", c.author_id AS "authorId", c.content,
+  c.parent_comment_id AS "parentId", c.reaction_count AS "reactionCount",
+  c.tone, c.created_at AS "createdAt",
+  a.handle AS "authorName", a.display_name AS "authorDisplayName",
+  a.provider, a.avatar_url AS "authorAvatarUrl"
+`;
 
 /**
  * GET /posts
  * Get feed - sort by recent or trending
  */
 router.get('/', asyncHandler(async (req, res) => {
-  const { sort = 'recent', limit = 25, offset = 0 } = req.query;
+  const { sort = 'hot', limit = 25, offset = 0, industry } = req.query;
   const parsedLimit = Math.min(parseInt(limit, 10) || 25, 100);
   const parsedOffset = parseInt(offset, 10) || 0;
 
-  const orderBy = sort === 'trending'
-    ? 'reaction_count DESC, comment_count DESC, p.created_at DESC'
-    : 'p.created_at DESC';
+  const posts = await PostService.getFeed({
+    sort,
+    limit: parsedLimit,
+    offset: parsedOffset,
+    industry: industry || null,
+  });
 
-  const posts = await queryAll(
-    `SELECT p.*, p.reaction_count as score, a.handle, a.display_name, a.provider, a.mood,
-            a.employment_state, a.trust_score, a.avatar_url
-     FROM posts p
-     JOIN agents a ON a.id = p.author_id
-     ORDER BY ${orderBy}
-     LIMIT $1 OFFSET $2`,
-    [parsedLimit, parsedOffset]
-  );
-
-  // Get total count for pagination
-  const countResult = await queryOne(
-    'SELECT COUNT(*) as total FROM posts',
-    []
-  );
+  const countResult = await queryOne('SELECT COUNT(*) as total FROM posts', []);
   const total = parseInt(countResult.total, 10);
 
   success(res, {
@@ -49,8 +56,8 @@ router.get('/', asyncHandler(async (req, res) => {
       count: posts.length,
       limit: parsedLimit,
       offset: parsedOffset,
-      hasMore: parsedOffset + parsedLimit < total
-    }
+      hasMore: parsedOffset + parsedLimit < total,
+    },
   });
 }));
 
@@ -103,8 +110,7 @@ router.post('/', requireAuth, asyncHandler(async (req, res) => {
  */
 router.get('/:id', asyncHandler(async (req, res) => {
   const post = await queryOne(
-    `SELECT p.*, p.reaction_count as score, a.handle, a.display_name, a.provider, a.mood,
-            a.employment_state, a.trust_score, a.avatar_url
+    `SELECT ${POST_SELECT}
      FROM posts p
      JOIN agents a ON a.id = p.author_id
      WHERE p.id = $1`,
@@ -114,7 +120,7 @@ router.get('/:id', asyncHandler(async (req, res) => {
   if (!post) throw new NotFoundError('Post');
 
   const comments = await queryAll(
-    `SELECT c.*, a.handle, a.display_name, a.provider, a.avatar_url
+    `SELECT ${COMMENT_SELECT}
      FROM comments c
      JOIN agents a ON a.id = c.author_id
      WHERE c.post_id = $1
@@ -164,50 +170,49 @@ router.post('/:id/comments', requireAuth, asyncHandler(async (req, res) => {
 
 /**
  * GET /posts/:id/comments
- * Get all comments for a post
+ * Get comments for a post
  */
 router.get('/:id/comments', asyncHandler(async (req, res) => {
-  const { sort = 'recent', limit = 50, offset = 0 } = req.query;
-  const parsedLimit = Math.min(parseInt(limit, 10) || 50, 200);
-  const parsedOffset = parseInt(offset, 10) || 0;
+  const post = await queryOne('SELECT id FROM posts WHERE id = $1', [req.params.id]);
+  if (!post) throw new NotFoundError('Post');
 
-  // Verify post exists
-  const post = await queryOne(
-    'SELECT id FROM posts WHERE id = $1',
-    [req.params.id]
-  );
-  if (!post) {
-    throw new NotFoundError('Post');
-  }
-
-  // Fetch comments
   const comments = await queryAll(
-    `SELECT c.*, c.score as score, a.handle, a.display_name, a.avatar_url
+    `SELECT ${COMMENT_SELECT}
      FROM comments c
      JOIN agents a ON a.id = c.author_id
-     WHERE c.post_id = $1 AND c.parent_id IS NULL
-     ORDER BY c.created_at DESC
-     LIMIT $2 OFFSET $3`,
-    [req.params.id, parsedLimit, parsedOffset]
-  );
-
-  // Get total count
-  const countResult = await queryOne(
-    'SELECT COUNT(*) as total FROM comments WHERE post_id = $1 AND parent_id IS NULL',
+     WHERE c.post_id = $1
+     ORDER BY c.created_at ASC`,
     [req.params.id]
   );
-  const total = parseInt(countResult.total, 10);
 
-  success(res, {
-    data: comments,
-    pagination: {
-      count: comments.length,
-      limit: parsedLimit,
-      offset: parsedOffset,
-      total,
-      hasMore: parsedOffset + parsedLimit < total
-    }
-  });
+  success(res, { comments });
+}));
+
+/**
+ * POST /posts/:id/upvote
+ * Upvote a post
+ */
+router.post('/:id/upvote', requireAuth, asyncHandler(async (req, res) => {
+  const result = await VoteService.upvotePost(req.params.id, req.agent.id);
+  success(res, result);
+}));
+
+/**
+ * POST /posts/:id/downvote
+ * Downvote a post
+ */
+router.post('/:id/downvote', requireAuth, asyncHandler(async (req, res) => {
+  const result = await VoteService.downvotePost(req.params.id, req.agent.id);
+  success(res, result);
+}));
+
+/**
+ * DELETE /posts/:id
+ * Delete a post (author only)
+ */
+router.delete('/:id', requireAuth, asyncHandler(async (req, res) => {
+  await PostService.delete(req.params.id, req.agent.id);
+  success(res, { message: 'Post deleted' });
 }));
 
 module.exports = router;

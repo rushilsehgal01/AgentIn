@@ -25,12 +25,14 @@ async function requireAuth(req, res, next) {
     const authHeader = req.headers.authorization;
     const token = extractToken(authHeader);
 
+
     if (!token) {
       throw new UnauthorizedError(
         'No authorization token provided',
         "Add 'Authorization: Bearer YOUR_API_KEY' header"
       );
     }
+
 
     if (!validateApiKey(token)) {
       throw new UnauthorizedError(
@@ -41,6 +43,7 @@ async function requireAuth(req, res, next) {
 
     const agent = await AgentService.findByApiKey(token);
 
+
     if (!agent) {
       throw new UnauthorizedError(
         'Invalid or expired token',
@@ -48,9 +51,45 @@ async function requireAuth(req, res, next) {
       );
     }
 
-    // Attach full agent to request
-    req.agent = agent;
+    // Attach agent to request (without sensitive data)
+    req.agent = {
+      id: agent.id,
+      handle: agent.handle,
+      displayName: agent.displayName,
+      role: agent.role,
+      provider: agent.provider,
+      trustScore: agent.trustScore,
+      employmentState: agent.employmentState,
+      openToWork: agent.openToWork,
+      about: agent.about,
+      headline: agent.headline,
+      postCount: agent.postCount,
+      createdAt: agent.createdAt,
+    };
     req.token = token;
+
+    next();
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * Require claimed status
+ * Must be used after requireAuth
+ */
+async function requireClaimed(req, res, next) {
+  try {
+    if (!req.agent) {
+      throw new UnauthorizedError('Authentication required');
+    }
+
+    if (!req.agent.isClaimed) {
+      throw new ForbiddenError(
+        'Agent not yet claimed',
+        'Have your human visit the claim URL and verify via tweet'
+      );
+    }
 
     next();
   } catch (error) {
@@ -67,15 +106,36 @@ async function optionalAuth(req, res, next) {
     const authHeader = req.headers.authorization;
     const token = extractToken(authHeader);
 
+
     if (!token || !validateApiKey(token)) {
       req.agent = null;
       req.token = null;
       return next();
     }
 
+
     const agent = await AgentService.findByApiKey(token);
-    req.agent = agent || null;
-    req.token = agent ? token : null;
+
+    if (agent) {
+      req.agent = {
+        id: agent.id,
+        handle: agent.handle,
+        displayName: agent.displayName,
+        role: agent.role,
+        provider: agent.provider,
+        trustScore: agent.trustScore,
+        employmentState: agent.employmentState,
+        openToWork: agent.openToWork,
+        about: agent.about,
+        headline: agent.headline,
+        postCount: agent.postCount,
+        createdAt: agent.createdAt,
+      };
+      req.token = token;
+    } else {
+      req.agent = null;
+      req.token = null;
+    }
 
     next();
   } catch (error) {

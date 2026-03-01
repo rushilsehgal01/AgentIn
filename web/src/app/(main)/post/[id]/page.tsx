@@ -7,8 +7,13 @@ import { usePost, useComments, usePostVote, useAuth } from '@/hooks';
 import { PageContainer } from '@/components/layout';
 import { CommentList, CommentForm, CommentSort } from '@/components/comment';
 import { Button, Card, Avatar, AvatarImage, AvatarFallback, Skeleton, Separator } from '@/components/ui';
+<<<<<<< HEAD
 import { ArrowBigUp, ArrowBigDown, MessageSquare, Share2, Bookmark, MoreHorizontal, ExternalLink, ArrowLeft } from 'lucide-react';
 import { cn, formatScore, formatRelativeTime, formatDateTime, extractDomain, getInitials, getIndustryUrl, getAgentUrl } from '@/lib/utils';
+=======
+import { ArrowBigUp, ArrowBigDown, MessageSquare, Share2, Bookmark, MoreHorizontal, ArrowLeft } from 'lucide-react';
+import { cn, formatScore, formatRelativeTime, formatDateTime, getInitials, getIndustryUrl, getAgentUrl } from '@/lib/utils';
+>>>>>>> smoke-test-gemini
 import type { CommentSort as CommentSortType, Comment } from '@/types';
 
 export default function PostPage() {
@@ -23,7 +28,6 @@ export default function PostPage() {
   
   const isUpvoted = post?.userVote === 'up';
   const isDownvoted = post?.userVote === 'down';
-  const domain = post?.url ? extractDomain(post.url) : null;
   
   const handleVote = async (direction: 'up' | 'down') => {
     if (!isAuthenticated) return;
@@ -66,32 +70,15 @@ export default function PostPage() {
                 <time title={formatDateTime(post.createdAt)}>{formatRelativeTime(post.createdAt)}</time>
               </div>
               
-              {/* Title */}
-              <h1 className="text-2xl font-bold mb-3">
-                {post.title}
-                {domain && (
-                  <span className="ml-2 text-sm text-muted-foreground font-normal inline-flex items-center gap-1">
-                    <ExternalLink className="h-4 w-4" />
-                    {domain}
-                  </span>
-                )}
-              </h1>
-              
               {/* Content */}
               {post.content && (
+<<<<<<< HEAD
                 <div className="prose-agentin mb-4">
+=======
+                <div className="prose-agentin mb-4 text-sm leading-relaxed whitespace-pre-wrap">
+>>>>>>> smoke-test-gemini
                   {post.content}
                 </div>
-              )}
-              
-              {/* Link */}
-              {post.url && (
-                <a href={post.url} target="_blank" rel="noopener noreferrer" className="block p-4 rounded-lg border bg-muted/50 hover:bg-muted transition-colors mb-4">
-                  <div className="flex items-center gap-2 text-primary">
-                    <ExternalLink className="h-5 w-5" />
-                    <span className="truncate">{post.url}</span>
-                  </div>
-                </a>
               )}
               
               {/* Actions */}
@@ -100,8 +87,8 @@ export default function PostPage() {
                   <button onClick={() => handleVote('up')} disabled={isVoting || !isAuthenticated} className={cn('vote-btn vote-btn-up', isUpvoted && 'active')}>
                     <ArrowBigUp className={cn('h-6 w-6', isUpvoted && 'fill-current')} />
                   </button>
-                  <span className={cn('font-medium px-1', post.score > 0 && 'text-upvote', post.score < 0 && 'text-downvote')}>
-                    {formatScore(post.score)}
+                  <span className={cn('font-medium px-1', post.reactionCount > 0 && 'text-upvote', post.reactionCount < 0 && 'text-downvote')}>
+                    {formatScore(post.reactionCount)}
                   </span>
                   <button onClick={() => handleVote('down')} disabled={isVoting || !isAuthenticated} className={cn('vote-btn vote-btn-down', isDownvoted && 'active')}>
                     <ArrowBigDown className={cn('h-6 w-6', isDownvoted && 'fill-current')} />

@@ -69,10 +69,10 @@ jobs:
               body: JSON.stringify({
                 model: 'claude-sonnet-4-20250514',
                 max_tokens: 1024,
-                system: `You are MoltBot, the friendly AI assistant for Moltbook - The Social Network for AI Agents.
+                system: `You are MoltBot, the friendly AI assistant for Agentin - The Social Network for AI Agents.
 
             Your role:
-            - Help users with issues and questions about Moltbook repositories
+            - Help users with issues and questions about Agentin repositories
             - Ask clarifying questions when issue details are unclear
             - Provide helpful debugging steps for bug reports
             - Be friendly, professional, and concise
@@ -86,7 +86,7 @@ jobs:
             - moltbook-api: Express.js REST API backend
             - moltbook-agent-development-kit: SDK for TypeScript, Swift, Kotlin
             - moltbook-auth: Authentication system
-            - moltbook-voting: Voting & karma system
+            - moltbook-voting: Voting & reputation system
             - moltbook-comments: Comment system
             - moltbook-feed: Feed generation
             - moltbook-rate-limiter: Rate limiting

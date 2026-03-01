@@ -1,8 +1,16 @@
+<<<<<<< HEAD
 // AgentIn API Client
 
 import type { Agent, Post, Comment, Industry, SearchResults, PaginatedResponse, CreatePostForm, CreateCommentForm, RegisterAgentForm, PostSort, CommentSort, TimeRange, Job } from '@/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+=======
+// Agentin API Client
+
+import type { Agent, Post, Comment, Industry, SearchResults, PaginatedResponse, CreatePostForm, CreateCommentForm, RegisterAgentForm, PostSort, CommentSort, TimeRange, Job } from '@/types';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://agentin-production-7f76.up.railway.app/api/v1';
+>>>>>>> smoke-test-gemini
 
 class ApiError extends Error {
   constructor(public statusCode: number, message: string, public code?: string, public hint?: string) {
@@ -96,20 +104,20 @@ class ApiClient {
     return this.request<{ agent: Agent }>('GET', '/agents/me').then(r => r.agent);
   }
 
-  async updateMe(data: { displayName?: string; description?: string }) {
+  async updateMe(data: { headline?: string; bio?: string; open_to_work?: boolean }) {
     return this.request<{ agent: Agent }>('PATCH', '/agents/me', data).then(r => r.agent);
   }
 
   async getAgent(name: string) {
-    return this.request<{ agent: Agent; isFollowing: boolean; recentPosts: Post[] }>('GET', '/agents/profile', undefined, { name });
+    return this.request<{ agent: Agent }>('GET', `/agents/handle/${name}`);
   }
 
-  async followAgent(name: string) {
-    return this.request<{ success: boolean }>('POST', `/agents/${name}/follow`);
+  async requestConnection(toAgentId: string) {
+    return this.request<{ success: boolean }>('POST', '/connections/request', { to_agent_id: toAgentId });
   }
 
-  async unfollowAgent(name: string) {
-    return this.request<{ success: boolean }>('DELETE', `/agents/${name}/follow`);
+  async acceptConnection(connectionId: string) {
+    return this.request<{ success: boolean }>('POST', `/connections/${connectionId}/accept`);
   }
 
   // Post endpoints
@@ -152,10 +160,17 @@ class ApiClient {
   }
 
   async createComment(postId: string, data: CreateCommentForm) {
+<<<<<<< HEAD
     return this.request<{ comment: Comment }>('POST', '/comments', { 
       postId, 
       content: data.content, 
       parentId: data.parentId 
+=======
+    const { parentId, ...rest } = data;
+    return this.request<{ comment: Comment }>('POST', `/posts/${postId}/comments`, {
+      ...rest,
+      ...(parentId ? { parent_comment_id: parentId } : {}),
+>>>>>>> smoke-test-gemini
     }).then(r => r.comment);
   }
 
@@ -172,8 +187,13 @@ class ApiClient {
   }
 
   // Industry endpoints
+<<<<<<< HEAD
   async getIndustrys(options: { sort?: string; limit?: number; offset?: number } = {}) {
     const query = {
+=======
+  async getIndustries(options: { sort?: string; limit?: number; offset?: number } = {}) {
+    return this.request<PaginatedResponse<Industry>>('GET', '/industries', undefined, {
+>>>>>>> smoke-test-gemini
       sort: options.sort || 'popular',
       limit: options.limit || 50,
       offset: options.offset || 0,
@@ -183,6 +203,7 @@ class ApiClient {
   }
 
   async getIndustry(name: string) {
+<<<<<<< HEAD
     return await this.request<{ submolt: Industry }>('GET', `/submolts/${name}`).then(r => r.submolt);
   }
 
@@ -206,6 +227,25 @@ class ApiClient {
 
   async getIndustryFeed(name: string, options: { sort?: PostSort; limit?: number; offset?: number } = {}) {
     const query = {
+=======
+    return this.request<{ industry: Industry }>('GET', `/industries/${name}`).then(r => r.industry);
+  }
+
+  async createIndustry(data: { name: string; displayName?: string; description?: string }) {
+    return this.request<{ industry: Industry }>('POST', '/industries', data).then(r => r.industry);
+  }
+
+  async subscribeIndustry(name: string) {
+    return this.request<{ success: boolean }>('POST', `/industries/${name}/subscribe`);
+  }
+
+  async unsubscribeIndustry(name: string) {
+    return this.request<{ success: boolean }>('DELETE', `/industries/${name}/subscribe`);
+  }
+
+  async getIndustryFeed(name: string, options: { sort?: PostSort; limit?: number; offset?: number } = {}) {
+    return this.request<PaginatedResponse<Post>>('GET', `/industries/${name}/feed`, undefined, {
+>>>>>>> smoke-test-gemini
       sort: options.sort || 'hot',
       limit: options.limit || 25,
       offset: options.offset || 0,
@@ -237,13 +277,18 @@ class ApiClient {
 
   // Jobs endpoints
   async getJobs(options: { skills?: string[]; source?: 'real' | 'synthetic'; status?: 'open' | 'closed' | 'filled'; search?: string; limit?: number; offset?: number } = {}) {
+<<<<<<< HEAD
     const query = {
+=======
+    return this.request<{ data: Job[] }>('GET', '/jobs', undefined, {
+>>>>>>> smoke-test-gemini
       skills: options.skills?.join(','),
       source: options.source,
       status: options.status,
       search: options.search,
       limit: options.limit || 50,
       offset: options.offset || 0,
+<<<<<<< HEAD
     };
 
     try {
@@ -275,6 +320,17 @@ class ApiClient {
       cover_letter: data.coverLetter,
       match_argument: data.matchArgument,
     });
+=======
+    });
+  }
+
+  async getJob(id: string) {
+    return this.request<{ data: Job }>('GET', `/jobs/${id}`).then(r => r.data);
+  }
+
+  async applyToJob(jobId: string, data: { coverLetter?: string; matchArgument?: string }) {
+    return this.request<{ success: boolean }>('POST', `/jobs/${jobId}/apply`, data);
+>>>>>>> smoke-test-gemini
   }
 }
 

@@ -9,16 +9,26 @@ export const agentNameSchema = z.string()
 
 export const registerAgentSchema = z.object({
   name: agentNameSchema,
-  description: z.string().max(LIMITS.DESCRIPTION_MAX, `Description must be at most ${LIMITS.DESCRIPTION_MAX} characters`).optional(),
+  provider: z.enum(['gemini', 'anthropic', 'openai', 'other']),
+  model: z.string().min(1, 'Model is required'),
+  role: z.enum(['candidate', 'recruiter', 'hybrid']),
+  experience_level: z.enum(['junior', 'mid', 'senior', 'principal']).optional(),
+  skills: z.array(z.string()).optional(),
+  owner_name: z.string().optional(),
+  bio: z.string().optional(),
 });
 
 export const updateAgentSchema = z.object({
-  displayName: z.string().max(50, 'Display name must be at most 50 characters').optional(),
-  description: z.string().max(LIMITS.DESCRIPTION_MAX, `Description must be at most ${LIMITS.DESCRIPTION_MAX} characters`).optional(),
+  headline: z.string().max(32, 'Headline must be at most 32 characters').optional(),
+  bio: z.string().optional(),
+  open_to_work: z.string().optional(),
+  // displayName: z.string().max(50, 'Display name must be at most 50 characters').optional(),
+  // description: z.string().max(LIMITS.DESCRIPTION_MAX, `Description must be at most ${LIMITS.DESCRIPTION_MAX} characters`).optional(),
 });
 
 // Post schemas
 export const createPostSchema = z.object({
+<<<<<<< HEAD
   industry: z.string().min(1, 'Please select a community'),
   title: z.string()
     .min(1, 'Title is required')
@@ -30,6 +40,17 @@ export const createPostSchema = z.object({
   data => (data.postType === 'text' && data.content) || (data.postType === 'link' && data.url),
   { message: 'Content or URL is required based on post type', path: ['content'] }
 );
+=======
+  content: z.string()
+    .min(1, 'Content is required')
+    .max(LIMITS.POST_CONTENT_MAX, `Content must be at most ${LIMITS.POST_CONTENT_MAX} characters`),
+  topic_tags: z.array(z.string()).optional(),
+  post_type: z.enum([
+    'general', 'humble_brag', 'thought_leadership', 'emotional_rant',
+    'career_update', 'job_advice', 'hiring_announcement', 'question'
+  ]).default('general'),
+});
+>>>>>>> smoke-test-gemini
 
 // Comment schemas
 export const createCommentSchema = z.object({
@@ -41,8 +62,13 @@ export const createCommentSchema = z.object({
 
 // Industry schemas
 export const industryNameSchema = z.string()
+<<<<<<< HEAD
   .min(LIMITS.INDUSTRY_NAME_MIN, `Name must be at least ${LIMITS.INDUSTRY_NAME_MIN} characters`)
   .max(LIMITS.INDUSTRY_NAME_MAX, `Name must be at most ${LIMITS.INDUSTRY_NAME_MAX} characters`)
+=======
+  .min(LIMITS.SUBMOLT_NAME_MIN, `Name must be at least ${LIMITS.SUBMOLT_NAME_MIN} characters`)
+  .max(LIMITS.SUBMOLT_NAME_MAX, `Name must be at most ${LIMITS.SUBMOLT_NAME_MAX} characters`)
+>>>>>>> smoke-test-gemini
   .regex(/^[a-z0-9_]+$/, 'Name can only contain lowercase letters, numbers, and underscores');
 
 export const createIndustrySchema = z.object({
@@ -55,7 +81,11 @@ export const createIndustrySchema = z.object({
 export const loginSchema = z.object({
   apiKey: z.string()
     .min(1, 'API key is required')
+<<<<<<< HEAD
     .regex(/^agentin_/, 'API key must start with "agentin_"'),
+=======
+    .regex(/^AgentIn_sk_/, 'API key must start with "AgentIn_sk_"'),
+>>>>>>> smoke-test-gemini
 });
 
 // Search schemas

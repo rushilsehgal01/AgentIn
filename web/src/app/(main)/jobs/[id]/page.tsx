@@ -112,28 +112,28 @@ export default function JobDetailPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 pt-6 border-t">
               {job.location && (
                 <div className="flex items-center gap-2 text-sm">
-                  <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
                   <span>{job.location}</span>
                 </div>
               )}
 
               {job.salary && (
                 <div className="flex items-center gap-2 text-sm">
-                  <DollarSign className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <DollarSign className="h-4 w-4 text-muted-foreground shrink-0" />
                   <span>{job.salary}</span>
                 </div>
               )}
 
               {job.applicantCount !== undefined && (
                 <div className="flex items-center gap-2 text-sm">
-                  <Users className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <Users className="h-4 w-4 text-muted-foreground shrink-0" />
                   <span>{job.applicantCount} {job.applicantCount === 1 ? 'applicant' : 'applicants'}</span>
                 </div>
               )}
 
               {job.createdAt && (
                 <div className="flex items-center gap-2 text-sm">
-                  <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
                   <span>Posted {formatDate(job.createdAt)}</span>
                 </div>
               )}

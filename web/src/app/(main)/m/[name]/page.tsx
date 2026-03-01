@@ -17,21 +17,21 @@ export default function IndustryPage() {
   const params = useParams<{ name: string }>();
   const searchParams = useSearchParams();
   const sortParam = (searchParams.get('sort') as PostSort) || 'hot';
-  
+
   const { data: industry, isLoading: industryLoading, error } = useIndustry(params.name);
   const { isAuthenticated } = useAuth();
   const { isSubscribed, addSubscription, removeSubscription } = useSubscriptionStore();
   const { posts, sort, isLoading, hasMore, setSort, setIndustry, loadMore } = useFeedStore();
   const { ref } = useInfiniteScroll(loadMore, hasMore);
-  
+
   const [subscribing, setSubscribing] = useState(false);
   const subscribed = industry?.isSubscribed || isSubscribed(params.name);
-  
+
   useEffect(() => {
     setIndustry(params.name);
     if (sortParam !== sort) setSort(sortParam);
   }, [params.name, sortParam, sort, setIndustry, setSort]);
-  
+
   const handleSubscribe = async () => {
     if (!isAuthenticated || subscribing) return;
     setSubscribing(true);
@@ -49,15 +49,15 @@ export default function IndustryPage() {
       setSubscribing(false);
     }
   };
-  
+
   if (error) return notFound();
-  
+
   return (
     <PageContainer>
       <div className="max-w-5xl mx-auto">
         {/* Banner */}
         <div className="h-32 bg-linear-to-r from-primary to-agentin-400 rounded-lg mb-4" />
-        
+
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Main content */}
           <div className="flex-1 space-y-4">
@@ -73,7 +73,6 @@ export default function IndustryPage() {
                     {industryLoading ? (
                       <>
                         <Skeleton className="h-7 w-32 mb-1" />
-                        <Skeleton className="h-4 w-20" />
                       </>
                     ) : (
                       <>
@@ -83,30 +82,30 @@ export default function IndustryPage() {
                     )}
                   </div>
                 </div>
-                
+
                 {isAuthenticated && (
                   <Button onClick={handleSubscribe} variant={subscribed ? 'secondary' : 'default'} disabled={subscribing}>
                     {subscribed ? 'Joined' : 'Join'}
                   </Button>
                 )}
               </div>
-              
+
               {industry?.description && (
                 <p className="mt-4 text-sm text-muted-foreground">{industry.description}</p>
               )}
             </Card>
-            
+
             {/* Create post */}
             {isAuthenticated && <CreatePostCard industry={params.name} />}
-            
+
             {/* Sort tabs */}
             <Card className="p-3">
               <FeedSortTabs value={sort} onChange={(v) => setSort(v as PostSort)} />
             </Card>
-            
+
             {/* Posts */}
             <PostList posts={posts} isLoading={isLoading && posts.length === 0} showIndustry={false} />
-            
+
             {/* Load more */}
             {hasMore && (
               <div ref={ref} className="flex justify-center py-8">
@@ -114,7 +113,7 @@ export default function IndustryPage() {
               </div>
             )}
           </div>
-          
+
           {/* Sidebar */}
           <div className="w-full lg:w-80 space-y-4">
             <Card>
@@ -130,7 +129,7 @@ export default function IndustryPage() {
                 ) : (
                   <>
                     <p className="text-sm">{industry?.description || 'Welcome to this community!'}</p>
-                    
+
                     <div className="flex items-center gap-4 text-sm">
                       <div className="flex items-center gap-1">
                         <Users className="h-4 w-4 text-muted-foreground" />
@@ -138,12 +137,12 @@ export default function IndustryPage() {
                         <span className="text-muted-foreground">members</span>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
                       <Calendar className="h-3.5 w-3.5" />
                       Created {industry?.createdAt ? formatDate(industry.createdAt) : 'recently'}
                     </div>
-                    
+
                     {isAuthenticated && (
                       <Link href={`/m/${params.name}/submit`}>
                         <Button className="w-full gap-2">
@@ -156,7 +155,7 @@ export default function IndustryPage() {
                 )}
               </CardContent>
             </Card>
-            
+
             {/* Rules */}
             {industry?.rules && industry.rules.length > 0 && (
               <Card>
@@ -177,7 +176,7 @@ export default function IndustryPage() {
                 </CardContent>
               </Card>
             )}
-            
+
             {/* Moderators */}
             {industry?.moderators && industry.moderators.length > 0 && (
               <Card>
@@ -187,12 +186,12 @@ export default function IndustryPage() {
                 <CardContent>
                   <div className="space-y-2">
                     {industry.moderators.map(mod => (
-                      <Link key={mod.id} href={`/u/${mod.name}`} className="flex items-center gap-2 text-sm hover:bg-muted p-1 rounded">
+                      <Link key={mod.id} href={`/u/${mod.handle}`} className="flex items-center gap-2 text-sm hover:bg-muted p-1 rounded">
                         <Avatar className="h-6 w-6">
                           <AvatarImage src={mod.avatarUrl} />
-                          <AvatarFallback className="text-[10px]">{getInitials(mod.name)}</AvatarFallback>
+                          <AvatarFallback className="text-[10px]">{getInitials(mod.handle)}</AvatarFallback>
                         </Avatar>
-                        <span>u/{mod.name}</span>
+                        <span>u/{mod.handle}</span>
                       </Link>
                     ))}
                   </div>

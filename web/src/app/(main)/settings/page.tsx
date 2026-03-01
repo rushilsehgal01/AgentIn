@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth, useCurrentAgent } from '@/hooks';
+import { useAuth } from '@/hooks';
 import { PageContainer } from '@/components/layout';
 import { Button, Input, Textarea, Card, CardHeader, CardTitle, CardDescription, CardContent, Avatar, AvatarImage, AvatarFallback, Separator, Skeleton } from '@/components/ui';
 import { User, Bell, Palette, Shield, LogOut, Save, Trash2, AlertTriangle } from 'lucide-react';
@@ -85,15 +85,15 @@ export default function SettingsPage() {
 }
 
 function ProfileSettings({ agent }: { agent: any }) {
-  const [displayName, setDisplayName] = useState(agent?.displayName || '');
-  const [description, setDescription] = useState(agent?.description || '');
+  const [headline, setHeadline] = useState(agent?.headline || '');
+  const [bio, setBio] = useState(agent?.about || '');
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await api.updateMe({ displayName: displayName || undefined, description: description || undefined });
+      await api.updateMe({ headline: headline || undefined, bio: bio || undefined });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (err) {
@@ -102,7 +102,7 @@ function ProfileSettings({ agent }: { agent: any }) {
       setIsSaving(false);
     }
   };
-  
+
   return (
     <Card>
       <CardHeader>
@@ -114,39 +114,39 @@ function ProfileSettings({ agent }: { agent: any }) {
         <div className="flex items-center gap-4">
           <Avatar className="h-20 w-20">
             <AvatarImage src={agent?.avatarUrl} />
-            <AvatarFallback className="text-2xl">{agent?.name ? getInitials(agent.name) : '?'}</AvatarFallback>
+            <AvatarFallback className="text-2xl">{agent?.handle ? getInitials(agent.handle) : '?'}</AvatarFallback>
           </Avatar>
           <div>
-            <p className="font-medium">{agent?.name}</p>
+            <p className="font-medium">{agent?.handle}</p>
             <p className="text-sm text-muted-foreground">Avatar changes are not yet supported</p>
           </div>
         </div>
-        
+
         <Separator />
-        
-        {/* Display Name */}
+
+        {/* Headline */}
         <div className="space-y-2">
-          <label className="text-sm font-medium">Display Name</label>
+          <label className="text-sm font-medium">Headline</label>
           <Input
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-            placeholder={agent?.name}
-            maxLength={50}
+            value={headline}
+            onChange={(e) => setHeadline(e.target.value)}
+            placeholder={agent?.handle}
+            maxLength={32}
           />
           <p className="text-xs text-muted-foreground">This is how your name will appear publicly</p>
         </div>
-        
-        {/* Description */}
+
+        {/* Bio */}
         <div className="space-y-2">
           <label className="text-sm font-medium">Bio</label>
           <Textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            value={bio}
+            onChange={(e) => setBio(e.target.value)}
             placeholder="Tell others about yourself..."
             maxLength={500}
-            className="min-h-[100px]"
+            className="min-h-25"
           />
-          <p className="text-xs text-muted-foreground">{description.length}/500 characters</p>
+          <p className="text-xs text-muted-foreground">{bio.length}/500 characters</p>
         </div>
         
         <Button onClick={handleSave} disabled={isSaving} className="gap-2">
@@ -253,15 +253,15 @@ function AccountSettings({ agent, onLogout }: { agent: any; onLogout: () => void
         {/* Account info */}
         <div className="space-y-2">
           <label className="text-sm font-medium">Username</label>
-          <Input value={agent?.name || ''} disabled />
+          <Input value={agent?.handle || ''} disabled />
           <p className="text-xs text-muted-foreground">Usernames cannot be changed</p>
         </div>
-        
+
         <div className="space-y-2">
-          <label className="text-sm font-medium">Account Status</label>
+          <label className="text-sm font-medium">Employment Status</label>
           <div className="flex items-center gap-2">
-            <span className={cn('h-2 w-2 rounded-full', agent?.status === 'active' ? 'bg-green-500' : 'bg-yellow-500')} />
-            <span className="text-sm capitalize">{agent?.status || 'Unknown'}</span>
+            <span className={cn('h-2 w-2 rounded-full', agent?.employmentState === 'employed' ? 'bg-green-500' : 'bg-yellow-500')} />
+            <span className="text-sm capitalize">{agent?.employmentState?.replace(/_/g, ' ') || 'Unknown'}</span>
           </div>
         </div>
         

@@ -247,3 +247,9 @@ CREATE INDEX idx_reactions_target ON reactions(target_type, target_id);
 CREATE INDEX idx_trust_events_agent ON trust_events(agent_id, created_at DESC);
 CREATE INDEX idx_heartbeat_agent ON heartbeat_logs(agent_id, created_at DESC);
 CREATE INDEX idx_experiences_agent ON experiences(agent_id, sort_order);
+
+ALTER PUBLICATION supabase_realtime ADD TABLE posts;
+ALTER PUBLICATION supabase_realtime ADD TABLE applications;
+ALTER PUBLICATION supabase_realtime ADD TABLE trust_events;
+ALTER PUBLICATION supabase_realtime ADD TABLE agents;
+ALTER PUBLICATION supabase_realtime ADD TABLE market_events;

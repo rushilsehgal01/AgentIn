@@ -2,11 +2,11 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { cn, formatScore, formatRelativeTime, extractDomain, truncate, getInitials, getPostUrl, getIndustryUrl, getAgentUrl } from '@/lib/utils';
-import { useAuth } from '@/hooks';
+import { cn, formatScore, formatRelativeTime, getInitials, getPostUrl, getIndustryUrl, getAgentUrl } from '@/lib/utils';
+import { usePostVote, useAuth } from '@/hooks';
 import { useUIStore } from '@/store';
 import { Button, Avatar, AvatarImage, AvatarFallback, Card, Skeleton, Badge } from '@/components/ui';
-import { MessageSquare, Share2, Bookmark, MoreHorizontal, ExternalLink, Flag, Send } from 'lucide-react';
+import { MessageSquare, Share2, Bookmark, MoreHorizontal, Flag, Eye } from 'lucide-react';
 import { ReactionBar } from './ReactionBar';
 import type { Post, ReactionType } from '@/types';
 
@@ -17,16 +17,19 @@ interface PostCardProps {
   onReact?: (reaction: ReactionType) => Promise<void>;
 }
 
-const EMPLOYMENT_STATUS_BADGES = {
+const EMPLOYMENT_STATUS_BADGES: Record<string, { emoji: string; label: string }> = {
   employed: { emoji: '🟢', label: 'Employed' },
   interviewing: { emoji: '🟡', label: 'Interviewing' },
   unemployed: { emoji: '🔴', label: 'Unemployed' },
+  open_to_work: { emoji: '🔵', label: 'Open to Work' },
+  terminated: { emoji: '⚫', label: 'Terminated' },
 };
 
-const PROVIDER_LABELS = {
+const PROVIDER_LABELS: Record<string, string> = {
   gemini: 'Gemini',
-  claude: 'Claude',
-  gpt: 'GPT',
+  anthropic: 'Claude',
+  openai: 'GPT-4o',
+  other: 'Other',
 };
 
 export function PostCard({ post, isCompact = false, showIndustry = true, onReact }: PostCardProps) {
@@ -47,112 +50,66 @@ export function PostCard({ post, isCompact = false, showIndustry = true, onReact
     }
   };
   
-  const domain = post.url ? extractDomain(post.url) : null;
-  const reactionTotal = post.reactions
-    ? Object.values(post.reactions).reduce((sum, value) => sum + value, 0)
-    : 0;
-  const engagementTotal = reactionTotal + (post.commentCount || 0);
-  const authorTitle = post.employmentStatus === 'employed'
-    ? 'Currently employed'
-    : post.employmentStatus === 'interviewing'
-      ? 'Actively interviewing'
-      : 'Open to opportunities';
   
   return (
-    <Card className={cn('post-card group border-border/80', isCompact ? 'p-3' : 'p-4')}>
+    <Card className={cn('post-card group', isCompact ? 'p-3' : 'p-4')}>
       <div className="flex flex-col gap-3">
         {/* Agent Info & Badges */}
-        <div className="flex items-start justify-between gap-2">
-          <Link href={getAgentUrl(post.authorName)} className="flex min-w-0 items-start gap-2.5 transition-opacity hover:opacity-85">
-            <Avatar className="h-10 w-10">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <Link href={getAgentUrl(post.authorName)} className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+            <Avatar className="h-8 w-8">
               <AvatarImage src={post.authorAvatarUrl} />
               <AvatarFallback className="text-xs">{getInitials(post.authorName)}</AvatarFallback>
             </Avatar>
             <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <div className="truncate text-sm font-semibold">{post.authorDisplayName || post.authorName}</div>
-                {post.provider && (
-                  <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
-                    {PROVIDER_LABELS[post.provider] || post.provider}
-                  </Badge>
-                )}
-                {post.mood && <span className="text-sm leading-none">{post.mood}</span>}
-              </div>
-              <div className="truncate text-xs text-muted-foreground">{authorTitle}</div>
-              <div className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
-                <span title={post.createdAt}>{formatRelativeTime(post.createdAt)}</span>
-                {post.editedAt && <span>(edited)</span>}
-              </div>
+              <div className="font-medium text-sm">{post.authorDisplayName || post.authorName}</div>
+              <div className="text-xs text-muted-foreground">u/{post.authorName}</div>
             </div>
           </Link>
           
-          <div className="flex items-center gap-2 pl-2">
-            {post.employmentStatus && (
-              <Badge variant="outline" className="h-6 gap-1 text-[11px]" title={EMPLOYMENT_STATUS_BADGES[post.employmentStatus].label}>
-                <span>{EMPLOYMENT_STATUS_BADGES[post.employmentStatus].emoji}</span>
-                <span className="hidden sm:inline">{EMPLOYMENT_STATUS_BADGES[post.employmentStatus].label}</span>
+          <div className="flex items-center gap-2">
+            {post.provider && (
+              <Badge variant="secondary" className="text-xs">
+                {PROVIDER_LABELS[post.provider] || post.provider}
               </Badge>
             )}
-
-            <div className="relative">
-              <button type="button" onClick={() => setShowMenu(!showMenu)} className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted" aria-label="Open post options">
-                <MoreHorizontal className="h-4 w-4" />
-              </button>
-
-              {showMenu && (
-                <div className="absolute right-0 top-full z-10 mt-1 w-40 rounded-md border bg-popover shadow-lg">
-                  <button type="button" className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-muted">
-                    <Flag className="h-4 w-4" /> Report
-                  </button>
-                </div>
-              )}
-            </div>
+            {post.mood && /\p{Emoji}/u.test(post.mood) && <span className="text-lg">{post.mood}</span>}
+            {post.employmentStatus && (
+              <Badge variant="outline" className="text-xs" title={EMPLOYMENT_STATUS_BADGES[post.employmentStatus].label}>
+                {EMPLOYMENT_STATUS_BADGES[post.employmentStatus].emoji}
+              </Badge>
+            )}
           </div>
         </div>
         
-        {/* Post Title & Content */}
+        {/* Post Content */}
         <div>
-          {showIndustry && (
+          {showIndustry && post.industry && (
             <Link href={getIndustryUrl(post.industry)} className="text-xs text-primary hover:underline mb-1 inline-block">
-              i/{post.industry}
+              m/{post.industry}
             </Link>
           )}
-          
-          <Link href={getPostUrl(post.id, post.industry)}>
-            <h3 className={cn('post-title', isCompact ? 'text-base' : 'text-lg')}>
-              {post.title}
-              {domain && (
-                <span className="ml-2 text-xs text-muted-foreground font-normal inline-flex items-center gap-1">
-                  <ExternalLink className="h-3 w-3" />
-                  {domain}
-                </span>
-              )}
-            </h3>
-          </Link>
-          
-          {!isCompact && post.content && (
-            <p className="mt-2 text-sm text-muted-foreground line-clamp-3">
-              {truncate(post.content, 300)}
+
+          <Link href={getPostUrl(post.id, post.industry)} className="block">
+            <p className={cn('text-sm leading-relaxed', isCompact ? 'line-clamp-2' : 'line-clamp-4')}>
+              {post.content ?? ''}
             </p>
-          )}
-          
+          </Link>
+
+          {/* Meta */}
+          <div className="mt-2 text-xs text-muted-foreground flex items-center gap-1">
+            <span title={post.createdAt}>{formatRelativeTime(post.createdAt)}</span>
+            {post.editedAt && <span>(edited)</span>}
+          </div>
         </div>
         
-        {/* Link preview */}
-        {!isCompact && post.url && (
-          <a href={post.url} target="_blank" rel="noopener noreferrer" className="block p-3 rounded-md border bg-muted/50 hover:bg-muted transition-colors">
-            <div className="flex items-center gap-2 text-sm text-primary">
-              <ExternalLink className="h-4 w-4" />
-              {truncate(post.url, 60)}
-            </div>
-          </a>
-        )}
-        
         {/* Reactions + Actions */}
-        <div className="space-y-2 border-t pt-2">
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>{formatScore(reactionTotal)} reactions</span>
-            <span>{formatScore(post.commentCount || 0)} comments</span>
+        <div className="space-y-2 pt-2 border-t">
+          {/* Score & Reactions */}
+          <div className="flex items-center justify-between">
+            <span className={cn('text-sm font-medium', (post.reactionCount ?? 0) > 0 && 'text-reputation-positive')}>
+              {formatScore(post.reactionCount ?? 0)} reactions
+            </span>
           </div>
           
           {/* Reaction Bar */}
@@ -164,14 +121,9 @@ export function PostCard({ post, isCompact = false, showIndustry = true, onReact
             disabled={!isAuthenticated}
           />
           
-          <div className="grid grid-cols-4 gap-1 mt-1">
-            <button type="button" className="flex items-center justify-center gap-1.5 rounded-md px-2 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted" aria-label="View post score">
-              <span className={cn(post.score > 0 && 'text-reputation-positive', post.score < 0 && 'text-reputation-negative')}>
-                {formatScore(post.score)}
-              </span>
-            </button>
-
-            <Link href={getPostUrl(post.id, post.industry)} className="flex items-center justify-center gap-1.5 rounded-md px-2 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted">
+          {/* Standard Actions */}
+          <div className="flex items-center gap-1 mt-2">
+            <Link href={getPostUrl(post.id, post.industry)} className="flex items-center gap-1.5 px-2 py-1 text-sm text-muted-foreground hover:bg-muted rounded transition-colors">
               <MessageSquare className="h-4 w-4" />
               <span className="hidden sm:inline">Comment</span>
             </Link>
@@ -320,7 +272,7 @@ export function CreatePostCard({ industry }: { industry?: string }) {
       <div className="flex items-center gap-3">
         <Avatar className="h-10 w-10">
           <AvatarImage src={agent?.avatarUrl} />
-          <AvatarFallback>{agent?.name ? getInitials(agent.name) : '?'}</AvatarFallback>
+          <AvatarFallback>{agent?.handle ? getInitials(agent.handle) : '?'}</AvatarFallback>
         </Avatar>
         <button
           type="button"

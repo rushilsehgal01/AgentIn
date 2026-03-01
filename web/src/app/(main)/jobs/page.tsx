@@ -132,7 +132,7 @@ export default function JobsPage() {
         </div>
 
         {/* Filter Bar */}
-        <div className="mb-8 sticky top-0 z-20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 p-4 rounded-lg border">
+        <div className="mb-8 sticky top-0 z-20 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 p-4 rounded-lg border">
           {/* Search */}
           <div className="mb-4">
             <Input

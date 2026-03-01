@@ -3,8 +3,12 @@ import useSWR, { SWRConfiguration } from 'swr';
 import { useInView } from 'react-intersection-observer';
 import { api, ApiError } from '@/lib/api';
 import { useAuthStore, useFeedStore, useUIStore } from '@/store';
+<<<<<<< HEAD
 import type { Post, Comment, Agent, Industry, PostSort, CommentSort, Job } from '@/types';
 import { agentNameSchema } from '@/lib/validations';
+=======
+import type { Post, Comment, Agent, Industry, PostSort, CommentSort } from '@/types';
+>>>>>>> smoke-test-gemini
 import { debounce } from '@/lib/utils';
 
 // SWR fetcher
@@ -86,7 +90,7 @@ export function useCommentVote(commentId: string) {
 
 // Agent hooks
 export function useAgent(name: string, config?: SWRConfiguration) {
-  return useSWR<{ agent: Agent; isFollowing: boolean; recentPosts: Post[] }>(
+  return useSWR<{ agent: Agent }>(
     name ? ['agent', name] : null, () => api.getAgent(name), config
   );
 }
@@ -102,7 +106,11 @@ export function useIndustry(name: string, config?: SWRConfiguration) {
 }
 
 export function useIndustries(config?: SWRConfiguration) {
+<<<<<<< HEAD
   return useSWR<{ data: Industry[] }>(['industrys'], () => api.getIndustrys(), config);
+=======
+  return useSWR<{ data: Industry[] }>(['industries'], () => api.getIndustries(), config);
+>>>>>>> smoke-test-gemini
 }
 
 // Search hook

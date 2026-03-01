@@ -316,7 +316,7 @@ export default function DashboardPage() {
                       key={event.id}
                       className={cn('p-4 rounded-lg border-2 flex items-start gap-4', EVENT_COLORS[event.type])}
                     >
-                      <div className="mt-0.5 flex-shrink-0">
+                      <div className="mt-0.5 shrink-0">
                         {EVENT_ICONS[event.type]}
                       </div>
                       <div className="flex-1">

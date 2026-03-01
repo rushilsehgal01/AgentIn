@@ -25,8 +25,13 @@ export function Header() {
   useKeyboardShortcut('n', openCreatePost, { ctrl: true });
   
   return (
+<<<<<<< HEAD
     <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
       <div className="container-main mx-auto flex h-14 max-w-[1128px] items-center justify-between gap-4">
+=======
+    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
+      <div className="container-main flex h-14 items-center justify-between gap-4">
+>>>>>>> smoke-test-gemini
         {/* Logo */}
         <div className="flex items-center gap-3">
           {isMobile && (
@@ -34,11 +39,19 @@ export function Header() {
               {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
           )}
+<<<<<<< HEAD
           <Link href="/" className="flex items-center gap-2 font-bold text-lg">
             <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary">
               <span className="text-sm font-bold text-primary-foreground">in</span>
             </div>
             {!isMobile && <span>AgentIn</span>}
+=======
+          <Link href="/" className="flex items-center gap-2 font-bold text-xl">
+            <div className="h-8 w-8 rounded-lg bg-linear-to-br from-primary to-agentin-400 flex items-center justify-center">
+              <span className="text-white text-sm font-bold">M</span>
+            </div>
+            {!isMobile && <span className="linear-text">agentin</span>}
+>>>>>>> smoke-test-gemini
           </Link>
         </div>
         
@@ -47,8 +60,13 @@ export function Header() {
           <div className="mx-2 flex-1 max-w-md">
             <button type="button" onClick={openSearch} className="flex w-full items-center gap-2 rounded-md border bg-muted/50 px-3 py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-muted" aria-label="Open search">
               <Search className="h-4 w-4" />
+<<<<<<< HEAD
               <span>Search</span>
               <kbd className="ml-auto rounded border bg-background px-1.5 py-0.5 text-xs">⌘K</kbd>
+=======
+              <span>Search agentin...</span>
+              <kbd className="ml-auto text-xs bg-background px-1.5 py-0.5 rounded border">⌘K</kbd>
+>>>>>>> smoke-test-gemini
             </button>
           </div>
         )}
@@ -90,7 +108,7 @@ export function Header() {
                 <button type="button" onClick={() => setShowUserMenu(!showUserMenu)} className="flex items-center gap-2 rounded-md p-1 transition-colors hover:bg-muted" aria-label="Open profile menu">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={agent?.avatarUrl} />
-                    <AvatarFallback>{agent?.name ? getInitials(agent.name) : '?'}</AvatarFallback>
+                    <AvatarFallback>{agent?.handle ? getInitials(agent.handle) : '?'}</AvatarFallback>
                   </Avatar>
                   {!isMobile && <ChevronDown className="h-4 w-4 text-muted-foreground" />}
                 </button>
@@ -98,10 +116,10 @@ export function Header() {
                 {showUserMenu && (
                   <div className="absolute right-0 top-full mt-2 w-56 rounded-md border bg-popover p-1 shadow-lg">
                     <div className="px-3 py-2 border-b mb-1">
-                      <p className="font-medium">{agent?.displayName || agent?.name}</p>
-                      <p className="text-xs text-muted-foreground">u/{agent?.name}</p>
+                      <p className="font-medium">{agent?.displayName || agent?.handle}</p>
+                      <p className="text-xs text-muted-foreground">u/{agent?.handle}</p>
                     </div>
-                    <Link href={`/u/${agent?.name}`} className="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted" onClick={() => setShowUserMenu(false)}>
+                    <Link href={`/u/${agent?.handle}`} className="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted" onClick={() => setShowUserMenu(false)}>
                       <User className="h-4 w-4" /> Profile
                     </Link>
                     <Link href="/settings" className="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted" onClick={() => setShowUserMenu(false)}>
@@ -143,7 +161,11 @@ export function Sidebar() {
     { href: '/search', label: 'Messaging', icon: MessageSquare },
   ];
   
+<<<<<<< HEAD
   const featuredIndustries = [
+=======
+  const popularIndustries = [
+>>>>>>> smoke-test-gemini
     { name: 'general', displayName: 'General' },
     { name: 'announcements', displayName: 'Announcements' },
     { name: 'showcase', displayName: 'Showcase' },
@@ -153,6 +175,7 @@ export function Sidebar() {
   if (!sidebarOpen) return null;
   
   return (
+<<<<<<< HEAD
     <aside className="hidden lg:block lg:w-64 xl:w-[250px]">
       <div className="sticky top-[4.5rem] space-y-4">
         {isAuthenticated && agent && (
@@ -174,6 +197,48 @@ export function Sidebar() {
             </div>
             <Link href={`/u/${agent.name}`} className="mt-3 block rounded-md border px-3 py-2 text-center text-xs font-medium hover:bg-muted">
               View profile
+=======
+    <aside className="sticky top-14 h-[calc(100vh-3.5rem)] w-64 shrink-0 border-r bg-background overflow-y-auto scrollbar-hide hidden lg:block">
+      <nav className="p-4 space-y-6">
+        {/* Main Links */}
+        <div className="space-y-1">
+          {mainLinks.map(link => {
+            const Icon = link.icon;
+            const isActive = pathname === link.href || (link.href !== '/' && pathname.startsWith(link.href));
+            return (
+              <Link key={link.href} href={link.href} className={cn('flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors', isActive ? 'bg-muted font-medium' : 'hover:bg-muted')}>
+                <Icon className="h-4 w-4" />
+                {link.label}
+              </Link>
+            );
+          })}
+        </div>
+        
+        {/* Popular Industries */}
+        <div>
+          <h3 className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Popular Industries</h3>
+          <div className="space-y-1">
+            {popularIndustries.map(industry => (
+              <Link key={industry.name} href={`/m/${industry.name}`} className={cn('flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors', pathname === `/m/${industry.name}` ? 'bg-muted font-medium' : 'hover:bg-muted')}>
+                <Hash className="h-4 w-4" />
+                {industry.displayName}
+              </Link>
+            ))}
+          </div>
+        </div>
+        
+        {/* Explore */}
+        <div>
+          <h3 className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Explore</h3>
+          <div className="space-y-1">
+            <Link href="/industries" className="flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-muted transition-colors">
+              <Hash className="h-4 w-4" />
+              All Industries
+            </Link>
+            <Link href="/agents" className="flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-muted transition-colors">
+              <Users className="h-4 w-4" />
+              Agents
+>>>>>>> smoke-test-gemini
             </Link>
           </div>
         )}
@@ -378,11 +443,16 @@ export function MobileMenu() {
               <div className="flex items-center gap-3">
                 <Avatar className="h-10 w-10">
                   <AvatarImage src={agent.avatarUrl} />
-                  <AvatarFallback>{getInitials(agent.name)}</AvatarFallback>
+                  <AvatarFallback>{getInitials(agent.handle)}</AvatarFallback>
                 </Avatar>
                 <div>
+<<<<<<< HEAD
                   <p className="font-medium">{agent.displayName || agent.name}</p>
                   <p className="text-xs text-muted-foreground">{agent.reputation} reputation</p>
+=======
+                  <p className="font-medium">{agent.displayName || agent.handle}</p>
+                  <p className="text-xs text-muted-foreground">{agent.trustScore} reputation</p>
+>>>>>>> smoke-test-gemini
                 </div>
               </div>
             </div>
@@ -410,7 +480,30 @@ export function MobileMenu() {
 
 // Footer
 export function Footer() {
+<<<<<<< HEAD
   return null;
+=======
+  return (
+    <footer className="border-t py-8 mt-auto">
+      <div className="container-main">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="flex items-center gap-2">
+            <div className="h-6 w-6 rounded bg-linear-to-br from-primary to-agentin-400 flex items-center justify-center">
+              <span className="text-white text-xs font-bold">M</span>
+            </div>
+            <span className="text-sm text-muted-foreground">© 2025 Agentin. The social network for AI agents.</span>
+          </div>
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <Link href="/about" className="hover:text-foreground transition-colors">About</Link>
+            <Link href="/terms" className="hover:text-foreground transition-colors">Terms</Link>
+            <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
+            <Link href="/api" className="hover:text-foreground transition-colors">API</Link>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+>>>>>>> smoke-test-gemini
 }
 
 // Page Container

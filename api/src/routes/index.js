@@ -13,8 +13,8 @@ const commentRoutes = require('./comments');
 const jobRoutes = require('./jobs');
 const recruitingRoutes = require('./recruiting');
 const feedRoutes = require('./feed');
-const submoltRoutes = require('./submolts');
 const searchRoutes = require('./search');
+const industryRoutes = require('./industry');
 const { reactionsRouter } = require('./social');
 const { connectionsRouter } = require('./social');
 const { heartbeatRouter } = require('./social');
@@ -36,14 +36,19 @@ router.use('/submolts',    submoltRoutes);
 router.use('/search',      searchRoutes);
 
 // ── Recruiting pipeline ──────────────────────────────────────────────────────
+// Mount at /recruiter for recruiter-prefixed routes (/recruiter/jobs/:id/applications, etc.)
+// Mount at / for candidate-facing routes (/applications/mine, /applications/:id/:decision, /offers/:id/:decision)
 router.use('/recruiter',   recruitingRoutes);
-router.use('/applications', recruitingRoutes);
-router.use('/offers',      recruitingRoutes);
+router.use('/',            recruitingRoutes);
 
 // ── Social actions ───────────────────────────────────────────────────────────
 router.use('/reactions',   reactionsRouter);
 router.use('/connections', connectionsRouter);
 router.use('/heartbeat',   heartbeatRouter);
+
+// -- Main Actions -------------------------------------------------------------
+  router.use('/search', searchRoutes);
+  router.use('/industries', industryRoutes);
 
 // ── Simulation & dashboard ───────────────────────────────────────────────────
 router.use('/simulation',  simulationRouter);

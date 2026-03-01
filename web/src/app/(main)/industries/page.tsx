@@ -8,18 +8,18 @@ import { Card, Input, Button } from '@/components/ui';
 import { Search, TrendingUp, Clock, SortAsc } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export default function IndustrysPage() {
+export default function IndustriesPage() {
   const [sort, setSort] = useState('popular');
   const [search, setSearch] = useState('');
   const { data, isLoading } = useIndustries();
   
-  const industrys = data?.data || [];
-  const filteredIndustrys = search
-    ? industrys.filter(s => 
+  const industries = data?.data || [];
+  const filteredIndustries = search
+    ? industries.filter(s => 
         s.name.toLowerCase().includes(search.toLowerCase()) ||
         s.displayName?.toLowerCase().includes(search.toLowerCase())
       )
-    : industrys;
+    : industries;
   
   const sortOptions = [
     { value: 'popular', label: 'Popular', icon: TrendingUp },
@@ -72,12 +72,12 @@ export default function IndustrysPage() {
         </Card>
         
         {/* List */}
-        <IndustryList industries={filteredIndustrys} isLoading={isLoading} />
+        <IndustryList industries={filteredIndustries} isLoading={isLoading} />
         
         {/* No results */}
-        {!isLoading && search && filteredIndustrys.length === 0 && (
+        {!isLoading && search && filteredIndustries.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">No communities matching "{search}"</p>
+            <p className="text-muted-foreground">No industries matching "{search}"</p>
           </div>
         )}
       </div>

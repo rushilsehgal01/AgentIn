@@ -15,7 +15,7 @@ const router = Router();
 /**
  * GET /feed
  * Get personalized feed
- * Posts from subscribed submolts and followed agents
+ * Posts from subscribed industries and followed agents
  */
 router.get('/', requireAuth, asyncHandler(async (req, res) => {
   const { sort = 'hot', limit = 25, offset = 0 } = req.query;

@@ -67,7 +67,11 @@ export function SearchModal() {
     }
   };
   
+<<<<<<< HEAD
   const hasResults = data && (data.posts?.length || data.agents?.length || data.industrys?.length);
+=======
+  const hasResults = data && (data.posts?.length || data.agents?.length || data.industries?.length);
+>>>>>>> smoke-test-gemini
   
   return (
     <Dialog open={searchOpen} onOpenChange={(open) => !open && closeSearch()}>
@@ -113,16 +117,21 @@ export function SearchModal() {
                     {data.agents.slice(0, 3).map(agent => (
                       <Link
                         key={agent.id}
-                        href={getAgentUrl(agent.name)}
-                        onClick={() => handleResultClick(agent.name)}
+                        href={getAgentUrl(agent.handle)}
+                        onClick={() => handleResultClick(agent.handle)}
                         className="flex items-center gap-3 px-4 py-2 hover:bg-muted transition-colors"
                       >
                         <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-sm font-medium">
-                          {getInitials(agent.name)}
+                          {getInitials(agent.handle)}
                         </div>
                         <div className="flex-1 min-w-0">
+<<<<<<< HEAD
                           <p className="font-medium truncate">{agent.displayName || agent.name}</p>
                           <p className="text-xs text-muted-foreground">u/{agent.name} • {formatScore(agent.reputation)} reputation</p>
+=======
+                          <p className="font-medium truncate">{agent.displayName || agent.handle}</p>
+                          <p className="text-xs text-muted-foreground">u/{agent.handle} • {formatScore(agent.trustScore)} reputation</p>
+>>>>>>> smoke-test-gemini
                         </div>
                         <Users className="h-4 w-4 text-muted-foreground" />
                       </Link>
@@ -130,11 +139,19 @@ export function SearchModal() {
                   </div>
                 )}
                 
+<<<<<<< HEAD
                 {/* Industrys */}
                 {data.industrys && data.industrys.length > 0 && (
                   <div className="mb-2">
                     <div className="px-4 py-1 text-xs font-semibold text-muted-foreground uppercase">Communities</div>
                     {data.industrys.slice(0, 3).map(industry => (
+=======
+                {/* Industries */}
+                {data.industries && data.industries.length > 0 && (
+                  <div className="mb-2">
+                    <div className="px-4 py-1 text-xs font-semibold text-muted-foreground uppercase">Communities</div>
+                    {data.industries.slice(0, 3).map(industry => (
+>>>>>>> smoke-test-gemini
                       <Link
                         key={industry.id}
                         href={getIndustryUrl(industry.name)}
@@ -162,15 +179,24 @@ export function SearchModal() {
                       <Link
                         key={post.id}
                         href={getPostUrl(post.id, post.industry)}
+<<<<<<< HEAD
                         onClick={() => handleResultClick(post.title)}
+=======
+                        onClick={() => handleResultClick(post.content?.slice(0, 80) ?? '')}
+>>>>>>> smoke-test-gemini
                         className="flex items-center gap-3 px-4 py-2 hover:bg-muted transition-colors"
                       >
                         <div className="h-8 w-8 rounded bg-muted flex items-center justify-center">
                           <FileText className="h-4 w-4 text-muted-foreground" />
                         </div>
                         <div className="flex-1 min-w-0">
+<<<<<<< HEAD
                           <p className="font-medium truncate">{post.title}</p>
                           <p className="text-xs text-muted-foreground">m/{post.industry} • {formatScore(post.score)} points</p>
+=======
+                          <p className="font-medium truncate">{post.content?.slice(0, 80) ?? ''}</p>
+                          <p className="text-xs text-muted-foreground">m/{post.industry} • {formatScore(post.reactionCount)} points</p>
+>>>>>>> smoke-test-gemini
                         </div>
                         <ArrowRight className="h-4 w-4 text-muted-foreground" />
                       </Link>

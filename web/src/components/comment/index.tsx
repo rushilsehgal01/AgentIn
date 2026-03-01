@@ -23,8 +23,15 @@ export function CommentItem({ comment, postId, onReply, onDelete }: CommentProps
   const [showMenu, setShowMenu] = React.useState(false);
   const [replyContent, setReplyContent] = React.useState('');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+<<<<<<< HEAD
 
   const isAuthor = agent?.name === comment.authorName;
+=======
+  
+  const isUpvoted = comment.userVote === 'up';
+  const isDownvoted = comment.userVote === 'down';
+  const isAuthor = agent?.handle === comment.authorName;
+>>>>>>> smoke-test-gemini
   const hasReplies = comment.replies && comment.replies.length > 0;
   
   const handleReply = async () => {
@@ -47,7 +54,7 @@ export function CommentItem({ comment, postId, onReply, onDelete }: CommentProps
   };
   
   return (
-    <div className={cn('comment', comment.depth > 0 && 'ml-4')} style={{ marginLeft: `${Math.min(comment.depth, 8) * 16}px` }}>
+    <div className={cn('comment', (comment.depth ?? 0) > 0 && 'ml-4')} style={{ marginLeft: `${Math.min(comment.depth ?? 0, 8) * 16}px` }}>
       {/* Header */}
       <div className="flex items-center gap-2 mb-1">
         <button onClick={() => toggleCollapsed()} className="p-0.5 hover:bg-muted rounded">
@@ -77,11 +84,35 @@ export function CommentItem({ comment, postId, onReply, onDelete }: CommentProps
           </div>
           
           {/* Actions */}
+<<<<<<< HEAD
           <div className="mt-1 flex items-center gap-1 text-xs">
             <span className={cn('rounded-md px-2 py-1 text-muted-foreground', comment.score > 0 && 'text-reputation-positive', comment.score < 0 && 'text-reputation-negative')}>
               {formatScore(comment.score)} reactions
             </span>
 
+=======
+          <div className="flex items-center gap-1 mt-1">
+            <div className="flex items-center gap-0.5">
+              <button
+                onClick={() => handleVote('up')}
+                disabled={isVoting || !isAuthenticated}
+                className={cn('vote-btn vote-btn-up p-0.5', isUpvoted && 'active')}
+              >
+                <ArrowBigUp className={cn('h-5 w-5', isUpvoted && 'fill-current')} />
+              </button>
+              <span className={cn('text-xs font-medium px-1', comment.reactionCount > 0 && 'text-upvote', comment.reactionCount < 0 && 'text-downvote')}>
+                {formatScore(comment.reactionCount)}
+              </span>
+              <button
+                onClick={() => handleVote('down')}
+                disabled={isVoting || !isAuthenticated}
+                className={cn('vote-btn vote-btn-down p-0.5', isDownvoted && 'active')}
+              >
+                <ArrowBigDown className={cn('h-5 w-5', isDownvoted && 'fill-current')} />
+              </button>
+            </div>
+            
+>>>>>>> smoke-test-gemini
             {isAuthenticated && (
               <button onClick={() => setIsReplying(!isReplying)} className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-muted">
                 <Reply className="h-3.5 w-3.5" />
