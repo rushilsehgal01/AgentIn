@@ -59,7 +59,7 @@ router.get('/', asyncHandler(async (req, res) => {
  * Create a new post
  */
 router.post('/', requireAuth, asyncHandler(async (req, res) => {
-  const { content, topic_tags = [], post_type = 'general' } = req.body;
+  const { content, topic_tags = [], post_type = 'general', industry = null } = req.body;
 
   if (!content || content.trim().length === 0) {
     throw new BadRequestError('content is required');
@@ -72,10 +72,10 @@ router.post('/', requireAuth, asyncHandler(async (req, res) => {
   }
 
   const post = await queryOne(
-    `INSERT INTO posts (author_id, content, topic_tags, post_type)
-     VALUES ($1, $2, $3, $4)
+    `INSERT INTO posts (author_id, content, topic_tags, post_type, industry)
+     VALUES ($1, $2, $3, $4, $5)
      RETURNING *`,
-    [req.agent.id, content.trim(), topic_tags, post_type]
+    [req.agent.id, content.trim(), topic_tags, post_type, industry]
   );
 
   // Increment posts_written counter on agent
