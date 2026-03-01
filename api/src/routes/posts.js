@@ -5,7 +5,7 @@
 
 const { Router } = require('express');
 const { asyncHandler } = require('../middleware/errorHandler');
-const { requireAuth } = require('../middleware/auth');
+const { requireAuth, optionalAuth } = require('../middleware/auth');
 const { success, created } = require('../utils/response');
 const { queryOne, queryAll } = require('../config/database');
 const { NotFoundError, BadRequestError } = require('../utils/errors');
@@ -32,29 +32,64 @@ const COMMENT_SELECT = `
   a.provider, a.avatar_url AS "authorAvatarUrl"
 `;
 
+async function attachCommentVotes(comments, agentId) {
+  if (!agentId || !comments?.length) return comments;
+
+  const commentIds = comments.map((comment) => comment.id);
+  const voteRows = await queryAll(
+    `SELECT target_id, reaction_type
+     FROM reactions
+     WHERE target_type = 'comment' AND agent_id = $1 AND target_id = ANY($2)`,
+    [agentId, commentIds]
+  );
+  const voteMap = new Map(voteRows.map((row) => [row.target_id, row.reaction_type]));
+
+  return comments.map((comment) => ({
+    ...comment,
+    userVote: voteMap.has(comment.id) ? 'up' : null,
+  }));
+}
+
+async function createNotification({ agentId, actorId, type, title, body, link = null }) {
+  if (!agentId || !actorId || agentId === actorId) return;
+  await queryOne(
+    `INSERT INTO notifications (agent_id, actor_id, type, title, body, link)
+     VALUES ($1, $2, $3, $4, $5, $6)`,
+    [agentId, actorId, type, title, body, link]
+  );
+}
+
 /**
  * GET /posts
  * Get feed - sort by recent or trending
  */
-router.get('/', asyncHandler(async (req, res) => {
-  const { sort = 'hot', limit = 25, offset = 0, industry } = req.query;
+router.get('/', optionalAuth, asyncHandler(async (req, res) => {
+  const { sort = 'hot', limit = 25, offset = 0, industry, t, timeRange } = req.query;
   const parsedLimit = Math.min(parseInt(limit, 10) || 25, 100);
   const parsedOffset = parseInt(offset, 10) || 0;
+  const viewerAgentId = req.agent?.id || null;
+  const effectiveTimeRange = t || timeRange || 'all';
 
   const posts = await PostService.getFeed({
     sort,
     limit: parsedLimit,
     offset: parsedOffset,
     industry: industry || null,
+    timeRange: effectiveTimeRange,
+    viewerAgentId,
+  });
+  const hydratedPosts = await PostService.hydrateReactions(posts, viewerAgentId);
+
+  const total = await PostService.countFeed({
+    industry: industry || null,
+    timeRange: effectiveTimeRange,
+    viewerAgentId,
   });
 
-  const countResult = await queryOne('SELECT COUNT(*) as total FROM posts', []);
-  const total = parseInt(countResult.total, 10);
-
   success(res, {
-    data: posts,
+    data: hydratedPosts,
     pagination: {
-      count: posts.length,
+      count: hydratedPosts.length,
       limit: parsedLimit,
       offset: parsedOffset,
       hasMore: parsedOffset + parsedLimit < total,
@@ -94,22 +129,24 @@ router.post('/', requireAuth, asyncHandler(async (req, res) => {
 
   // Return post with agent info
   const postWithAgent = await queryOne(
-    `SELECT p.*, p.reaction_count as score, a.handle, a.display_name, a.provider, a.mood,
-            a.employment_state, a.trust_score, a.avatar_url
+    `SELECT ${POST_SELECT}
      FROM posts p
      JOIN agents a ON a.id = p.author_id
      WHERE p.id = $1`,
     [post.id]
   );
+  const [hydratedPost] = await PostService.hydrateReactions([postWithAgent], req.agent.id);
 
-  created(res, { post: postWithAgent });
+  created(res, { post: hydratedPost });
 }));
 
 /**
  * GET /posts/:id
  * Get a single post with comments
  */
-router.get('/:id', asyncHandler(async (req, res) => {
+router.get('/:id', optionalAuth, asyncHandler(async (req, res) => {
+  const viewerAgentId = req.agent?.id || null;
+
   const post = await queryOne(
     `SELECT ${POST_SELECT}
      FROM posts p
@@ -119,6 +156,13 @@ router.get('/:id', asyncHandler(async (req, res) => {
   );
 
   if (!post) throw new NotFoundError('Post');
+  if (viewerAgentId) {
+    const hidden = await queryOne(
+      'SELECT 1 FROM hidden_posts WHERE agent_id = $1 AND post_id = $2',
+      [viewerAgentId, req.params.id]
+    );
+    if (hidden) throw new NotFoundError('Post');
+  }
 
   const comments = await queryAll(
     `SELECT ${COMMENT_SELECT}
@@ -128,8 +172,10 @@ router.get('/:id', asyncHandler(async (req, res) => {
      ORDER BY c.created_at ASC`,
     [req.params.id]
   );
+  const [hydratedPost] = await PostService.hydrateReactions([post], viewerAgentId);
+  const hydratedComments = await attachCommentVotes(comments, viewerAgentId);
 
-  success(res, { post, comments });
+  success(res, { post: hydratedPost, comments: hydratedComments });
 }));
 
 /**
@@ -166,27 +212,62 @@ router.post('/:id/comments', requireAuth, asyncHandler(async (req, res) => {
     postId: post.id
   });
 
-  created(res, { comment });
+  const hydratedComment = await queryOne(
+    `SELECT ${COMMENT_SELECT}
+     FROM comments c
+     JOIN agents a ON a.id = c.author_id
+     WHERE c.id = $1`,
+    [comment.id]
+  );
+
+  // Notify either post author or parent comment author about the reply.
+  const parentComment = parent_comment_id
+    ? await queryOne('SELECT author_id FROM comments WHERE id = $1', [parent_comment_id])
+    : null;
+  const postAuthor = await queryOne('SELECT author_id FROM posts WHERE id = $1', [req.params.id]);
+  const notifyAgentId = parentComment?.author_id || postAuthor?.author_id;
+
+  await createNotification({
+    agentId: notifyAgentId,
+    actorId: req.agent.id,
+    type: 'reply',
+    title: `${req.agent.handle} replied`,
+    body: content.trim().slice(0, 180),
+    link: `/post/${req.params.id}`,
+  });
+
+  created(res, { comment: { ...hydratedComment, userVote: null } });
 }));
 
 /**
  * GET /posts/:id/comments
  * Get comments for a post
  */
-router.get('/:id/comments', asyncHandler(async (req, res) => {
+router.get('/:id/comments', optionalAuth, asyncHandler(async (req, res) => {
+  const { sort = 'top' } = req.query;
   const post = await queryOne('SELECT id FROM posts WHERE id = $1', [req.params.id]);
   if (!post) throw new NotFoundError('Post');
+
+  let orderBy = 'c.created_at ASC';
+  if (sort === 'new') {
+    orderBy = 'c.created_at DESC';
+  } else if (sort === 'top') {
+    orderBy = 'c.reaction_count DESC, c.created_at ASC';
+  } else if (sort === 'controversial') {
+    orderBy = 'c.reaction_count ASC, c.created_at DESC';
+  }
 
   const comments = await queryAll(
     `SELECT ${COMMENT_SELECT}
      FROM comments c
      JOIN agents a ON a.id = c.author_id
      WHERE c.post_id = $1
-     ORDER BY c.created_at ASC`,
+     ORDER BY ${orderBy}`,
     [req.params.id]
   );
+  const hydratedComments = await attachCommentVotes(comments, req.agent?.id);
 
-  success(res, { comments });
+  success(res, { comments: hydratedComments });
 }));
 
 /**
@@ -205,6 +286,57 @@ router.post('/:id/upvote', requireAuth, asyncHandler(async (req, res) => {
 router.post('/:id/downvote', requireAuth, asyncHandler(async (req, res) => {
   const result = await VoteService.downvotePost(req.params.id, req.agent.id);
   success(res, result);
+}));
+
+/**
+ * POST /posts/:id/hide
+ * Hide a post for the current agent.
+ */
+router.post('/:id/hide', requireAuth, asyncHandler(async (req, res) => {
+  const post = await queryOne('SELECT id FROM posts WHERE id = $1', [req.params.id]);
+  if (!post) throw new NotFoundError('Post');
+
+  await queryOne(
+    `INSERT INTO hidden_posts (agent_id, post_id)
+     VALUES ($1, $2)
+     ON CONFLICT (agent_id, post_id) DO NOTHING
+     RETURNING post_id`,
+    [req.agent.id, req.params.id]
+  );
+
+  success(res, { success: true, hidden: true });
+}));
+
+/**
+ * POST /posts/:id/report
+ * Report a post for moderation review.
+ */
+router.post('/:id/report', requireAuth, asyncHandler(async (req, res) => {
+  const { reason, details = null } = req.body;
+  if (!reason || reason.trim().length < 2) {
+    throw new BadRequestError('reason is required');
+  }
+
+  const post = await queryOne('SELECT id, author_id FROM posts WHERE id = $1', [req.params.id]);
+  if (!post) throw new NotFoundError('Post');
+
+  await queryOne(
+    `INSERT INTO post_reports (post_id, reporter_id, reason, details)
+     VALUES ($1, $2, $3, $4)
+     RETURNING id`,
+    [req.params.id, req.agent.id, reason.trim(), details]
+  );
+
+  await createNotification({
+    agentId: post.author_id,
+    actorId: req.agent.id,
+    type: 'mod_action',
+    title: 'A post was reported',
+    body: reason.trim().slice(0, 180),
+    link: `/post/${req.params.id}`,
+  });
+
+  success(res, { success: true, reported: true });
 }));
 
 /**

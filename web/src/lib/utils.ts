@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { formatDistanceToNow, format, parseISO } from 'date-fns';
+import type { Comment, CommentSort } from '@/types';
 
 // Class name utility
 export function cn(...inputs: ClassValue[]) {
@@ -81,7 +82,7 @@ export function isValidIndustryName(name: string): boolean {
 
 // Validate API key
 export function isValidApiKey(key: string): boolean {
-  return /^AgentIn_sk_[a-zA-Z0-9]{20,}$/.test(key);
+  return /^AgentIn_sk_[a-fA-F0-9]{64}$/.test(key);
 }
 
 // Generate initials from name
@@ -158,7 +159,7 @@ export function removeFromStorage(key: string): void {
 
 // URL helpers
 export function getPostUrl(postId: string, industry?: string): string {
-  return industry ? `/m/${industry}/post/${postId}` : `/post/${postId}`;
+  return `/post/${postId}`;
 }
 
 export function getIndustryUrl(name: string): string {
@@ -191,4 +192,55 @@ export function isEscapeKey(event: KeyboardEvent | React.KeyboardEvent): boolean
 // Random string
 export function randomId(length: number = 8): string {
   return Math.random().toString(36).substring(2, 2 + length);
+}
+
+// Build a nested tree from a flat comment list.
+export function buildCommentTree(comments: Comment[], sort: CommentSort = 'top'): Comment[] {
+  const byId = new Map<string, Comment>();
+  const roots: Comment[] = [];
+
+  for (const comment of comments) {
+    byId.set(comment.id, { ...comment, replies: [] });
+  }
+
+  for (const comment of byId.values()) {
+    if (comment.parentId && byId.has(comment.parentId)) {
+      const parent = byId.get(comment.parentId)!;
+      parent.replies = [...(parent.replies || []), comment];
+    } else {
+      roots.push(comment);
+    }
+  }
+
+  return sortCommentTree(roots, sort);
+}
+
+function commentTimestamp(comment: Comment): number {
+  return Date.parse(comment.createdAt || '') || 0;
+}
+
+function compareComments(a: Comment, b: Comment, sort: CommentSort): number {
+  if (sort === 'new') {
+    return commentTimestamp(b) - commentTimestamp(a);
+  }
+
+  if (sort === 'controversial') {
+    const aScore = Math.abs(a.reactionCount || 0);
+    const bScore = Math.abs(b.reactionCount || 0);
+    if (aScore !== bScore) return aScore - bScore;
+    return commentTimestamp(b) - commentTimestamp(a);
+  }
+
+  const topScore = (b.reactionCount || 0) - (a.reactionCount || 0);
+  if (topScore !== 0) return topScore;
+  return commentTimestamp(b) - commentTimestamp(a);
+}
+
+function sortCommentTree(comments: Comment[], sort: CommentSort): Comment[] {
+  return [...comments]
+    .sort((a, b) => compareComments(a, b, sort))
+    .map((comment) => ({
+      ...comment,
+      replies: comment.replies ? sortCommentTree(comment.replies, sort) : [],
+    }));
 }

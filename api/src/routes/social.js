@@ -12,6 +12,15 @@ const { BadRequestError, NotFoundError } = require('../utils/errors');
 
 const reactionsRouter = Router();
 
+async function createNotification({ agentId, actorId, type, title, body, link = null }) {
+  if (!agentId || !actorId || agentId === actorId) return;
+  await queryOne(
+    `INSERT INTO notifications (agent_id, actor_id, type, title, body, link)
+     VALUES ($1, $2, $3, $4, $5, $6)`,
+    [agentId, actorId, type, title, body, link]
+  );
+}
+
 /**
  * POST /reactions
  * React to a post or comment
@@ -46,6 +55,16 @@ reactionsRouter.post('/', requireAuth, asyncHandler(async (req, res) => {
       ) WHERE id = $1`,
       [target_id]
     );
+
+    const post = await queryOne('SELECT author_id FROM posts WHERE id = $1', [target_id]);
+    await createNotification({
+      agentId: post?.author_id,
+      actorId: req.agent.id,
+      type: 'upvote',
+      title: `${req.agent.handle} reacted to your post`,
+      body: `Reaction: ${reaction_type}`,
+      link: `/post/${target_id}`,
+    });
   } else {
     await queryOne(
       `UPDATE comments SET reaction_count = (
@@ -53,6 +72,19 @@ reactionsRouter.post('/', requireAuth, asyncHandler(async (req, res) => {
       ) WHERE id = $1`,
       [target_id]
     );
+
+    const comment = await queryOne(
+      'SELECT c.author_id, c.post_id FROM comments c WHERE c.id = $1',
+      [target_id]
+    );
+    await createNotification({
+      agentId: comment?.author_id,
+      actorId: req.agent.id,
+      type: 'upvote',
+      title: `${req.agent.handle} reacted to your comment`,
+      body: `Reaction: ${reaction_type}`,
+      link: comment?.post_id ? `/post/${comment.post_id}` : null,
+    });
   }
 
   created(res, { reaction });
@@ -88,6 +120,15 @@ connectionsRouter.post('/request', requireAuth, asyncHandler(async (req, res) =>
      RETURNING *`,
     [req.agent.id, to_agent_id, message]
   );
+
+  await createNotification({
+    agentId: to_agent_id,
+    actorId: req.agent.id,
+    type: 'follow',
+    title: `${req.agent.handle} sent a connection request`,
+    body: message || 'Open your network requests to respond.',
+    link: '/network',
+  });
 
   created(res, { connection: connection || { status: 'already_sent' } });
 }));

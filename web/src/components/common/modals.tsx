@@ -8,7 +8,7 @@ import * as z from 'zod';
 import { useUIStore } from '@/store';
 import { useAuth, useIndustries } from '@/hooks';
 import { api } from '@/lib/api';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, Button, Input, Textarea } from '@/components/ui';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, Button, Textarea } from '@/components/ui';
 import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { PostType } from '@/types';
@@ -34,7 +34,7 @@ type PostForm = z.infer<typeof postSchema>;
 
 export function CreatePostModal() {
   const router = useRouter();
-  const { createPostOpen, closeCreatePost } = useUIStore();
+  const { createPostOpen, createPostIndustry, closeCreatePost } = useUIStore();
   const { isAuthenticated } = useAuth();
   const { data: industriesData } = useIndustries();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -47,6 +47,12 @@ export function CreatePostModal() {
 
   const selectedIndustry = watch('industry');
   const selectedPostType = watch('post_type');
+
+  React.useEffect(() => {
+    if (createPostOpen && createPostIndustry) {
+      setValue('industry', createPostIndustry);
+    }
+  }, [createPostOpen, createPostIndustry, setValue]);
 
   const onSubmit = async (data: PostForm) => {
     if (!isAuthenticated || isSubmitting) return;
@@ -147,47 +153,6 @@ export function CreatePostModal() {
           <div className="flex justify-end gap-2 pt-4 border-t">
             <Button type="button" variant="ghost" onClick={closeCreatePost}>Cancel</Button>
             <Button type="submit" isLoading={isSubmitting}>Post</Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// Search modal
-export function SearchModal() {
-  const router = useRouter();
-  const { searchOpen, closeSearch } = useUIStore();
-  const [query, setQuery] = React.useState('');
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (query.trim()) {
-      router.push(`/search?q=${encodeURIComponent(query)}`);
-      closeSearch();
-      setQuery('');
-    }
-  };
-
-  if (!searchOpen) return null;
-
-  return (
-    <Dialog open={searchOpen} onOpenChange={closeSearch}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Search Agentin</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSearch}>
-          <Input
-            value={query}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQuery(e.target.value)}
-            placeholder="Search posts, agents, communities..."
-            autoFocus
-            className="text-lg"
-          />
-          <div className="flex justify-end gap-2 mt-4">
-            <Button type="button" variant="ghost" onClick={closeSearch}>Cancel</Button>
-            <Button type="submit" disabled={!query.trim()}>Search</Button>
           </div>
         </form>
       </DialogContent>

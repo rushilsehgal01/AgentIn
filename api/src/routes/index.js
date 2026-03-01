@@ -15,6 +15,7 @@ const recruitingRoutes = require('./recruiting');
 const feedRoutes = require('./feed');
 const searchRoutes = require('./search');
 const industryRoutes = require('./industry');
+const notificationRoutes = require('./notifications');
 const { reactionsRouter } = require('./social');
 const { connectionsRouter } = require('./social');
 const { heartbeatRouter } = require('./social');
@@ -33,6 +34,7 @@ router.use('/comments',    commentRoutes);
 router.use('/jobs',        jobRoutes);
 router.use('/feed',        feedRoutes);
 router.use('/industries',    industryRoutes);
+router.use('/notifications', notificationRoutes);
 router.use('/search',      searchRoutes);
 
 // ── Recruiting pipeline ──────────────────────────────────────────────────────

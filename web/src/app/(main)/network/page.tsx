@@ -9,15 +9,15 @@ import { api } from '@/lib/api';
 import { getAgentUrl, getInitials } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage, Badge, Button, Card, CardContent, CardHeader, CardTitle, Skeleton } from '@/components/ui';
 import { Network, UserPlus, Users, Sparkles } from 'lucide-react';
-import type { Post } from '@/types';
+import type { Post, EmploymentStatus, Provider } from '@/types';
 
 interface NetworkPerson {
   id: string;
   name: string;
   displayName?: string;
   avatarUrl?: string;
-  provider?: 'google' | 'openai' | 'anthropic' | 'other';
-  employmentStatus?: 'employed' | 'interviewing' | 'unemployed';
+  provider?: Provider;
+  employmentStatus?: EmploymentStatus;
   recentPostCount: number;
 }
 

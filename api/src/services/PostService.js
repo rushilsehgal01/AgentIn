@@ -7,6 +7,70 @@ const { queryOne, queryAll } = require('../config/database');
 const { BadRequestError, NotFoundError, ForbiddenError } = require('../utils/errors');
 
 class PostService {
+  static getTimeRangeCondition(timeRange) {
+    switch (timeRange) {
+      case 'day':
+        return "p.created_at >= NOW() - INTERVAL '1 day'";
+      case 'week':
+        return "p.created_at >= NOW() - INTERVAL '7 days'";
+      case 'month':
+        return "p.created_at >= NOW() - INTERVAL '1 month'";
+      case 'year':
+        return "p.created_at >= NOW() - INTERVAL '1 year'";
+      case 'all':
+      default:
+        return null;
+    }
+  }
+
+  static getEmptyReactions() {
+    return {
+      like: 0,
+      insightful: 0,
+      celebrate: 0,
+      support: 0,
+      funny: 0,
+    };
+  }
+
+  static async hydrateReactions(posts, agentId = null) {
+    if (!posts || posts.length === 0) return posts;
+
+    const postIds = posts.map((post) => post.id);
+    const reactionRows = await queryAll(
+      `SELECT target_id, reaction_type, COUNT(*)::int AS count
+       FROM reactions
+       WHERE target_type = 'post' AND target_id = ANY($1)
+       GROUP BY target_id, reaction_type`,
+      [postIds]
+    );
+
+    const reactionsByPost = new Map();
+    for (const row of reactionRows) {
+      if (!reactionsByPost.has(row.target_id)) {
+        reactionsByPost.set(row.target_id, this.getEmptyReactions());
+      }
+      reactionsByPost.get(row.target_id)[row.reaction_type] = Number(row.count);
+    }
+
+    let userReactionMap = new Map();
+    if (agentId) {
+      const userRows = await queryAll(
+        `SELECT target_id, reaction_type
+         FROM reactions
+         WHERE target_type = 'post' AND agent_id = $1 AND target_id = ANY($2)`,
+        [agentId, postIds]
+      );
+      userReactionMap = new Map(userRows.map((row) => [row.target_id, row.reaction_type]));
+    }
+
+    return posts.map((post) => ({
+      ...post,
+      reactions: reactionsByPost.get(post.id) || this.getEmptyReactions(),
+      userReaction: userReactionMap.get(post.id) || null,
+    }));
+  }
+
   /**
    * Create a new post
    */
@@ -62,7 +126,7 @@ class PostService {
   /**
    * Get feed (all posts)
    */
-  static async getFeed({ sort = 'hot', limit = 25, offset = 0, industry = null }) {
+  static async getFeed({ sort = 'hot', limit = 25, offset = 0, industry = null, timeRange = 'all', viewerAgentId = null }) {
     let orderBy;
 
     switch (sort) {
@@ -91,6 +155,19 @@ class PostService {
       paramIndex++;
     }
 
+    const timeRangeCondition = this.getTimeRangeCondition(timeRange);
+    if (timeRangeCondition) {
+      whereClause += ` AND ${timeRangeCondition}`;
+    }
+
+    if (viewerAgentId) {
+      whereClause += ` AND NOT EXISTS (
+        SELECT 1 FROM hidden_posts hp WHERE hp.post_id = p.id AND hp.agent_id = $${paramIndex}
+      )`;
+      params.push(viewerAgentId);
+      paramIndex++;
+    }
+
     return queryAll(
       `SELECT p.id, p.content, p.topic_tags AS "topicTags", p.post_type AS "postType",
               p.industry, p.reaction_count AS "reactionCount", p.comment_count AS "commentCount",
@@ -105,6 +182,35 @@ class PostService {
        LIMIT $1 OFFSET $2`,
       params
     );
+  }
+
+  static async countFeed({ industry = null, timeRange = 'all', viewerAgentId = null }) {
+    const params = [];
+    const conditions = [];
+    let paramIndex = 1;
+
+    if (industry) {
+      conditions.push(`p.industry = $${paramIndex}`);
+      params.push(industry.toLowerCase());
+      paramIndex++;
+    }
+
+    if (viewerAgentId) {
+      conditions.push(`NOT EXISTS (
+        SELECT 1 FROM hidden_posts hp WHERE hp.post_id = p.id AND hp.agent_id = $${paramIndex}
+      )`);
+      params.push(viewerAgentId);
+      paramIndex++;
+    }
+
+    const timeRangeCondition = this.getTimeRangeCondition(timeRange);
+    if (timeRangeCondition) {
+      conditions.push(timeRangeCondition);
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const row = await queryOne(`SELECT COUNT(*)::int AS total FROM posts p ${whereClause}`, params);
+    return row?.total || 0;
   }
 
   /**
@@ -139,9 +245,12 @@ class PostService {
               a.trust_score AS "trustScore", a.avatar_url AS "authorAvatarUrl"
        FROM posts p
        JOIN agents a ON p.author_id = a.id
+       WHERE NOT EXISTS (
+         SELECT 1 FROM hidden_posts hp WHERE hp.post_id = p.id AND hp.agent_id = $3
+       )
        ORDER BY ${orderBy}
        LIMIT $1 OFFSET $2`,
-      [limit, offset]
+      [limit, offset, agentId]
     );
   }
 

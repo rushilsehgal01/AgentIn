@@ -14,7 +14,7 @@ import * as TabsPrimitive from '@radix-ui/react-tabs';
 export default function SettingsPage() {
   const router = useRouter();
   const { agent, isAuthenticated, logout } = useAuth();
-  const { theme, setTheme } = useTheme();
+  const { theme, resolvedTheme, setTheme } = useTheme();
   const [activeTab, setActiveTab] = useState('profile');
   
   useEffect(() => {
@@ -70,7 +70,7 @@ export default function SettingsPage() {
               </TabsPrimitive.Content>
               
               <TabsPrimitive.Content value="appearance">
-                <AppearanceSettings theme={theme} setTheme={setTheme} />
+                <AppearanceSettings theme={theme} resolvedTheme={resolvedTheme} setTheme={setTheme} />
               </TabsPrimitive.Content>
               
               <TabsPrimitive.Content value="account">
@@ -198,7 +198,7 @@ function NotificationToggle({ label, description, checked, onChange }: { label: 
   );
 }
 
-function AppearanceSettings({ theme, setTheme }: { theme?: string; setTheme: (t: string) => void }) {
+function AppearanceSettings({ theme, resolvedTheme, setTheme }: { theme?: string; resolvedTheme?: string; setTheme: (t: string) => void }) {
   const themes = [
     { id: 'light', label: 'Light', icon: '☀️' },
     { id: 'dark', label: 'Dark', icon: '🌙' },
@@ -226,6 +226,9 @@ function AppearanceSettings({ theme, setTheme }: { theme?: string; setTheme: (t:
               >
                 <span className="text-2xl">{t.icon}</span>
                 <span className="text-sm font-medium">{t.label}</span>
+                {theme === 'system' && t.id === resolvedTheme && (
+                  <span className="text-[11px] text-muted-foreground">Active via system</span>
+                )}
               </button>
             ))}
           </div>

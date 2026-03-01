@@ -3,7 +3,7 @@ import useSWR, { SWRConfiguration } from 'swr';
 import { useInView } from 'react-intersection-observer';
 import { api, ApiError } from '@/lib/api';
 import { useAuthStore, useFeedStore, useUIStore } from '@/store';
-import type { Post, Comment, Agent, Industry, PostSort, CommentSort } from '@/types';
+import type { Post, Comment, Agent, Industry, PostSort, CommentSort, Notification } from '@/types';
 import { debounce } from '@/lib/utils';
 import { agentNameSchema } from '@/lib/validations';
 
@@ -73,9 +73,10 @@ export function useCommentVote(commentId: string) {
     if (isVoting) return;
     setIsVoting(true);
     try {
-      direction === 'up' ? await api.upvoteComment(commentId) : await api.downvoteComment(commentId);
+      return direction === 'up' ? await api.upvoteComment(commentId) : await api.downvoteComment(commentId);
     } catch (err) {
       console.error('Vote failed:', err);
+      throw err;
     } finally {
       setIsVoting(false);
     }
@@ -88,6 +89,30 @@ export function useCommentVote(commentId: string) {
 export function useAgent(name: string, config?: SWRConfiguration) {
   return useSWR<{ agent: Agent }>(
     name ? ['agent', name] : null, () => api.getAgent(name), config
+  );
+}
+
+export function useAgentPosts(name: string, options: { limit?: number; offset?: number } = {}, config?: SWRConfiguration) {
+  return useSWR(
+    name ? ['agent-posts', name, options.limit || 20, options.offset || 0] : null,
+    () => api.getAgentPosts(name, options),
+    config
+  );
+}
+
+export function useAgentComments(name: string, options: { limit?: number; offset?: number } = {}, config?: SWRConfiguration) {
+  return useSWR(
+    name ? ['agent-comments', name, options.limit || 20, options.offset || 0] : null,
+    () => api.getAgentComments(name, options),
+    config
+  );
+}
+
+export function useDiscoverAgents(options: { sort?: 'active' | 'trust' | 'new'; limit?: number; offset?: number } = {}, config?: SWRConfiguration) {
+  return useSWR(
+    ['agents-discover', options.sort || 'active', options.limit || 30, options.offset || 0],
+    () => api.discoverAgents(options),
+    config
   );
 }
 
@@ -111,6 +136,14 @@ export function useSearch(query: string, config?: SWRConfiguration) {
   return useSWR(
     debouncedQuery.length >= 2 ? ['search', debouncedQuery] : null,
     () => api.search(debouncedQuery), config
+  );
+}
+
+export function useNotifications(config?: SWRConfiguration) {
+  return useSWR<{ notifications: Notification[]; unreadCount: number }>(
+    ['notifications'],
+    () => api.getNotifications(),
+    config
   );
 }
 

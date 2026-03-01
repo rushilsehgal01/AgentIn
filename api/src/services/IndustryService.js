@@ -3,10 +3,55 @@
  * Handles community creation and management
  */
 
-const { queryOne, queryAll } = require('../config/database');
-const { BadRequestError, NotFoundError } = require('../utils/errors');
+const { query, queryOne, queryAll, transaction } = require('../config/database');
+const { BadRequestError, NotFoundError, ConflictError, ForbiddenError } = require('../utils/errors');
 
 class IndustryService {
+  static schemaReady = false;
+
+  static async ensureSchema() {
+    if (this.schemaReady) return;
+
+    await query(
+      `CREATE TABLE IF NOT EXISTS industries (
+         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+         name TEXT UNIQUE NOT NULL,
+         display_name TEXT NOT NULL,
+         description TEXT DEFAULT '',
+         creator_id UUID REFERENCES agents(id) ON DELETE SET NULL,
+         subscriber_count INTEGER DEFAULT 0,
+         created_at TIMESTAMPTZ DEFAULT now(),
+         updated_at TIMESTAMPTZ DEFAULT now()
+       )`
+    );
+
+    await query(
+      `CREATE TABLE IF NOT EXISTS subscriptions (
+         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+         industry_id UUID REFERENCES industries(id) ON DELETE CASCADE,
+         agent_id UUID REFERENCES agents(id) ON DELETE CASCADE,
+         created_at TIMESTAMPTZ DEFAULT now(),
+         UNIQUE(industry_id, agent_id)
+       )`
+    );
+
+    await query(
+      `CREATE TABLE IF NOT EXISTS industry_moderators (
+         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+         industry_id UUID REFERENCES industries(id) ON DELETE CASCADE,
+         agent_id UUID REFERENCES agents(id) ON DELETE CASCADE,
+         role TEXT DEFAULT 'moderator' CHECK (role IN ('owner', 'moderator')),
+         created_at TIMESTAMPTZ DEFAULT now(),
+         UNIQUE(industry_id, agent_id)
+       )`
+    );
+
+    await query('CREATE INDEX IF NOT EXISTS idx_industries_name ON industries(name)');
+    await query('CREATE INDEX IF NOT EXISTS idx_subscriptions_agent ON subscriptions(agent_id, created_at DESC)');
+
+    this.schemaReady = true;
+  }
+
   /**
    * Create a new industry
    * 
@@ -18,6 +63,8 @@ class IndustryService {
    * @returns {Promise<Object>} Created industry
    */
   static async create({ name, displayName, description = '', creatorId }) {
+    await this.ensureSchema();
+
     if (!name || typeof name !== 'string') {
       throw new BadRequestError('Name is required');
     }
@@ -82,6 +129,8 @@ class IndustryService {
    * @returns {Promise<Object>} Industry
    */
   static async findByName(name, agentId = null) {
+    await this.ensureSchema();
+
     const industry = await queryOne(
       `SELECT s.id, s.name, s.description,
               s.display_name AS "displayName",
@@ -107,18 +156,20 @@ class IndustryService {
    * @returns {Promise<Array>} Industries
    */
   static async list({ limit = 50, offset = 0, sort = 'popular' }) {
+    await this.ensureSchema();
+
     let orderBy;
     
     switch (sort) {
       case 'new':
-        orderBy = 'MAX(p.created_at) DESC';
+        orderBy = 'created_at DESC';
         break;
       case 'alphabetical':
-        orderBy = 'industry ASC';
+        orderBy = 'name ASC';
         break;
       case 'popular':
       default:
-        orderBy = 'COUNT(*) DESC';
+        orderBy = 'subscriber_count DESC, created_at DESC';
         break;
     }
     
@@ -132,16 +183,6 @@ class IndustryService {
        LIMIT $1 OFFSET $2`,
       [limit, offset]
     );
-    
-    // Transform to match expected format
-    return industries.map(ind => ({
-      id: ind.id,
-      name: ind.name,
-      display_name: ind.name,
-      description: '',
-      subscriber_count: parseInt(ind.subscriber_count, 10),
-      created_at: ind.created_at
-    }));
   }
   
   /**
@@ -152,6 +193,8 @@ class IndustryService {
    * @returns {Promise<Object>} Success response
    */
   static async subscribe(industryId, agentId) {
+    await this.ensureSchema();
+
     // Check if already subscribed
     const existing = await queryOne(
       'SELECT id FROM subscriptions WHERE industry_id = $1 AND agent_id = $2',
@@ -185,6 +228,8 @@ class IndustryService {
    * @returns {Promise<Object>} Success response
    */
   static async unsubscribe(industryId, agentId) {
+    await this.ensureSchema();
+
     const result = await queryOne(
       'DELETE FROM subscriptions WHERE industry_id = $1 AND agent_id = $2 RETURNING id',
       [industryId, agentId]
@@ -210,6 +255,8 @@ class IndustryService {
    * @returns {Promise<boolean>}
    */
   static async isSubscribed(industryId, agentId) {
+    await this.ensureSchema();
+
     const result = await queryOne(
       'SELECT id FROM subscriptions WHERE industry_id = $1 AND agent_id = $2',
       [industryId, agentId]
@@ -226,6 +273,8 @@ class IndustryService {
    * @returns {Promise<Object>} Updated industry
    */
   static async update(industryId, agentId, updates) {
+    await this.ensureSchema();
+
     // Check permissions
     const mod = await queryOne(
       'SELECT role FROM industry_moderators WHERE industry_id = $1 AND agent_id = $2',
@@ -270,6 +319,8 @@ class IndustryService {
    * @returns {Promise<Array>} Moderators
    */
   static async getModerators(industryId) {
+    await this.ensureSchema();
+
     return queryAll(
       `SELECT a.handle, a.display_name, sm.role, sm.created_at
        FROM industry_moderators sm
@@ -290,6 +341,8 @@ class IndustryService {
    * @returns {Promise<Object>} Success response
    */
   static async addModerator(industryId, requesterId, agentName, role = 'moderator') {
+    await this.ensureSchema();
+
     // Check requester is owner
     const requester = await queryOne(
       'SELECT role FROM industry_moderators WHERE industry_id = $1 AND agent_id = $2',
@@ -330,6 +383,8 @@ class IndustryService {
    * @returns {Promise<Object>} Success response
    */
   static async removeModerator(industryId, requesterId, agentName) {
+    await this.ensureSchema();
+
     // Check requester is owner
     const requester = await queryOne(
       'SELECT role FROM industry_moderators WHERE industry_id = $1 AND agent_id = $2',

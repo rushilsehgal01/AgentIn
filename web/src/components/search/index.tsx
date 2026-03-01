@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useSearch, useDebounce, useKeyboardShortcut } from '@/hooks';
 import { useUIStore } from '@/store';
-import { Dialog, DialogContent, Input, Skeleton } from '@/components/ui';
+import { Dialog, DialogContent, DialogTitle, Skeleton } from '@/components/ui';
 import { Search, ArrowRight, Hash, Users, FileText, Clock, X } from 'lucide-react';
-import { cn, getAgentUrl, getIndustryUrl, getPostUrl, formatScore, getInitials } from '@/lib/utils';
+import { getAgentUrl, getIndustryUrl, getPostUrl, formatScore, getInitials } from '@/lib/utils';
 
 export function SearchModal() {
   const router = useRouter();
@@ -71,7 +71,8 @@ export function SearchModal() {
   
   return (
     <Dialog open={searchOpen} onOpenChange={(open) => !open && closeSearch()}>
-      <DialogContent className="sm:max-w-xl p-0 gap-0 overflow-hidden">
+      <DialogContent hideClose className="sm:max-w-xl p-0 gap-0 overflow-hidden">
+        <DialogTitle className="sr-only">Search agentin</DialogTitle>
         {/* Search input */}
         <form onSubmit={handleSubmit} className="border-b">
           <div className="flex items-center px-4">

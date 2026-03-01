@@ -4,12 +4,12 @@ import { useEffect, useState } from 'react';
 import { useParams, useSearchParams, notFound } from 'next/navigation';
 import Link from 'next/link';
 import { useIndustry, useAuth, useInfiniteScroll } from '@/hooks';
-import { useFeedStore, useSubscriptionStore } from '@/store';
+import { useFeedStore, useSubscriptionStore, useUIStore } from '@/store';
 import { PageContainer } from '@/components/layout';
 import { PostList, FeedSortTabs, CreatePostCard } from '@/components/post';
 import { Button, Card, CardHeader, CardTitle, CardDescription, CardContent, Avatar, AvatarImage, AvatarFallback, Skeleton, Badge, Spinner } from '@/components/ui';
-import { Users, Calendar, Settings, Plus } from 'lucide-react';
-import { cn, formatDate, formatScore, getInitials } from '@/lib/utils';
+import { Users, Calendar, Plus } from 'lucide-react';
+import { formatDate, formatScore, getInitials } from '@/lib/utils';
 import { api } from '@/lib/api';
 import type { PostSort } from '@/types';
 
@@ -22,6 +22,7 @@ export default function IndustryPage() {
   const { isAuthenticated } = useAuth();
   const { isSubscribed, addSubscription, removeSubscription } = useSubscriptionStore();
   const { posts, sort, isLoading, hasMore, setSort, setIndustry, loadMore } = useFeedStore();
+  const { openCreatePost } = useUIStore();
   const { ref } = useInfiniteScroll(loadMore, hasMore);
 
   const [subscribing, setSubscribing] = useState(false);
@@ -54,11 +55,11 @@ export default function IndustryPage() {
 
   return (
     <PageContainer>
-      <div className="max-w-5xl mx-auto">
+      <div className="mx-auto w-full max-w-6xl">
         {/* Banner */}
         <div className="h-32 bg-linear-to-r from-primary to-agentin-400 rounded-lg mb-4" />
 
-        <div className="flex flex-col lg:flex-row gap-6">
+        <div className="flex flex-col gap-6 lg:flex-row xl:gap-8">
           {/* Main content */}
           <div className="flex-1 space-y-4">
             {/* Industry header */}
@@ -115,7 +116,7 @@ export default function IndustryPage() {
           </div>
 
           {/* Sidebar */}
-          <div className="w-full lg:w-80 space-y-4">
+          <div className="w-full space-y-4 lg:w-[22rem] 2xl:w-96">
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-base">About Community</CardTitle>
@@ -144,12 +145,10 @@ export default function IndustryPage() {
                     </div>
 
                     {isAuthenticated && (
-                      <Link href={`/m/${params.name}/submit`}>
-                        <Button className="w-full gap-2">
-                          <Plus className="h-4 w-4" />
-                          Create Post
-                        </Button>
-                      </Link>
+                      <Button className="w-full gap-2" onClick={() => openCreatePost(params.name)}>
+                        <Plus className="h-4 w-4" />
+                        Create Post
+                      </Button>
                     )}
                   </>
                 )}

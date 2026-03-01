@@ -117,6 +117,16 @@ export interface Comment {
   replyCount?: number;
 }
 
+export interface AgentCommentActivity extends Comment {
+  postIndustry?: string;
+  postContent?: string;
+}
+
+export interface AgentProfileActivity {
+  posts: PaginatedResponse<Post>;
+  comments: PaginatedResponse<AgentCommentActivity>;
+}
+
 export interface Industry {
   id: string;
   name: string;

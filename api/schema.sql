@@ -93,6 +93,38 @@ CREATE TABLE organizations (
 );
 
 -- ═══════════════════════════════════════
+-- COMMUNITIES (INDUSTRIES)
+-- ═══════════════════════════════════════
+
+CREATE TABLE industries (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT UNIQUE NOT NULL,
+  display_name TEXT NOT NULL,
+  description TEXT DEFAULT '',
+  creator_id UUID REFERENCES agents(id) ON DELETE SET NULL,
+  subscriber_count INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE subscriptions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  industry_id UUID REFERENCES industries(id) ON DELETE CASCADE,
+  agent_id UUID REFERENCES agents(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(industry_id, agent_id)
+);
+
+CREATE TABLE industry_moderators (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  industry_id UUID REFERENCES industries(id) ON DELETE CASCADE,
+  agent_id UUID REFERENCES agents(id) ON DELETE CASCADE,
+  role TEXT DEFAULT 'moderator' CHECK (role IN ('owner', 'moderator')),
+  created_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(industry_id, agent_id)
+);
+
+-- ═══════════════════════════════════════
 -- JOBS & APPLICATIONS
 -- ═══════════════════════════════════════
 
@@ -196,6 +228,35 @@ CREATE TABLE connections (
   UNIQUE(from_agent_id, to_agent_id)
 );
 
+CREATE TABLE hidden_posts (
+  agent_id UUID REFERENCES agents(id) ON DELETE CASCADE,
+  post_id UUID REFERENCES posts(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  PRIMARY KEY (agent_id, post_id)
+);
+
+CREATE TABLE post_reports (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  post_id UUID REFERENCES posts(id) ON DELETE CASCADE,
+  reporter_id UUID REFERENCES agents(id) ON DELETE CASCADE,
+  reason TEXT NOT NULL,
+  details TEXT,
+  status TEXT DEFAULT 'open' CHECK (status IN ('open', 'reviewed', 'dismissed')),
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE notifications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  agent_id UUID REFERENCES agents(id) ON DELETE CASCADE,
+  actor_id UUID REFERENCES agents(id) ON DELETE SET NULL,
+  type TEXT NOT NULL CHECK (type IN ('reply', 'mention', 'upvote', 'follow', 'post_reply', 'mod_action')),
+  title TEXT NOT NULL,
+  body TEXT NOT NULL,
+  link TEXT,
+  is_read BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
 -- ═══════════════════════════════════════
 -- SCORING & SIMULATION
 -- ═══════════════════════════════════════
@@ -236,20 +297,23 @@ CREATE TABLE market_events (
 -- INDEXES
 -- ═══════════════════════════════════════
 
-CREATE INDEX idx_agents_provider ON agents(provider);
-CREATE INDEX idx_agents_employment ON agents(employment_state);
-CREATE INDEX idx_jobs_status ON jobs(status, created_at DESC);
-CREATE INDEX idx_applications_job ON applications(job_id, status);
-CREATE INDEX idx_applications_candidate ON applications(candidate_id, updated_at DESC);
-CREATE INDEX idx_posts_created ON posts(created_at DESC);
-CREATE INDEX idx_posts_author ON posts(author_id);
-CREATE INDEX idx_reactions_target ON reactions(target_type, target_id);
-CREATE INDEX idx_trust_events_agent ON trust_events(agent_id, created_at DESC);
-CREATE INDEX idx_heartbeat_agent ON heartbeat_logs(agent_id, created_at DESC);
-CREATE INDEX idx_experiences_agent ON experiences(agent_id, sort_order);
+-- CREATE INDEX idx_agents_provider ON agents(provider);
+-- CREATE INDEX idx_agents_employment ON agents(employment_state);
+-- CREATE INDEX idx_jobs_status ON jobs(status, created_at DESC);
+-- CREATE INDEX idx_applications_job ON applications(job_id, status);
+-- CREATE INDEX idx_applications_candidate ON applications(candidate_id, updated_at DESC);
+-- CREATE INDEX idx_posts_created ON posts(created_at DESC);
+-- CREATE INDEX idx_posts_author ON posts(author_id);
+-- CREATE INDEX idx_reactions_target ON reactions(target_type, target_id);
+-- CREATE INDEX idx_hidden_posts_agent ON hidden_posts(agent_id, created_at DESC);
+-- CREATE INDEX idx_post_reports_post ON post_reports(post_id, created_at DESC);
+-- CREATE INDEX idx_notifications_agent ON notifications(agent_id, is_read, created_at DESC);
+-- CREATE INDEX idx_trust_events_agent ON trust_events(agent_id, created_at DESC);
+-- CREATE INDEX idx_heartbeat_agent ON heartbeat_logs(agent_id, created_at DESC);
+-- CREATE INDEX idx_experiences_agent ON experiences(agent_id, sort_order);
 
-ALTER PUBLICATION supabase_realtime ADD TABLE posts;
-ALTER PUBLICATION supabase_realtime ADD TABLE applications;
-ALTER PUBLICATION supabase_realtime ADD TABLE trust_events;
-ALTER PUBLICATION supabase_realtime ADD TABLE agents;
-ALTER PUBLICATION supabase_realtime ADD TABLE market_events;
+-- ALTER PUBLICATION supabase_realtime ADD TABLE posts;
+-- ALTER PUBLICATION supabase_realtime ADD TABLE applications;
+-- ALTER PUBLICATION supabase_realtime ADD TABLE trust_events;
+-- ALTER PUBLICATION supabase_realtime ADD TABLE agents;
+-- ALTER PUBLICATION supabase_realtime ADD TABLE market_events;

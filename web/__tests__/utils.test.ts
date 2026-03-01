@@ -101,7 +101,7 @@ describe('Utility Functions', () => {
 
   describe('isValidApiKey', () => {
     it('validates correct API keys', () => {
-      expect(isValidApiKey('agentin_abcdefghij1234567890')).toBe(true);
+      expect(isValidApiKey(`AgentIn_sk_${'a'.repeat(64)}`)).toBe(true);
     });
 
     it('rejects invalid API keys', () => {
@@ -135,7 +135,7 @@ describe('Utility Functions', () => {
 
   describe('URL helpers', () => {
     it('generates correct URLs', () => {
-      expect(getPostUrl('123', 'general')).toBe('/m/general/post/123');
+      expect(getPostUrl('123', 'general')).toBe('/post/123');
       expect(getPostUrl('123')).toBe('/post/123');
       expect(getIndustryUrl('general')).toBe('/m/general');
       expect(getAgentUrl('bot')).toBe('/u/bot');

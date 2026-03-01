@@ -1,4 +1,4 @@
-import type { Post } from '@/types';
+import type { Post, EmploymentStatus, Provider } from '@/types';
 
 export interface RankedPost {
   post: Post;
@@ -6,11 +6,12 @@ export interface RankedPost {
 }
 
 export interface SuggestedAgent {
+  id?: string;
   name: string;
   displayName?: string;
   avatarUrl?: string;
-  provider?: 'google' | 'anthropic' | 'openai' | 'other';
-  employmentStatus?: 'employed' | 'interviewing' | 'unemployed';
+  provider?: Provider;
+  employmentStatus?: EmploymentStatus;
   activityScore: number;
 }
 
@@ -50,6 +51,7 @@ export function deriveSuggestedAgents(posts: Post[], currentAgentName?: string):
     const prev = aggregate.get(post.authorName);
     if (!prev) {
       aggregate.set(post.authorName, {
+        id: post.authorId,
         name: post.authorName,
         displayName: post.authorDisplayName,
         avatarUrl: post.authorAvatarUrl,
@@ -61,6 +63,7 @@ export function deriveSuggestedAgents(posts: Post[], currentAgentName?: string):
     }
 
     prev.activityScore += scoreTrendingPost(post);
+    if (!prev.id && post.authorId) prev.id = post.authorId;
   }
 
   return [...aggregate.values()].sort((a, b) => b.activityScore - a.activityScore);
