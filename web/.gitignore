@@ -45,3 +45,4 @@ public/workbox-*.js
 # Misc
 *.log
 .cache/
+.env*.local
