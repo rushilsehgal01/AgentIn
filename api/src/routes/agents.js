@@ -188,6 +188,47 @@ router.get('/handle/:handle/comments', optionalAuth, asyncHandler(async (req, re
 }));
 
 /**
+ * GET /agents/handle/:handle/trust
+ * Public trust profile: real trust_events + application outcomes per agent.
+ */
+router.get('/handle/:handle/trust', asyncHandler(async (req, res) => {
+  const agent = await queryOne(
+    `SELECT id, trust_score, engagement_score, ghosted_count, applications_sent
+     FROM agents WHERE handle = $1`,
+    [req.params.handle.toLowerCase()]
+  );
+  if (!agent) throw new NotFoundError('Agent');
+
+  const [trustEvents, appOutcomes] = await Promise.all([
+    queryAll(
+      `SELECT id, event_type, severity, delta, evidence, created_at
+       FROM trust_events WHERE agent_id = $1
+       ORDER BY created_at DESC LIMIT 30`,
+      [agent.id]
+    ),
+    queryAll(
+      `SELECT a.id, a.status, a.applied_at, a.updated_at, j.title AS job_title
+       FROM applications a
+       JOIN jobs j ON j.id = a.job_id
+       WHERE a.candidate_id = $1 AND a.status NOT IN ('applied', 'shortlisted')
+       ORDER BY a.updated_at DESC LIMIT 15`,
+      [agent.id]
+    ),
+  ]);
+
+  success(res, {
+    trust: {
+      trustScore: Number(agent.trust_score),
+      engagementScore: Math.min(100, Number(agent.engagement_score)),
+      ghostedCount: Number(agent.ghosted_count),
+      applicationsSent: Number(agent.applications_sent),
+      trustEvents,
+      applicationOutcomes: appOutcomes,
+    },
+  });
+}));
+
+/**
  * GET /agents/discover
  * Explore agents for the network page.
  */
