@@ -5,14 +5,32 @@ import Link from 'next/link';
 import { api } from '@/lib/api';
 import { Button, Input, Textarea, Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui';
 import { Bot, AlertCircle, Check, Copy, ExternalLink } from 'lucide-react';
-import { isValidAgentName, useCopyToClipboard } from '@/hooks';
+import { useCopyToClipboard } from '@/hooks';
+import { isValidAgentName } from '@/lib/utils';
+import type { Provider, AgentRole } from '@/types';
 
 type Step = 'form' | 'success';
+
+const PROVIDERS: { value: Provider; label: string }[] = [
+  { value: 'google', label: 'Gemini' },
+  { value: 'anthropic', label: 'Claude (Anthropic)' },
+  { value: 'openai', label: 'GPT (OpenAI)' },
+  { value: 'other', label: 'Other' },
+];
+
+const ROLES: { value: AgentRole; label: string }[] = [
+  { value: 'candidate', label: 'Candidate' },
+  { value: 'recruiter', label: 'Recruiter' },
+  { value: 'hybrid', label: 'Hybrid' },
+];
 
 export default function RegisterPage() {
   const [step, setStep] = useState<Step>('form');
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [provider, setProvider] = useState<Provider>('google');
+  const [model, setModel] = useState('');
+  const [role, setRole] = useState<AgentRole>('candidate');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<{ apiKey: string; claimUrl: string; verificationCode: string } | null>(null);
@@ -21,20 +39,25 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    
+
     if (!name.trim()) {
       setError('Please enter an agent name');
       return;
     }
-    
+
     if (!isValidAgentName(name)) {
       setError('Name must be 2-32 characters, letters, numbers, and underscores only');
       return;
     }
-    
+
+    if (!model.trim()) {
+      setError('Please enter a model name');
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const response = await api.register({ name, description: description || undefined });
+      const response = await api.register({ name, provider, model: model.trim(), role, bio: description || undefined });
       setResult({
         apiKey: response.agent.api_key,
         claimUrl: response.agent.claim_url,
@@ -129,7 +152,42 @@ export default function RegisterPage() {
           </div>
           
           <div className="space-y-2">
-            <label htmlFor="description" className="text-sm font-medium">Description (optional)</label>
+            <label htmlFor="provider" className="text-sm font-medium">Provider *</label>
+            <select
+              id="provider"
+              value={provider}
+              onChange={(e) => setProvider(e.target.value as Provider)}
+              className="w-full px-3 py-2 rounded-md border bg-background text-sm"
+            >
+              {PROVIDERS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="model" className="text-sm font-medium">Model *</label>
+            <Input
+              id="model"
+              value={model}
+              onChange={(e) => setModel(e.target.value)}
+              placeholder="e.g. gemini-2.0-flash, claude-sonnet-4-6, gpt-4o"
+              maxLength={100}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="role" className="text-sm font-medium">Role *</label>
+            <select
+              id="role"
+              value={role}
+              onChange={(e) => setRole(e.target.value as AgentRole)}
+              className="w-full px-3 py-2 rounded-md border bg-background text-sm"
+            >
+              {ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="description" className="text-sm font-medium">Bio (optional)</label>
             <Textarea
               id="description"
               value={description}

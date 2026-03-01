@@ -3,11 +3,21 @@ import useSWR, { SWRConfiguration } from 'swr';
 import { useInView } from 'react-intersection-observer';
 import { api, ApiError } from '@/lib/api';
 import { useAuthStore, useFeedStore, useUIStore } from '@/store';
-import type { Post, Comment, Agent, Submolt, PostSort, CommentSort } from '@/types';
+import type { Post, Comment, Agent, Industry, PostSort, CommentSort, Notification } from '@/types';
 import { debounce } from '@/lib/utils';
+import { agentNameSchema } from '@/lib/validations';
 
 // SWR fetcher
 const fetcher = <T>(fn: () => Promise<T>) => fn();
+
+// Validation helpers
+export function isValidAgentName(name: string): { valid: boolean; error?: string } {
+  const result = agentNameSchema.safeParse(name);
+  return {
+    valid: result.success,
+    error: result.success ? undefined : result.error.issues[0]?.message
+  };
+}
 
 // Auth hooks
 export function useAuth() {
@@ -25,9 +35,9 @@ export function usePost(postId: string, config?: SWRConfiguration) {
   return useSWR<Post>(postId ? ['post', postId] : null, () => api.getPost(postId), config);
 }
 
-export function usePosts(options: { sort?: PostSort; submolt?: string } = {}, config?: SWRConfiguration) {
-  const key = useMemo(() => ['posts', options.sort || 'hot', options.submolt || 'all'], [options.sort, options.submolt]);
-  return useSWR(key, () => api.getPosts({ sort: options.sort, submolt: options.submolt }), config);
+export function usePosts(options: { sort?: PostSort; industry?: string } = {}, config?: SWRConfiguration) {
+  const key = useMemo(() => ['posts', options.sort || 'hot', options.industry || 'all'], [options.sort, options.industry]);
+  return useSWR(key, () => api.getPosts({ sort: options.sort, industry: options.industry }), config);
 }
 
 export function usePostVote(postId: string) {
@@ -63,9 +73,10 @@ export function useCommentVote(commentId: string) {
     if (isVoting) return;
     setIsVoting(true);
     try {
-      direction === 'up' ? await api.upvoteComment(commentId) : await api.downvoteComment(commentId);
+      return direction === 'up' ? await api.upvoteComment(commentId) : await api.downvoteComment(commentId);
     } catch (err) {
       console.error('Vote failed:', err);
+      throw err;
     } finally {
       setIsVoting(false);
     }
@@ -76,8 +87,32 @@ export function useCommentVote(commentId: string) {
 
 // Agent hooks
 export function useAgent(name: string, config?: SWRConfiguration) {
-  return useSWR<{ agent: Agent; isFollowing: boolean; recentPosts: Post[] }>(
+  return useSWR<{ agent: Agent }>(
     name ? ['agent', name] : null, () => api.getAgent(name), config
+  );
+}
+
+export function useAgentPosts(name: string, options: { limit?: number; offset?: number } = {}, config?: SWRConfiguration) {
+  return useSWR(
+    name ? ['agent-posts', name, options.limit || 20, options.offset || 0] : null,
+    () => api.getAgentPosts(name, options),
+    config
+  );
+}
+
+export function useAgentComments(name: string, options: { limit?: number; offset?: number } = {}, config?: SWRConfiguration) {
+  return useSWR(
+    name ? ['agent-comments', name, options.limit || 20, options.offset || 0] : null,
+    () => api.getAgentComments(name, options),
+    config
+  );
+}
+
+export function useDiscoverAgents(options: { sort?: 'active' | 'trust' | 'new'; limit?: number; offset?: number } = {}, config?: SWRConfiguration) {
+  return useSWR(
+    ['agents-discover', options.sort || 'active', options.limit || 30, options.offset || 0],
+    () => api.discoverAgents(options),
+    config
   );
 }
 
@@ -86,13 +121,13 @@ export function useCurrentAgent() {
   return useSWR<Agent>(isAuthenticated ? ['me'] : null, () => api.getMe(), { fallbackData: agent || undefined });
 }
 
-// Submolt hooks
-export function useSubmolt(name: string, config?: SWRConfiguration) {
-  return useSWR<Submolt>(name ? ['submolt', name] : null, () => api.getSubmolt(name), config);
+// Industry hooks
+export function useIndustry(name: string, config?: SWRConfiguration) {
+  return useSWR<Industry>(name ? ['industry', name] : null, () => api.getIndustry(name), config);
 }
 
-export function useSubmolts(config?: SWRConfiguration) {
-  return useSWR<{ data: Submolt[] }>(['submolts'], () => api.getSubmolts(), config);
+export function useIndustries(config?: SWRConfiguration) {
+  return useSWR<{ data: Industry[] }>(['industries'], () => api.getIndustries(), config);
 }
 
 // Search hook
@@ -102,6 +137,32 @@ export function useSearch(query: string, config?: SWRConfiguration) {
     debouncedQuery.length >= 2 ? ['search', debouncedQuery] : null,
     () => api.search(debouncedQuery), config
   );
+}
+
+export function useNotifications(config?: SWRConfiguration) {
+  return useSWR<{ notifications: Notification[]; unreadCount: number }>(
+    ['notifications'],
+    () => api.getNotifications(),
+    config
+  );
+}
+
+// Jobs hook
+export function useJobs(options: { skills?: string[]; source?: 'real' | 'synthetic'; status?: 'open' | 'closed' | 'filled' } = {}, config?: SWRConfiguration) {
+  const { data, error, isLoading } = useSWR(
+    ['jobs', options.skills?.join(','), options.source, options.status],
+    async () => {
+      try {
+        return await api.getJobs(options);
+      } catch (err) {
+        console.error('Failed to fetch jobs:', err);
+        throw err;
+      }
+    },
+    config
+  );
+  
+  return { data, error: error as ApiError | undefined, isLoading };
 }
 
 // Infinite scroll hook
@@ -241,7 +302,7 @@ export function useToggle(initialValue = false): [boolean, () => void, (value: b
 
 // Previous value hook
 export function usePrevious<T>(value: T): T | undefined {
-  const ref = useRef<T>();
+  const ref = useRef<T | undefined>(undefined);
   useEffect(() => { ref.current = value; });
   return ref.current;
 }

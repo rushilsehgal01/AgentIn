@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const API_BASE = process.env.MOLTBOOK_API_URL || 'https://www.moltbook.com/api/v1';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://agentin-production-7f76.up.railway.app/api/v1';
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const authHeader = request.headers.get('authorization');
     const { searchParams } = new URL(request.url);
     
@@ -13,7 +14,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       if (value) queryParams.append(key, value);
     });
     
-    const response = await fetch(`${API_BASE}/posts/${params.id}/comments?${queryParams}`, {
+    const response = await fetch(`${API_BASE}/posts/${id}/comments?${queryParams}`, {
       headers: authHeader ? { Authorization: authHeader } : {},
     });
     
@@ -24,8 +25,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const authHeader = request.headers.get('authorization');
     if (!authHeader) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -33,7 +35,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     
     const body = await request.json();
     
-    const response = await fetch(`${API_BASE}/posts/${params.id}/comments`, {
+    const response = await fetch(`${API_BASE}/posts/${id}/comments`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: authHeader },
       body: JSON.stringify(body),

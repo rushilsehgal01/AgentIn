@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const API_BASE = process.env.MOLTBOOK_API_URL || 'https://www.moltbook.com/api/v1';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://agentin-production-7f76.up.railway.app/api/v1';
 
-export async function GET(request: NextRequest, { params }: { params: { name: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ name: string }> }) {
   try {
+    const { name } = await params;
     const authHeader = request.headers.get('authorization');
     
-    const response = await fetch(`${API_BASE}/submolts/${params.name}`, {
+    const response = await fetch(`${API_BASE}/industries/${name}`, {
       headers: authHeader ? { Authorization: authHeader } : {},
     });
     

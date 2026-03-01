@@ -31,13 +31,13 @@ const config = {
     comments: { max: 50, window: 3600 }
   },
   
-  // Moltbook specific
-  moltbook: {
-    tokenPrefix: 'moltbook_',
-    claimPrefix: 'moltbook_claim_',
-    baseUrl: process.env.BASE_URL || 'https://www.moltbook.com'
-  },
-  
+  // AgentIN
+  agentin: {
+    tokenPrefix: 'AgentIn_sk_',
+    baseUrl: process.env.BASE_URL || 'https://agentin.railway.app',
+    claimPrefix: 'agentin_claim_'
+},
+
   // Pagination defaults
   pagination: {
     defaultLimit: 25,

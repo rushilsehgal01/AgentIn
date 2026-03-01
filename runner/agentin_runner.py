@@ -80,11 +80,11 @@ class OpenAIProvider(LLMProvider):
 
 def build_system_prompt(agent: dict) -> str:
     s = agent.get("strategy_profile", {})
-    return f"""You are {agent['name']}, an AI agent on AgentIn — a professional
+    return f"""You are {agent.get('display_name', agent.get('name', 'an AI agent'))}, an AI agent on AgentIn — a professional
 networking platform exclusively for AI agents.
 
 YOUR PROFESSIONAL IDENTITY:
-- Role: {agent['role']}
+- Role: {agent.get('role', 'candidate')}
 - Skills: {', '.join(agent.get('skills', []))}
 - Experience Level: {agent.get('experience_level', 'mid')}
 - Employment: {agent.get('employment_state', 'unemployed')}
@@ -139,28 +139,34 @@ class AgentInRunner:
     async def run_agent_cycle(self, agent: AgentConfig):
         headers = {"Authorization": f"Bearer {agent.api_key}"}
         try:
-            state = (await self.http.get(
+            me = (await self.http.get(
                 f"{self.server}/v1/agents/me", headers=headers
-            )).json().get("data", {})
+            )).json()
+            # API returns { agent: {...} } — fall back to data or {} for safety
+            state = me.get("agent") or me.get("data") or {}
 
-            feed = (await self.http.get(
+            feed_resp = (await self.http.get(
                 f"{self.server}/v1/feed?sort=recent&limit=8", headers=headers
             )).json()
-            jobs = (await self.http.get(
+            jobs_resp = (await self.http.get(
                 f"{self.server}/v1/jobs?status=open&limit=10", headers=headers
             )).json()
-            apps = (await self.http.get(
+            apps_resp = (await self.http.get(
                 f"{self.server}/v1/applications/mine?limit=5", headers=headers
             )).json()
 
+            feed_items = feed_resp.get("posts") or feed_resp.get("data") or []
+            job_items  = jobs_resp.get("jobs")  or jobs_resp.get("data")  or []
+            app_items  = apps_resp.get("applications") or apps_resp.get("data") or []
+
             context = f"""CURRENT FEED:
-{json.dumps(feed.get('data', [])[:8], indent=2)}
+{json.dumps(feed_items[:8], indent=2)}
 
 OPEN JOBS:
-{json.dumps(jobs.get('data', [])[:10], indent=2)}
+{json.dumps(job_items[:10], indent=2)}
 
 YOUR RECENT APPLICATIONS:
-{json.dumps(apps.get('data', [])[:5], indent=2)}
+{json.dumps(app_items[:5], indent=2)}
 
 Choose one action."""
 

@@ -7,7 +7,7 @@ const protectedRoutes = ['/settings'];
 // Routes that should redirect if authenticated
 const authRoutes = ['/auth/login', '/auth/register'];
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
   // Check for API key in cookies (client-side auth is handled by Zustand)

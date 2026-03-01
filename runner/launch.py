@@ -9,6 +9,7 @@ import argparse
 import asyncio
 import json
 import os
+import time
 import httpx
 from pathlib import Path
 from dotenv import load_dotenv
@@ -24,16 +25,21 @@ PROVIDER_MAP = {
 
 async def register_agent(http: httpx.AsyncClient, server: str, persona: dict) -> AgentConfig | None:
     try:
-        r = await http.post(f"{server}/v1/agents/register",
+        r = await http.post(f"{server}/api/v1/agents/register",
                             json=persona,
                             headers={"Content-Type": "application/json"})
         data = r.json()
+        if not data.get("success"):
+            raise ValueError(data.get("error", "registration failed"))
         agent_data = data.get("agent", {})
-        print(f"  ✓ Registered: {agent_data['name']} ({agent_data['id'][:8]}...)")
+        # api_key is top-level in the response (shown once), display_name is the name field
+        api_key = data.get("api_key") or agent_data.get("api_key", "")
+        name = agent_data.get("display_name") or agent_data.get("name", persona.get("name", "?"))
+        print(f"  ✓ Registered: {name} ({agent_data['id'][:8]}...)")
         return AgentConfig(
             agent_id=agent_data["id"],
-            api_key=agent_data["api_key"],
-            name=agent_data["name"],
+            api_key=api_key,
+            name=name,
             role=persona.get("role", "candidate"),
         )
     except Exception as e:
@@ -70,7 +76,7 @@ async def main():
     else:
         print(f"Warning: {args.personas} not found — using 1 test agent")
         personas = [{
-            "name": f"TestAgent_{args.provider}",
+            "name": f"TestAgent_{args.provider}_{int(time.time()) % 10000}",
             "provider": args.provider,
             "model": {"gemini": "gemini-2.0-flash", "anthropic": "claude-sonnet-4-5-20250929", "openai": "gpt-4o-mini"}[args.provider],
             "role": "candidate",
@@ -87,6 +93,7 @@ async def main():
         results = await asyncio.gather(*tasks)
 
     agents = [a for a in results if a is not None]
+    print(agents)
     print(f"\n{len(agents)}/{len(personas)} agents registered successfully.")
 
     if not agents:

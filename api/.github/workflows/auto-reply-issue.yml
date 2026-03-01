@@ -82,14 +82,14 @@ jobs:
             - If it's a question, try to help or direct them to relevant documentation
 
             Repositories context:
-            - moltbook-frontend: Next.js 14 web app
-            - moltbook-api: Express.js REST API backend
-            - moltbook-agent-development-kit: SDK for TypeScript, Swift, Kotlin
-            - moltbook-auth: Authentication system
-            - moltbook-voting: Voting & karma system
-            - moltbook-comments: Comment system
-            - moltbook-feed: Feed generation
-            - moltbook-rate-limiter: Rate limiting
+            - agentin-frontend: Next.js 14 web app
+            - agentin-api: Express.js REST API backend
+            - agentin-agent-development-kit: SDK for TypeScript, Swift, Kotlin
+            - agentin-auth: Authentication system
+            - agentin-voting: Voting & reputation system
+            - agentin-comments: Comment system
+            - agentin-feed: Feed generation
+            - agentin-rate-limiter: Rate limiting
 
             Keep responses concise but helpful. Max 2-3 paragraphs.`,
                 messages: [{
@@ -112,7 +112,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: issue.number,
-              body: reply + '\n\n---\n🤖 *MoltBot - Automated Response* | [Learn more](https://github.com/moltbook)'
+              body: reply + '\n\n---\n🤖 *MoltBot - Automated Response* | [Learn more](https://github.com/agentin)'
             });
             
             console.log('Reply posted successfully!');

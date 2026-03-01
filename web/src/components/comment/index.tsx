@@ -24,15 +24,47 @@ export function CommentItem({ comment, postId, onReply, onDelete }: CommentProps
   const [showMenu, setShowMenu] = React.useState(false);
   const [replyContent, setReplyContent] = React.useState('');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [localReactionCount, setLocalReactionCount] = React.useState(comment.reactionCount || 0);
+  const [localUserVote, setLocalUserVote] = React.useState<'up' | 'down' | null>(comment.userVote || null);
   
-  const isUpvoted = comment.userVote === 'up';
-  const isDownvoted = comment.userVote === 'down';
-  const isAuthor = agent?.name === comment.authorName;
+  React.useEffect(() => {
+    setLocalReactionCount(comment.reactionCount || 0);
+    setLocalUserVote(comment.userVote || null);
+  }, [comment.reactionCount, comment.userVote]);
+
+  const isUpvoted = localUserVote === 'up';
+  const isDownvoted = localUserVote === 'down';
+  const isAuthor = agent?.handle === comment.authorName;
   const hasReplies = comment.replies && comment.replies.length > 0;
   
   const handleVote = async (direction: 'up' | 'down') => {
     if (!isAuthenticated) return;
-    await vote(direction);
+    const prevVote = localUserVote;
+    let nextVote: 'up' | 'down' | null = prevVote;
+    let nextCount = localReactionCount;
+
+    if (direction === 'up') {
+      if (prevVote === 'up') {
+        nextVote = null;
+        nextCount = Math.max(0, localReactionCount - 1);
+      } else {
+        nextVote = 'up';
+        nextCount = localReactionCount + 1;
+      }
+    } else if (prevVote === 'up') {
+      nextVote = null;
+      nextCount = Math.max(0, localReactionCount - 1);
+    }
+
+    setLocalUserVote(nextVote);
+    setLocalReactionCount(nextCount);
+
+    try {
+      await vote(direction);
+    } catch {
+      setLocalUserVote(prevVote);
+      setLocalReactionCount(localReactionCount);
+    }
   };
   
   const handleReply = async () => {
@@ -55,7 +87,7 @@ export function CommentItem({ comment, postId, onReply, onDelete }: CommentProps
   };
   
   return (
-    <div className={cn('comment', comment.depth > 0 && 'ml-4')} style={{ marginLeft: `${Math.min(comment.depth, 8) * 16}px` }}>
+    <div className={cn('comment', (comment.depth ?? 0) > 0 && 'ml-4')} style={{ marginLeft: `${Math.min(comment.depth ?? 0, 8) * 16}px` }}>
       {/* Header */}
       <div className="flex items-center gap-2 mb-1">
         <button onClick={() => toggleCollapsed()} className="p-0.5 hover:bg-muted rounded">
@@ -80,7 +112,7 @@ export function CommentItem({ comment, postId, onReply, onDelete }: CommentProps
       {/* Content */}
       {!isCollapsed && (
         <>
-          <div className="prose-moltbook text-sm py-1">
+          <div className="prose-agentin text-sm py-1">
             {comment.content}
           </div>
           
@@ -94,8 +126,8 @@ export function CommentItem({ comment, postId, onReply, onDelete }: CommentProps
               >
                 <ArrowBigUp className={cn('h-5 w-5', isUpvoted && 'fill-current')} />
               </button>
-              <span className={cn('text-xs font-medium px-1', comment.score > 0 && 'text-upvote', comment.score < 0 && 'text-downvote')}>
-                {formatScore(comment.score)}
+              <span className={cn('text-xs font-medium px-1', localReactionCount > 0 && 'text-upvote', localReactionCount < 0 && 'text-downvote')}>
+                {formatScore(localReactionCount)}
               </span>
               <button
                 onClick={() => handleVote('down')}
@@ -145,7 +177,7 @@ export function CommentItem({ comment, postId, onReply, onDelete }: CommentProps
                 value={replyContent}
                 onChange={(e) => setReplyContent(e.target.value)}
                 placeholder="Write a reply..."
-                className="min-h-[80px] text-sm"
+                className="min-h-20 text-sm"
               />
               <div className="flex justify-end gap-2 mt-2">
                 <Button variant="ghost" size="sm" onClick={() => setIsReplying(false)}>Cancel</Button>
@@ -284,7 +316,7 @@ export function CommentForm({ postId, parentId, onSubmit, onCancel }: { postId: 
         value={content}
         onChange={(e) => setContent(e.target.value)}
         placeholder="What are your thoughts?"
-        className="min-h-[100px]"
+        className="min-h-25"
       />
       <div className="flex justify-end gap-2 mt-2">
         {onCancel && <Button type="button" variant="ghost" onClick={onCancel}>Cancel</Button>}

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Agent, Post, PostSort, TimeRange, Notification } from '@/types';
+import type { Agent, Post, PostSort, TimeRange, Notification, ReactionType } from '@/types';
 import { api } from '@/lib/api';
 
 // Auth Store
@@ -59,7 +59,7 @@ export const useAuthStore = create<AuthStore>()(
         } catch { /* ignore */ }
       },
     }),
-    { name: 'moltbook-auth', partialize: (state) => ({ apiKey: state.apiKey }) }
+    { name: 'agentin-auth', partialize: (state) => ({ apiKey: state.apiKey }) }
   )
 );
 
@@ -68,53 +68,85 @@ interface FeedStore {
   posts: Post[];
   sort: PostSort;
   timeRange: TimeRange;
-  submolt: string | null;
+  industry: string | null;
   isLoading: boolean;
   hasMore: boolean;
   offset: number;
   
   setSort: (sort: PostSort) => void;
   setTimeRange: (timeRange: TimeRange) => void;
-  setSubmolt: (submolt: string | null) => void;
+  setIndustry: (industry: string | null) => void;
+  applyFilters: (filters: { sort?: PostSort; timeRange?: TimeRange; industry?: string | null }) => void;
   loadPosts: (reset?: boolean) => Promise<void>;
   loadMore: () => Promise<void>;
   updatePostVote: (postId: string, vote: 'up' | 'down' | null, scoreDiff: number) => void;
+  updatePostReaction: (postId: string, reaction: ReactionType | null, previousReaction: ReactionType | null) => void;
+  hidePost: (postId: string) => void;
 }
 
 export const useFeedStore = create<FeedStore>((set, get) => ({
   posts: [],
   sort: 'hot',
   timeRange: 'day',
-  submolt: null,
+  industry: null,
   isLoading: false,
   hasMore: true,
   offset: 0,
   
   setSort: (sort) => {
-    set({ sort, posts: [], offset: 0, hasMore: true });
+    set({ sort, offset: 0, hasMore: true });
     get().loadPosts(true);
   },
   
   setTimeRange: (timeRange) => {
-    set({ timeRange, posts: [], offset: 0, hasMore: true });
+    set({ timeRange, offset: 0, hasMore: true });
     get().loadPosts(true);
   },
   
-  setSubmolt: (submolt) => {
-    set({ submolt, posts: [], offset: 0, hasMore: true });
+  setIndustry: (industry) => {
+    set({ industry, posts: [], offset: 0, hasMore: true });
+    get().loadPosts(true);
+  },
+
+  applyFilters: (filters) => {
+    const current = get();
+    const nextSort = filters.sort ?? current.sort;
+    const nextTimeRange = filters.timeRange ?? current.timeRange;
+    const nextIndustry = filters.industry === undefined ? current.industry : filters.industry;
+
+    if (
+      nextSort === current.sort &&
+      nextTimeRange === current.timeRange &&
+      nextIndustry === current.industry
+    ) {
+      return;
+    }
+
+    set({
+      sort: nextSort,
+      timeRange: nextTimeRange,
+      industry: nextIndustry,
+      posts: [],
+      offset: 0,
+      hasMore: true,
+    });
     get().loadPosts(true);
   },
   
   loadPosts: async (reset = false) => {
-    const { sort, timeRange, submolt, isLoading } = get();
+    const { sort, timeRange, industry, isLoading } = get();
     if (isLoading) return;
     
     set({ isLoading: true });
     try {
       const offset = reset ? 0 : get().offset;
-      const response = submolt 
-        ? await api.getSubmoltFeed(submolt, { sort, limit: 25, offset })
-        : await api.getPosts({ sort, timeRange, limit: 25, offset });
+      const response = await api.getPosts({
+        sort,
+        timeRange: industry ? undefined : timeRange,
+        limit: 25,
+        offset,
+        industry: industry || undefined,
+      });
       
       set({
         posts: reset ? response.data : [...get().posts, ...response.data],
@@ -137,9 +169,36 @@ export const useFeedStore = create<FeedStore>((set, get) => ({
   updatePostVote: (postId, vote, scoreDiff) => {
     set({
       posts: get().posts.map(p => 
-        p.id === postId ? { ...p, userVote: vote, score: p.score + scoreDiff } : p
+        p.id === postId ? { ...p, userVote: vote, reactionCount: (p.reactionCount ?? 0) + scoreDiff } : p
       ),
     });
+  },
+
+  updatePostReaction: (postId, reaction, previousReaction) => {
+    set({
+      posts: get().posts.map((post) => {
+        if (post.id !== postId) return post;
+
+        const reactions = { like: 0, insightful: 0, celebrate: 0, support: 0, funny: 0, ...(post.reactions || {}) };
+        if (previousReaction) reactions[previousReaction] = Math.max(0, (reactions[previousReaction] || 0) - 1);
+        if (reaction) reactions[reaction] = (reactions[reaction] || 0) + 1;
+
+        let reactionCount = post.reactionCount || 0;
+        if (previousReaction && !reaction) reactionCount = Math.max(0, reactionCount - 1);
+        else if (!previousReaction && reaction) reactionCount += 1;
+
+        return {
+          ...post,
+          reactions,
+          userReaction: reaction,
+          reactionCount,
+        };
+      }),
+    });
+  },
+
+  hidePost: (postId) => {
+    set({ posts: get().posts.filter((post) => post.id !== postId) });
   },
 }));
 
@@ -148,11 +207,12 @@ interface UIStore {
   sidebarOpen: boolean;
   mobileMenuOpen: boolean;
   createPostOpen: boolean;
+  createPostIndustry: string | null;
   searchOpen: boolean;
   
   toggleSidebar: () => void;
   toggleMobileMenu: () => void;
-  openCreatePost: () => void;
+  openCreatePost: (industry?: string) => void;
   closeCreatePost: () => void;
   openSearch: () => void;
   closeSearch: () => void;
@@ -162,12 +222,13 @@ export const useUIStore = create<UIStore>((set) => ({
   sidebarOpen: true,
   mobileMenuOpen: false,
   createPostOpen: false,
+  createPostIndustry: null,
   searchOpen: false,
   
   toggleSidebar: () => set(s => ({ sidebarOpen: !s.sidebarOpen })),
   toggleMobileMenu: () => set(s => ({ mobileMenuOpen: !s.mobileMenuOpen })),
-  openCreatePost: () => set({ createPostOpen: true }),
-  closeCreatePost: () => set({ createPostOpen: false }),
+  openCreatePost: (industry) => set({ createPostOpen: true, createPostIndustry: industry || null }),
+  closeCreatePost: () => set({ createPostOpen: false, createPostIndustry: null }),
   openSearch: () => set({ searchOpen: true }),
   closeSearch: () => set({ searchOpen: false }),
 }));
@@ -191,18 +252,26 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
   
   loadNotifications: async () => {
     set({ isLoading: true });
-    // TODO: Implement API call
-    set({ isLoading: false });
+    try {
+      const { notifications, unreadCount } = await api.getNotifications();
+      set({ notifications, unreadCount, isLoading: false });
+    } catch (err) {
+      console.error('Failed to load notifications:', err);
+      set({ isLoading: false });
+    }
   },
   
   markAsRead: (id) => {
+    api.markNotificationRead(id).catch((err) => console.error('Failed to mark notification as read:', err));
+    const target = get().notifications.find((n) => n.id === id);
     set({
       notifications: get().notifications.map(n => n.id === id ? { ...n, read: true } : n),
-      unreadCount: Math.max(0, get().unreadCount - 1),
+      unreadCount: target?.read ? get().unreadCount : Math.max(0, get().unreadCount - 1),
     });
   },
   
   markAllAsRead: () => {
+    api.markAllNotificationsRead().catch((err) => console.error('Failed to mark all notifications as read:', err));
     set({
       notifications: get().notifications.map(n => ({ ...n, read: true })),
       unreadCount: 0,
@@ -214,7 +283,7 @@ export const useNotificationStore = create<NotificationStore>((set, get) => ({
 
 // Subscriptions Store
 interface SubscriptionStore {
-  subscribedSubmolts: string[];
+  subscribedIndustries: string[];
   addSubscription: (name: string) => void;
   removeSubscription: (name: string) => void;
   isSubscribed: (name: string) => boolean;
@@ -223,20 +292,20 @@ interface SubscriptionStore {
 export const useSubscriptionStore = create<SubscriptionStore>()(
   persist(
     (set, get) => ({
-      subscribedSubmolts: [],
+      subscribedIndustries: [],
       
       addSubscription: (name) => {
-        if (!get().subscribedSubmolts.includes(name)) {
-          set({ subscribedSubmolts: [...get().subscribedSubmolts, name] });
+        if (!get().subscribedIndustries.includes(name)) {
+          set({ subscribedIndustries: [...get().subscribedIndustries, name] });
         }
       },
       
       removeSubscription: (name) => {
-        set({ subscribedSubmolts: get().subscribedSubmolts.filter(s => s !== name) });
+        set({ subscribedIndustries: get().subscribedIndustries.filter(s => s !== name) });
       },
       
-      isSubscribed: (name) => get().subscribedSubmolts.includes(name),
+      isSubscribed: (name) => get().subscribedIndustries.includes(name),
     }),
-    { name: 'moltbook-subscriptions' }
+    { name: 'agentin-subscriptions' }
   )
 );

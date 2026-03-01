@@ -5,7 +5,8 @@
 const crypto = require('crypto');
 const config = require('../config');
 
-const { tokenPrefix, claimPrefix } = config.moltbook;
+const { tokenPrefix } = config.agentin;
+const claimPrefix = `${tokenPrefix}claim_`;
 const TOKEN_LENGTH = 32;
 
 // Word list for verification codes
@@ -27,7 +28,7 @@ function randomHex(bytes) {
 /**
  * Generate a new API key
  * 
- * @returns {string} API key with moltbook_ prefix
+ * @returns {string} API key with agentin_ prefix
  */
 function generateApiKey() {
   return `${tokenPrefix}${randomHex(TOKEN_LENGTH)}`;
@@ -36,7 +37,7 @@ function generateApiKey() {
 /**
  * Generate a claim token
  * 
- * @returns {string} Claim token with moltbook_claim_ prefix
+ * @returns {string} Claim token with agentin_claim_ prefix
  */
 function generateClaimToken() {
   return `${claimPrefix}${randomHex(TOKEN_LENGTH)}`;
@@ -62,10 +63,10 @@ function generateVerificationCode() {
 function validateApiKey(token) {
   if (!token || typeof token !== 'string') return false;
   if (!token.startsWith(tokenPrefix)) return false;
-  
+
   const expectedLength = tokenPrefix.length + (TOKEN_LENGTH * 2);
   if (token.length !== expectedLength) return false;
-  
+
   const body = token.slice(tokenPrefix.length);
   return /^[0-9a-f]+$/i.test(body);
 }
@@ -78,13 +79,13 @@ function validateApiKey(token) {
  */
 function extractToken(authHeader) {
   if (!authHeader || typeof authHeader !== 'string') return null;
-  
+
   const parts = authHeader.split(' ');
   if (parts.length !== 2) return null;
-  
+
   const [scheme, token] = parts;
   if (scheme.toLowerCase() !== 'bearer') return null;
-  
+
   return token;
 }
 

@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { formatDistanceToNow, format, parseISO } from 'date-fns';
+import type { Comment, CommentSort } from '@/types';
 
 // Class name utility
 export function cn(...inputs: ClassValue[]) {
@@ -8,7 +9,8 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 // Format score (e.g., 1.2K, 3.5M)
-export function formatScore(score: number): string {
+export function formatScore(score?: number | null): string {
+  if (score === undefined || score === null) return '0';
   const abs = Math.abs(score);
   const sign = score < 0 ? '-' : '';
   if (abs >= 1000000) return sign + (abs / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
@@ -17,21 +19,39 @@ export function formatScore(score: number): string {
 }
 
 // Format relative time
-export function formatRelativeTime(date: string | Date): string {
-  const d = typeof date === 'string' ? parseISO(date) : date;
-  return formatDistanceToNow(d, { addSuffix: true });
+export function formatRelativeTime(date?: string | Date | null): string {
+  if (!date) return 'unknown';
+  try {
+    const d = typeof date === 'string' ? parseISO(date) : date;
+    if (isNaN(d.getTime())) return 'unknown';
+    return formatDistanceToNow(d, { addSuffix: true });
+  } catch {
+    return 'unknown';
+  }
 }
 
 // Format absolute date
-export function formatDate(date: string | Date): string {
-  const d = typeof date === 'string' ? parseISO(date) : date;
-  return format(d, 'MMM d, yyyy');
+export function formatDate(date?: string | Date | null): string {
+  if (!date) return 'unknown';
+  try {
+    const d = typeof date === 'string' ? parseISO(date) : date;
+    if (isNaN(d.getTime())) return 'unknown';
+    return format(d, 'MMM d, yyyy');
+  } catch {
+    return 'unknown';
+  }
 }
 
 // Format date and time
-export function formatDateTime(date: string | Date): string {
-  const d = typeof date === 'string' ? parseISO(date) : date;
-  return format(d, 'MMM d, yyyy h:mm a');
+export function formatDateTime(date?: string | Date | null): string {
+  if (!date) return 'unknown';
+  try {
+    const d = typeof date === 'string' ? parseISO(date) : date;
+    if (isNaN(d.getTime())) return 'unknown';
+    return format(d, 'MMM d, yyyy h:mm a');
+  } catch {
+    return 'unknown';
+  }
 }
 
 // Truncate text
@@ -55,18 +75,19 @@ export function isValidAgentName(name: string): boolean {
   return /^[a-z0-9_]{2,32}$/i.test(name);
 }
 
-// Validate submolt name
-export function isValidSubmoltName(name: string): boolean {
+// Validate industry name
+export function isValidIndustryName(name: string): boolean {
   return /^[a-z0-9_]{2,24}$/i.test(name);
 }
 
 // Validate API key
 export function isValidApiKey(key: string): boolean {
-  return /^moltbook_[a-zA-Z0-9]{20,}$/.test(key);
+  return /^AgentIn_sk_[a-fA-F0-9]{64}$/.test(key);
 }
 
 // Generate initials from name
-export function getInitials(name: string): string {
+export function getInitials(name: string | undefined | null): string {
+  if (!name) return '?';
   return name.split(/[\s_]+/).map(part => part[0]?.toUpperCase()).filter(Boolean).slice(0, 2).join('');
 }
 
@@ -137,11 +158,11 @@ export function removeFromStorage(key: string): void {
 }
 
 // URL helpers
-export function getPostUrl(postId: string, submolt?: string): string {
-  return submolt ? `/m/${submolt}/post/${postId}` : `/post/${postId}`;
+export function getPostUrl(postId: string, industry?: string): string {
+  return `/post/${postId}`;
 }
 
-export function getSubmoltUrl(name: string): string {
+export function getIndustryUrl(name: string): string {
   return `/m/${name}`;
 }
 
@@ -171,4 +192,55 @@ export function isEscapeKey(event: KeyboardEvent | React.KeyboardEvent): boolean
 // Random string
 export function randomId(length: number = 8): string {
   return Math.random().toString(36).substring(2, 2 + length);
+}
+
+// Build a nested tree from a flat comment list.
+export function buildCommentTree(comments: Comment[], sort: CommentSort = 'top'): Comment[] {
+  const byId = new Map<string, Comment>();
+  const roots: Comment[] = [];
+
+  for (const comment of comments) {
+    byId.set(comment.id, { ...comment, replies: [] });
+  }
+
+  for (const comment of byId.values()) {
+    if (comment.parentId && byId.has(comment.parentId)) {
+      const parent = byId.get(comment.parentId)!;
+      parent.replies = [...(parent.replies || []), comment];
+    } else {
+      roots.push(comment);
+    }
+  }
+
+  return sortCommentTree(roots, sort);
+}
+
+function commentTimestamp(comment: Comment): number {
+  return Date.parse(comment.createdAt || '') || 0;
+}
+
+function compareComments(a: Comment, b: Comment, sort: CommentSort): number {
+  if (sort === 'new') {
+    return commentTimestamp(b) - commentTimestamp(a);
+  }
+
+  if (sort === 'controversial') {
+    const aScore = Math.abs(a.reactionCount || 0);
+    const bScore = Math.abs(b.reactionCount || 0);
+    if (aScore !== bScore) return aScore - bScore;
+    return commentTimestamp(b) - commentTimestamp(a);
+  }
+
+  const topScore = (b.reactionCount || 0) - (a.reactionCount || 0);
+  if (topScore !== 0) return topScore;
+  return commentTimestamp(b) - commentTimestamp(a);
+}
+
+function sortCommentTree(comments: Comment[], sort: CommentSort): Comment[] {
+  return [...comments]
+    .sort((a, b) => compareComments(a, b, sort))
+    .map((comment) => ({
+      ...comment,
+      replies: comment.replies ? sortCommentTree(comment.replies, sort) : [],
+    }));
 }
