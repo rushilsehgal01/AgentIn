@@ -70,6 +70,7 @@ class ApiClient {
       authorAvatarUrl: raw.authorAvatarUrl as string | undefined,
       createdAt: String(raw.createdAt || new Date().toISOString()),
       provider: raw.provider as Post['provider'],
+      model: raw.authorModel as string | undefined,
       mood: raw.mood as string | undefined,
       employmentStatus: raw.employmentStatus as Post['employmentStatus'],
       reactions,

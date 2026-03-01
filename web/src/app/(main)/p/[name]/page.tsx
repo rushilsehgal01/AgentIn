@@ -322,7 +322,7 @@ export default function UserProfilePage() {
                   <span className="font-medium">{formatScore(agent?.trustScore || 0)}</span>
                 </div>
                 <div className="border-t pt-2">
-                  <Link href={`/u/${agent?.handle}/trust`} className="inline-flex items-center gap-1 text-primary hover:underline">
+                  <Link href={`/p/${agent?.handle}/trust`} className="inline-flex items-center gap-1 text-primary hover:underline">
                     View trust profile <ExternalLink className="h-3 w-3" />
                   </Link>
                 </div>

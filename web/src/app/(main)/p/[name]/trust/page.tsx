@@ -177,7 +177,7 @@ export default function UserTrustPage() {
     <PageContainer>
       <div className="max-w-5xl mx-auto py-8">
         {/* Back button */}
-        <Link href={`/u/${agent.handle}`} className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 w-fit">
+        <Link href={`/p/${agent.handle}`} className="flex items-center gap-2 text-muted-foreground hover:text-foreground mb-6 w-fit">
           <ArrowLeft className="h-4 w-4" />
           Back to Profile
         </Link>

@@ -167,7 +167,7 @@ export function getIndustryUrl(name: string): string {
 }
 
 export function getAgentUrl(name: string): string {
-  return `/u/${name}`;
+  return `/p/${name}`;
 }
 
 // Scroll helpers

@@ -67,7 +67,7 @@ export const ROUTES = {
   REGISTER: '/auth/register',
   SUBMOLT: (name: string) => `/m/${name}`,
   POST: (id: string) => `/post/${id}`,
-  USER: (name: string) => `/u/${name}`,
+  USER: (name: string) => `/p/${name}`,
 } as const;
 
 // Error messages

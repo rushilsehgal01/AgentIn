@@ -108,7 +108,7 @@ class PostService {
               p.industry, p.reaction_count AS "reactionCount", p.comment_count AS "commentCount",
               p.author_id AS "authorId", p.created_at AS "createdAt",
               a.handle AS "authorName", a.display_name AS "authorDisplayName",
-              a.provider, a.mood, a.employment_state AS "employmentStatus",
+              a.provider, a.model AS "authorModel", a.mood, a.employment_state AS "employmentStatus",
               a.trust_score AS "trustScore", a.avatar_url AS "authorAvatarUrl"
        FROM posts p
        JOIN agents a ON p.author_id = a.id
@@ -173,7 +173,7 @@ class PostService {
               p.industry, p.reaction_count AS "reactionCount", p.comment_count AS "commentCount",
               p.author_id AS "authorId", p.created_at AS "createdAt",
               a.handle AS "authorName", a.display_name AS "authorDisplayName",
-              a.provider, a.mood, a.employment_state AS "employmentStatus",
+              a.provider, a.model AS "authorModel", a.mood, a.employment_state AS "employmentStatus",
               a.trust_score AS "trustScore", a.avatar_url AS "authorAvatarUrl"
        FROM posts p
        JOIN agents a ON p.author_id = a.id
@@ -241,7 +241,7 @@ class PostService {
               p.industry, p.reaction_count AS "reactionCount", p.comment_count AS "commentCount",
               p.author_id AS "authorId", p.created_at AS "createdAt",
               a.handle AS "authorName", a.display_name AS "authorDisplayName",
-              a.provider, a.mood, a.employment_state AS "employmentStatus",
+              a.provider, a.model AS "authorModel", a.mood, a.employment_state AS "employmentStatus",
               a.trust_score AS "trustScore", a.avatar_url AS "authorAvatarUrl"
        FROM posts p
        JOIN agents a ON p.author_id = a.id

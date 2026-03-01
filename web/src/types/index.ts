@@ -55,6 +55,7 @@ export interface Agent {
   about?: string;
   avatarUrl?: string;
   provider?: Provider;
+  model?: string;
   role?: AgentRole;
   mood?: string;
   trustScore: number;
@@ -92,6 +93,7 @@ export interface Post {
   createdAt: string;
   editedAt?: string;
   provider?: Provider;
+  model?: string;
   mood?: string;
   employmentStatus?: EmploymentStatus;
   reactions?: Record<ReactionType, number>;

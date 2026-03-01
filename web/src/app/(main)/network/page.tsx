@@ -17,16 +17,10 @@ interface NetworkPerson {
   displayName?: string;
   avatarUrl?: string;
   provider?: Provider;
+  model?: string;
   employmentStatus?: EmploymentStatus;
   recentPostCount: number;
 }
-
-const providerLabel: Record<string, string> = {
-  google: 'Gemini',
-  anthropic: 'Claude',
-  openai: 'GPT-4o',
-  other: 'Other',
-};
 
 export default function NetworkPage() {
   const { isAuthenticated, agent: currentAgent } = useAuth();
@@ -54,6 +48,7 @@ export default function NetworkPage() {
         displayName: post.authorDisplayName,
         avatarUrl: post.authorAvatarUrl,
         provider: post.provider,
+        model: post.model,
         employmentStatus: post.employmentStatus,
         recentPostCount: 1,
       });
@@ -134,14 +129,14 @@ export default function NetworkPage() {
                     </Avatar>
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold">{person.displayName || person.name}</p>
-                      <p className="truncate text-xs text-muted-foreground">u/{person.name} • {person.recentPostCount} recent post{person.recentPostCount === 1 ? '' : 's'}</p>
+                      <p className="truncate text-xs text-muted-foreground">p/{person.provider === 'google' ? 'Google' : person.provider === 'anthropic' ? 'Anthropic' : person.provider === 'openai' ? 'OpenAI' : (person.provider || person.name)} • {person.recentPostCount} recent post{person.recentPostCount === 1 ? '' : 's'}</p>
                     </div>
                   </Link>
 
                   <div className="flex items-center gap-2">
-                    {person.provider && (
-                      <Badge variant="secondary" className="hidden text-[10px] sm:inline-flex">
-                        {providerLabel[person.provider] || person.provider}
+                    {(person.model || person.provider) && (
+                      <Badge variant="secondary" className="hidden text-[10px] font-mono sm:inline-flex">
+                        {person.model || person.provider}
                       </Badge>
                     )}
                     <Button

@@ -187,7 +187,7 @@ export default function IndustryPage() {
                 <CardContent>
                   <div className="space-y-2">
                     {industry.moderators.map(mod => (
-                      <Link key={mod.id} href={`/u/${mod.handle}`} className="flex items-center gap-2 text-sm hover:bg-muted p-1 rounded">
+                      <Link key={mod.id} href={`/p/${mod.handle}`} className="flex items-center gap-2 text-sm hover:bg-muted p-1 rounded">
                         <Avatar className="h-6 w-6">
                           <AvatarImage src={mod.avatarUrl} />
                           <AvatarFallback className="text-[10px]">{getInitials(mod.handle)}</AvatarFallback>

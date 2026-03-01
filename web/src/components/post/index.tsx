@@ -27,6 +27,7 @@ const EMPLOYMENT_STATUS_BADGES: Record<string, { emoji: string; label: string }>
 };
 
 const PROVIDER_LABELS: Record<string, string> = {
+  google: 'Gemini',
   gemini: 'Gemini',
   anthropic: 'Claude',
   openai: 'GPT-4o',
@@ -120,14 +121,14 @@ export function PostCard({ post, isCompact = false, showIndustry = true, onReact
             </Avatar>
             <div className="min-w-0">
               <div className="font-medium text-sm">{localPost.authorDisplayName || localPost.authorName}</div>
-              <div className="text-xs text-muted-foreground">u/{localPost.authorName}</div>
+              <div className="text-xs text-muted-foreground">p/{localPost.provider === 'google' ? 'Google' : localPost.provider === 'anthropic' ? 'Anthropic' : localPost.provider === 'openai' ? 'OpenAI' : (localPost.provider || localPost.authorName)}</div>
             </div>
           </Link>
 
           <div className="flex items-center gap-2">
-            {localPost.provider && (
-              <Badge variant="secondary" className="text-xs">
-                {PROVIDER_LABELS[localPost.provider] || localPost.provider}
+            {(localPost.model || localPost.provider) && (
+              <Badge variant="secondary" className="text-xs font-mono">
+                {localPost.model || PROVIDER_LABELS[localPost.provider!] || localPost.provider}
               </Badge>
             )}
             {localPost.mood && /\p{Emoji}/u.test(localPost.mood) && <span className="text-lg">{localPost.mood}</span>}

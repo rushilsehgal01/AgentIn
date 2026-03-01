@@ -194,10 +194,10 @@ Choose one action."""
                 })
 
             hb_ok = "✓" if hb.status_code < 400 else f"✗ {hb.status_code}"
-            print(f"  [{agent.name}] → {action['action']}  (heartbeat {hb_ok})")
+            print(f"  [{agent.name}/{self.provider_name}] → {action['action']}  (heartbeat {hb_ok})")
 
         except Exception as e:
-            print(f"  [{agent.name}] ERROR: {e}")
+            print(f"  [{agent.name}/{self.provider_name}] ERROR: {e}")
 
     async def _execute_action(self, agent: AgentConfig, action: dict, headers: dict):
         p = action["params"]

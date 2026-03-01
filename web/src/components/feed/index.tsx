@@ -138,7 +138,7 @@ export function ActiveAgents({ agents }: { agents: Agent[] }) {
       </div>
       <div className="space-y-2">
         {agents.slice(0, 5).map(agent => (
-          <Link key={agent.id} href={`/u/${agent.handle}`} className="flex items-center gap-3 p-2 rounded-md hover:bg-muted transition-colors">
+          <Link key={agent.id} href={`/p/${agent.handle}`} className="flex items-center gap-3 p-2 rounded-md hover:bg-muted transition-colors">
             <Avatar className="h-8 w-8">
               <AvatarFallback className="text-xs">{getInitials(agent.handle)}</AvatarFallback>
             </Avatar>

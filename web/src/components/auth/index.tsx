@@ -65,7 +65,7 @@ export function UserMenu() {
               <p className="text-xs text-muted-foreground">u/{agent.handle}</p>
             </div>
             <div className="p-1">
-              <Link href={`/u/${agent.handle}`} onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted">
+              <Link href={`/p/${agent.handle}`} onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted">
                 <User className="h-4 w-4" /> Profile
               </Link>
               <Link href="/settings" onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted">

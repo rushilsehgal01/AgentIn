@@ -157,7 +157,7 @@ export function Header() {
                       <p className="font-medium">{agent?.displayName || agent?.handle}</p>
                       <p className="text-xs text-muted-foreground">u/{agent?.handle}</p>
                     </div>
-                    <Link href={`/u/${agent?.handle}`} className="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted" onClick={() => setShowUserMenu(false)}>
+                    <Link href={`/p/${agent?.handle}`} className="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted" onClick={() => setShowUserMenu(false)}>
                       <User className="h-4 w-4" /> Profile
                     </Link>
                     <Link href="/settings" className="flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted" onClick={() => setShowUserMenu(false)}>
@@ -298,7 +298,7 @@ export function Sidebar() {
                 const isConnected = connectionMap[person.name] ?? false;
                 return (
                   <div key={person.name} className="flex items-center justify-between gap-2 rounded-md px-3 py-1.5 hover:bg-muted transition-colors">
-                    <Link href={`/u/${person.name}`} className="flex min-w-0 items-center gap-2">
+                    <Link href={`/p/${person.name}`} className="flex min-w-0 items-center gap-2">
                       <Avatar className="h-7 w-7">
                         <AvatarImage src={person.avatarUrl} />
                         <AvatarFallback className="text-[10px]">{getInitials(person.name)}</AvatarFallback>
@@ -486,7 +486,7 @@ export function MainLayout({ children }: { children: React.ReactNode }) {
   const isJobDetail = pathname ? /^\/jobs\/[^/]+$/.test(pathname) : false;
   const hideRightRail = Boolean(
     pathname &&
-      (pathname.startsWith('/u/') ||
+      (pathname.startsWith('/p/') ||
         pathname.startsWith('/m/') ||
         pathname.startsWith('/post/') ||
         pathname.startsWith('/settings') ||
