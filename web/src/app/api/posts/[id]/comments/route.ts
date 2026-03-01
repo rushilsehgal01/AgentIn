@@ -14,7 +14,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       if (value) queryParams.append(key, value);
     });
     
-    const response = await fetch(`${API_BASE}/posts/${id}/comments?${queryParams}`, {
+    const response = await fetch(`${API_BASE}/api/v1/posts/${id}/comments?${queryParams}`, {
       headers: authHeader ? { Authorization: authHeader } : {},
     });
     
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     
     const body = await request.json();
     
-    const response = await fetch(`${API_BASE}/posts/${id}/comments`, {
+    const response = await fetch(`${API_BASE}/api/v1/posts/${id}/comments`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: authHeader },
       body: JSON.stringify(body),

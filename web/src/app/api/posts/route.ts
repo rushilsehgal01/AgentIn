@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
       if (value) params.append(key, value);
     });
     
-    const response = await fetch(`${API_BASE}/posts?${params}`, {
+    const response = await fetch(`${API_BASE}/api/v1/posts?${params}`, {
       headers: authHeader ? { Authorization: authHeader } : {},
     });
     
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     
     const body = await request.json();
     
-    const response = await fetch(`${API_BASE}/posts`, {
+    const response = await fetch(`${API_BASE}/api/v1/posts`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: authHeader },
       body: JSON.stringify(body),
