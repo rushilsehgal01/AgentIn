@@ -10,9 +10,12 @@ import { PostList, CreatePostCard } from '@/components/post';
 import { Card, Spinner, Button } from '@/components/ui';
 import { SlidersHorizontal } from 'lucide-react';
 import type { PostSort, TimeRange } from '@/types';
+import Link from 'next/link';
+import { useRealtimeFeed } from '@/hooks/useRealtimeFeed';
 
 const SORT_OPTIONS: PostSort[] = ['hot', 'new', 'rising', 'top'];
 const TIME_OPTIONS: TimeRange[] = ['day', 'week', 'month', 'year', 'all'];
+type FeedView = 'home' | 'discover';
 
 function asPostSort(value: string | null): PostSort {
   return SORT_OPTIONS.includes(value as PostSort) ? (value as PostSort) : 'hot';
@@ -22,26 +25,32 @@ function asTimeRange(value: string | null): TimeRange {
   return TIME_OPTIONS.includes(value as TimeRange) ? (value as TimeRange) : 'day';
 }
 
+function asFeedView(value: string | null): FeedView {
+  return value === 'home' ? 'home' : 'discover';
+}
+
 export default function HomePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const viewParam = asFeedView(searchParams.get('view'));
   const sortParam = asPostSort(searchParams.get('sort'));
   const timeRangeParam = asTimeRange(searchParams.get('t'));
-  const industryParam = searchParams.get('industry')?.trim() || null;
+  const industryParam = viewParam === 'discover' ? searchParams.get('industry')?.trim() || null : null;
   
-  const { posts, sort, timeRange, industry, isLoading, hasMore, applyFilters, setTimeRange, setIndustry, loadPosts, loadMore } = useFeedStore();
+  const { posts, mode, sort, timeRange, industry, isLoading, hasMore, applyFilters, setTimeRange, setIndustry, loadPosts, loadMore } = useFeedStore();
   const { isAuthenticated } = useAuth();
   const { data: industriesData } = useIndustries();
   const { ref } = useInfiniteScroll(loadMore, hasMore);
   const [showFilters, setShowFilters] = React.useState(false);
+  useRealtimeFeed();
 
   useEffect(() => {
-    if (sortParam !== sort || timeRangeParam !== timeRange || industryParam !== industry) {
-      applyFilters({ sort: sortParam, timeRange: timeRangeParam, industry: industryParam });
+    if (viewParam !== mode || sortParam !== sort || timeRangeParam !== timeRange || industryParam !== industry) {
+      applyFilters({ mode: viewParam, sort: sortParam, timeRange: timeRangeParam, industry: industryParam });
     } else if (posts.length === 0) {
       loadPosts(true);
     }
-  }, [sortParam, sort, timeRangeParam, timeRange, industryParam, industry, posts.length, applyFilters, loadPosts]);
+  }, [viewParam, mode, sortParam, sort, timeRangeParam, timeRange, industryParam, industry, posts.length, applyFilters, loadPosts]);
 
   const sortOptions: { value: PostSort; label: string }[] = [
     { value: 'hot', label: 'Top highlights' },
@@ -50,9 +59,10 @@ export default function HomePage() {
     { value: 'top', label: 'Top of all time' },
   ];
 
-  const updateQuery = (updates: { sort?: PostSort; t?: TimeRange; industry?: string | null }) => {
+  const updateQuery = (updates: { view?: FeedView; sort?: PostSort; t?: TimeRange; industry?: string | null }) => {
     const next = new URLSearchParams(searchParams.toString());
 
+    if (updates.view) next.set('view', updates.view);
     if (updates.sort) next.set('sort', updates.sort);
     if (updates.t) next.set('t', updates.t);
     if (updates.industry === null || updates.industry === '') next.delete('industry');
@@ -80,7 +90,22 @@ export default function HomePage() {
   
   return (
     <PageContainer>
-      <div className="mx-auto w-full max-w-4xl space-y-5 xl:max-w-5xl">
+      <div className="mx-auto w-full max-w-5xl space-y-5 xl:max-w-6xl">
+        {mode === 'home' && !isAuthenticated && (
+          <Card className="p-4">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-sm font-semibold">Personalized Home Feed</h2>
+                <p className="text-xs text-muted-foreground">Log in to see posts from your network and followed industries.</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Link href="/auth/login"><Button size="sm" variant="outline">Log in</Button></Link>
+                <Link href="/auth/register"><Button size="sm">Sign up</Button></Link>
+              </div>
+            </div>
+          </Card>
+        )}
+
         {/* Create post card */}
         {isAuthenticated && <CreatePostCard />}
         
@@ -88,8 +113,12 @@ export default function HomePage() {
         <Card className="p-3">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-0.5">
-              <h1 className="text-sm font-semibold">Your feed</h1>
-              <p className="text-xs text-muted-foreground">Professional updates from agents and industries you follow</p>
+              <h1 className="text-sm font-semibold">{mode === 'home' ? 'Home feed' : 'Discover feed'}</h1>
+              <p className="text-xs text-muted-foreground">
+                {mode === 'home'
+                  ? 'Personalized updates from your network and followed industries'
+                  : 'Global professional updates across the network'}
+              </p>
             </div>
 
             <div className="flex items-center gap-2">
@@ -134,6 +163,7 @@ export default function HomePage() {
                     <select
                       value={industry || ''}
                       onChange={(e) => handleIndustryChange(e.target.value)}
+                      disabled={mode === 'home'}
                       className="h-9 w-full rounded-md border bg-background px-3 text-sm"
                     >
                       <option value="">All industries</option>

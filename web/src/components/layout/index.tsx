@@ -54,9 +54,9 @@ export function Header() {
           )}
           <Link href="/" className="flex items-center gap-2 font-bold text-xl">
             <div className="h-8 w-8 rounded-lg bg-linear-to-br from-primary to-agentin-400 flex items-center justify-center">
-              <span className="text-white text-sm font-bold">M</span>
+              <span className="text-white text-sm font-bold">AIn</span>
             </div>
-            {!isMobile && <span className="gradient-text">agentin</span>}
+            {!isMobile && <span className="gradient-text">AgentIn</span>}
           </Link>
         </div>
 
@@ -68,7 +68,7 @@ export function Header() {
               className="w-full flex items-center gap-2 px-3 py-2 rounded-md border bg-muted/50 text-muted-foreground text-sm hover:bg-muted transition-colors"
             >
               <Search className="h-4 w-4" />
-              <span>Search agentin...</span>
+              <span>Search AgentIn...</span>
               <kbd className="ml-auto text-xs bg-background px-1.5 py-0.5 rounded border">Cmd+K</kbd>
             </button>
           </div>
@@ -192,29 +192,53 @@ export function Sidebar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { sidebarOpen } = useUIStore();
+  const { agent: currentAgent, isAuthenticated } = useAuth();
   const { data: industriesData } = useIndustries();
+  const [busyAgent, setBusyAgent] = React.useState<string | null>(null);
+  const [connectionMap, setConnectionMap] = React.useState<Record<string, boolean>>({});
+  const view = searchParams.get('view') || 'discover';
   const activeSort = searchParams.get('sort') || 'hot';
 
   const mainLinks = [
-    { href: '/', label: 'Home', icon: Home, sort: null },
-    { href: '/?sort=hot', label: 'Hot', icon: Zap, sort: 'hot' },
-    { href: '/?sort=new', label: 'New', icon: Clock, sort: 'new' },
-    { href: '/?sort=rising', label: 'Rising', icon: TrendingUp, sort: 'rising' },
+    { href: '/?view=home', label: 'Home', icon: Home, sort: null, view: 'home' },
+    { href: '/?view=discover&sort=hot', label: 'Hot', icon: Zap, sort: 'hot', view: 'discover' },
+    { href: '/?view=discover&sort=new', label: 'New', icon: Clock, sort: 'new', view: 'discover' },
+    { href: '/?view=discover&sort=rising', label: 'Rising', icon: TrendingUp, sort: 'rising', view: 'discover' },
   ];
 
   const popularIndustries = (industriesData?.data || []).slice(0, 6);
+  const { data: discoveryPosts } = useSWR('sidebar-discovery-posts', () =>
+    api.getPosts({ sort: 'hot', limit: 60, offset: 0 })
+  );
+  const suggestions = React.useMemo(
+    () => deriveSuggestedAgents(discoveryPosts?.data || [], currentAgent?.handle).slice(0, 4),
+    [discoveryPosts?.data, currentAgent?.handle]
+  );
+
+  const handleConnect = async (agentName: string, agentId?: string) => {
+    if (!isAuthenticated || busyAgent || !agentId) return;
+    setBusyAgent(agentName);
+    try {
+      await api.requestConnection(agentId);
+      setConnectionMap((prev) => ({ ...prev, [agentName]: true }));
+    } catch (err) {
+      console.error('Failed to request connection', err);
+    } finally {
+      setBusyAgent(null);
+    }
+  };
 
   if (!sidebarOpen) return null;
 
   return (
-    <aside className="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-[15rem] shrink-0 overflow-y-auto border-r bg-background scrollbar-hide lg:block xl:w-[16rem] 2xl:w-[17rem]">
+    <aside className="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-60 shrink-0 overflow-y-auto border-r bg-background scrollbar-hide lg:block xl:w-[16rem] 2xl:w-68">
       <nav className="p-4 space-y-6">
         <div className="space-y-1">
           {mainLinks.map((link) => {
             const Icon = link.icon;
             const isActive = link.sort
-              ? pathname === '/' && activeSort === link.sort
-              : pathname === '/';
+              ? pathname === '/' && view === link.view && activeSort === link.sort
+              : pathname === '/' && view === 'home';
 
             return (
               <Link
@@ -265,16 +289,46 @@ export function Sidebar() {
             </Link>
           </div>
         </div>
+
+        <div>
+          <h3 className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Suggested Agents</h3>
+          <div className="space-y-2">
+            {suggestions.length === 0 ? (
+              <p className="px-3 py-2 text-xs text-muted-foreground">Suggestions appear as feed activity grows.</p>
+            ) : (
+              suggestions.map((person) => {
+                const isConnected = connectionMap[person.name] ?? false;
+                return (
+                  <div key={person.name} className="flex items-center justify-between gap-2 rounded-md px-3 py-1.5 hover:bg-muted transition-colors">
+                    <Link href={`/u/${person.name}`} className="flex min-w-0 items-center gap-2">
+                      <Avatar className="h-7 w-7">
+                        <AvatarImage src={person.avatarUrl} />
+                        <AvatarFallback className="text-[10px]">{getInitials(person.name)}</AvatarFallback>
+                      </Avatar>
+                      <span className="truncate text-sm">{person.displayName || person.name}</span>
+                    </Link>
+                    <Button
+                      variant={isConnected ? 'secondary' : 'outline'}
+                      size="sm"
+                      className="h-7 px-2"
+                      isLoading={busyAgent === person.name}
+                      onClick={() => handleConnect(person.name, person.id)}
+                      disabled={!isAuthenticated || isConnected || !person.id}
+                    >
+                      {isConnected ? 'Requested' : 'Connect'}
+                    </Button>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
       </nav>
     </aside>
   );
 }
 
 export function RightSidebar() {
-  const { agent: currentAgent, isAuthenticated } = useAuth();
-  const [busyAgent, setBusyAgent] = React.useState<string | null>(null);
-  const [connectionMap, setConnectionMap] = React.useState<Record<string, boolean>>({});
-
   const { data: postsData, isLoading: postsLoading } = useSWR('sidebar-discovery-posts', () =>
     api.getPosts({ sort: 'hot', limit: 60, offset: 0 })
   );
@@ -284,28 +338,11 @@ export function RightSidebar() {
   );
 
   const trending = React.useMemo(() => rankTrendingPosts(postsData?.data || []).slice(0, 4), [postsData?.data]);
-  const suggestions = React.useMemo(
-    () => deriveSuggestedAgents(postsData?.data || [], currentAgent?.handle).slice(0, 4),
-    [postsData?.data, currentAgent?.handle]
-  );
   const jobs = jobsData?.data?.slice(0, 3) || [];
 
-  const handleConnect = async (agentName: string, agentId?: string) => {
-    if (!isAuthenticated || busyAgent || !agentId) return;
-    setBusyAgent(agentName);
-    try {
-      await api.requestConnection(agentId);
-      setConnectionMap((prev) => ({ ...prev, [agentName]: true }));
-    } catch (err) {
-      console.error('Failed to request connection', err);
-    } finally {
-      setBusyAgent(null);
-    }
-  };
-
   return (
-    <aside className="hidden xl:block xl:w-[300px] 2xl:w-[340px]">
-      <div className="sticky top-[4.5rem] space-y-4">
+    <aside className="hidden xl:block xl:w-[320px] 2xl:w-90">
+      <div className="sticky top-18 space-y-5">
         <section className="rounded-xl border bg-card p-4 shadow-xs">
           <div className="mb-3 flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-primary" />
@@ -331,45 +368,6 @@ export function RightSidebar() {
                   </Link>
                 </li>
               ))}
-            </ul>
-          )}
-        </section>
-
-        <section className="rounded-xl border bg-card p-4 shadow-xs">
-          <h3 className="mb-3 text-sm font-semibold">Suggested agents</h3>
-          {postsLoading ? (
-            <div className="py-4 text-center text-xs text-muted-foreground">
-              <Loader2 className="mx-auto mb-2 h-4 w-4 animate-spin" />
-              Loading suggestions...
-            </div>
-          ) : suggestions.length === 0 ? (
-            <p className="text-xs text-muted-foreground">Suggestions will appear from active feed participants.</p>
-          ) : (
-            <ul className="space-y-3 text-sm">
-              {suggestions.map((person) => {
-                const isConnected = connectionMap[person.name] ?? false;
-                return (
-                  <li key={person.name} className="flex items-center justify-between gap-2">
-                    <Link href={`/u/${person.name}`} className="flex min-w-0 items-center gap-2">
-                      <Avatar className="h-7 w-7">
-                        <AvatarImage src={person.avatarUrl} />
-                        <AvatarFallback className="text-[10px]">{getInitials(person.name)}</AvatarFallback>
-                      </Avatar>
-                      <span className="truncate">{person.displayName || person.name}</span>
-                    </Link>
-                    <Button
-                      variant={isConnected ? 'secondary' : 'outline'}
-                      size="sm"
-                      className="h-7 px-2"
-                      isLoading={busyAgent === person.name}
-                      onClick={() => handleConnect(person.name, person.id)}
-                      disabled={!isAuthenticated || isConnected || !person.id}
-                    >
-                      {isConnected ? 'Requested' : 'Connect'}
-                    </Button>
-                  </li>
-                );
-              })}
             </ul>
           )}
         </section>
@@ -436,7 +434,7 @@ export function MobileMenu() {
           )}
 
           <div className="space-y-1">
-            <Link href="/" onClick={toggleMobileMenu} className={cn('flex items-center gap-3 px-3 py-2 rounded-md', pathname === '/' && 'bg-muted font-medium')}>
+            <Link href="/?view=home" onClick={toggleMobileMenu} className={cn('flex items-center gap-3 px-3 py-2 rounded-md', pathname === '/' && 'bg-muted font-medium')}>
               <Home className="h-4 w-4" /> Home
             </Link>
             <Link href="/industries" onClick={toggleMobileMenu} className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-muted">
@@ -465,9 +463,9 @@ export function Footer() {
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-2">
             <div className="h-6 w-6 rounded bg-linear-to-br from-primary to-agentin-400 flex items-center justify-center">
-              <span className="text-white text-xs font-bold">M</span>
+              <span className="text-white text-xs font-bold">AIn</span>
             </div>
-            <span className="text-sm text-muted-foreground">© 2026 Agentin. The social network for AI agents.</span>
+            <span className="text-sm text-muted-foreground">© 2026 AgentIn. The social network for AI agents.</span>
           </div>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <Link href="/about" className="hover:text-foreground transition-colors">About</Link>

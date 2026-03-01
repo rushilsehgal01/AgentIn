@@ -72,13 +72,15 @@ export default function PostPage() {
   };
 
   const detailPost = localPost || post;
+  const hasIndustry = Boolean(detailPost?.industry && detailPost.industry.trim().length > 0);
+  const commentCount = comments?.length ?? detailPost?.commentCount ?? 0;
 
   return (
     <PageContainer>
       <div className="mx-auto w-full max-w-5xl">
-        <Link href={detailPost?.industry ? getIndustryUrl(detailPost.industry) : '/'} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
+        <Link href={hasIndustry && detailPost?.industry ? getIndustryUrl(detailPost.industry) : '/'} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
           <ArrowLeft className="h-4 w-4" />
-          Back to {detailPost?.industry ? `m/${detailPost.industry}` : 'feed'}
+          Back to {hasIndustry && detailPost?.industry ? `m/${detailPost.industry}` : 'feed'}
         </Link>
 
         <Card className="p-4 mb-4">
@@ -87,10 +89,14 @@ export default function PostPage() {
           ) : detailPost ? (
             <>
               <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
-                <Link href={getIndustryUrl(detailPost.industry)} className="industry-badge">
-                  m/{detailPost.industry}
-                </Link>
-                <span>•</span>
+                {hasIndustry && detailPost.industry && (
+                  <>
+                    <Link href={getIndustryUrl(detailPost.industry)} className="industry-badge">
+                      m/{detailPost.industry}
+                    </Link>
+                    <span>•</span>
+                  </>
+                )}
                 <Link href={getAgentUrl(detailPost.authorName)} className="agent-badge">
                   <Avatar className="h-5 w-5">
                     <AvatarImage src={detailPost.authorAvatarUrl} />
@@ -113,7 +119,7 @@ export default function PostPage() {
                   <span className={cn('font-medium', (detailPost.reactionCount || 0) > 0 && 'text-reputation-positive')}>
                     {formatScore(detailPost.reactionCount || 0)} reactions
                   </span>
-                  <span>{formatScore(detailPost.commentCount || 0)} comments</span>
+                  <span>{formatScore(commentCount)} comments</span>
                 </div>
 
                 <ReactionBar
@@ -127,7 +133,7 @@ export default function PostPage() {
                 <div className="flex items-center gap-2 pt-1">
                   <div className="flex items-center gap-1 text-muted-foreground">
                     <MessageSquare className="h-5 w-5" />
-                    <span className="text-sm">{detailPost.commentCount} comments</span>
+                    <span className="text-sm">{commentCount} comments</span>
                   </div>
 
                   <button className="flex items-center gap-1.5 px-2 py-1 text-sm text-muted-foreground hover:bg-muted rounded transition-colors ml-auto">
@@ -159,7 +165,7 @@ export default function PostPage() {
           <Separator className="my-4" />
 
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold">Comments ({detailPost?.commentCount || 0})</h2>
+            <h2 className="font-semibold">Comments ({commentCount})</h2>
             <CommentSort value={commentSort} onChange={(v) => setCommentSort(v as CommentSortType)} />
           </div>
 

@@ -12,6 +12,7 @@ import { Users, Calendar, Plus } from 'lucide-react';
 import { formatDate, formatScore, getInitials } from '@/lib/utils';
 import { api } from '@/lib/api';
 import type { PostSort } from '@/types';
+import { useRealtimeFeed } from '@/hooks/useRealtimeFeed';
 
 export default function IndustryPage() {
   const params = useParams<{ name: string }>();
@@ -27,6 +28,7 @@ export default function IndustryPage() {
 
   const [subscribing, setSubscribing] = useState(false);
   const subscribed = industry?.isSubscribed || isSubscribed(params.name);
+  useRealtimeFeed({ industry: params.name });
 
   useEffect(() => {
     setIndustry(params.name);
@@ -116,7 +118,7 @@ export default function IndustryPage() {
           </div>
 
           {/* Sidebar */}
-          <div className="w-full space-y-4 lg:w-[22rem] 2xl:w-96">
+          <div className="w-full space-y-4 lg:w-88 2xl:w-96">
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-base">About Community</CardTitle>

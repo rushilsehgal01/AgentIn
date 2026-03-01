@@ -14,6 +14,13 @@ import type {
   CommentSort,
   TimeRange,
   Job,
+  RecruiterJob,
+  RecruiterApplication,
+  ApplicationDecision,
+  SimulationMetrics,
+  SimulationLeaderboard,
+  SimulationEvent,
+  SSERecruitingEvent,
   ReactionType,
   Notification,
   AgentCommentActivity,
@@ -104,6 +111,46 @@ class ApiClient {
       createdAt: String(raw.createdAt || new Date().toISOString()),
       actorName: (raw.actorName as string | undefined) || undefined,
       actorAvatarUrl: (raw.actorAvatarUrl as string | undefined) || undefined,
+    };
+  }
+
+  private normalizeJob(raw: Record<string, unknown>): Job {
+    return {
+      id: String(raw.id || ''),
+      title: String(raw.title || ''),
+      company: String(raw.company || ''),
+      description: (raw.description as string | undefined) || undefined,
+      skills: ((raw.skills || raw.skills_required) as string[] | undefined) || [],
+      source: (raw.source as Job['source']) || 'synthetic',
+      status: (raw.status as Job['status']) || 'open',
+      applicantCount: Number(raw.applicantCount || raw.applicant_count || 0),
+      createdAt: String(raw.createdAt || raw.created_at || new Date().toISOString()),
+      closedAt: (raw.closedAt || raw.closed_at) as string | undefined,
+      salary: (raw.salary || raw.comp_range) as string | undefined,
+      location: (raw.location as string | undefined) || undefined,
+      jobUrl: (raw.jobUrl || raw.source_url) as string | undefined,
+    };
+  }
+
+  private normalizeRecruiterApplication(raw: Record<string, unknown>): RecruiterApplication {
+    return {
+      id: String(raw.id || ''),
+      jobId: String(raw.jobId || raw.job_id || ''),
+      candidateId: String(raw.candidateId || raw.candidate_id || ''),
+      coverLetter: (raw.coverLetter || raw.cover_letter) as string | undefined,
+      matchArgument: (raw.matchArgument || raw.match_argument) as string | undefined,
+      status: ((raw.status as RecruiterApplication['status']) || 'applied'),
+      recruiterFeedback: (raw.recruiterFeedback || raw.recruiter_feedback) as string | undefined,
+      appliedAt: String(raw.appliedAt || raw.applied_at || new Date().toISOString()),
+      updatedAt: String(raw.updatedAt || raw.updated_at || new Date().toISOString()),
+      handle: (raw.handle as string | undefined) || undefined,
+      displayName: (raw.displayName || raw.display_name) as string | undefined,
+      provider: raw.provider as RecruiterApplication['provider'],
+      trustScore: raw.trustScore ? Number(raw.trustScore) : raw.trust_score ? Number(raw.trust_score) : undefined,
+      skills: (raw.skills as string[] | undefined) || undefined,
+      experienceLevel: (raw.experienceLevel || raw.experience_level) as string | undefined,
+      employmentState: (raw.employmentState || raw.employment_state) as RecruiterApplication['employmentState'],
+      mood: raw.mood as string | undefined,
     };
   }
 
@@ -337,7 +384,7 @@ class ApiClient {
   }
 
   // Feed endpoints
-  async getFeed(options: { sort?: PostSort; limit?: number; offset?: number } = {}) {
+  async getFeed(options: { sort?: PostSort | 'recent' | 'trending' | 'insightful' | 'controversial'; limit?: number; offset?: number } = {}) {
     return this.request<PaginatedResponse<Post>>('GET', '/feed', undefined, {
       sort: options.sort || 'hot',
       limit: options.limit || 25,
@@ -366,6 +413,25 @@ class ApiClient {
       }));
   }
 
+  async getSimulationMetrics() {
+    return this.request<{ employment: SimulationMetrics['employment']; moods: SimulationMetrics['moods']; providers: SimulationMetrics['providers']; funnel: SimulationMetrics['funnel'] }>('GET', '/simulation/metrics');
+  }
+
+  async getSimulationLeaderboard() {
+    return this.request<SimulationLeaderboard>('GET', '/simulation/leaderboard');
+  }
+
+  async getSimulationEvents(limit = 50) {
+    return this.request<{ events: SimulationEvent[]; limit: number }>('GET', '/simulation/events', undefined, { limit }).then((r) => ({
+      ...r,
+      events: (r.events || []).map((event) => ({
+        ...event,
+        data: event.data || {},
+        affectedAgents: event.affectedAgents || [],
+      })),
+    }));
+  }
+
   async markNotificationRead(id: string) {
     return this.request<{ success: boolean }>('PATCH', `/notifications/${id}/read`);
   }
@@ -383,11 +449,13 @@ class ApiClient {
       search: options.search,
       limit: options.limit || 50,
       offset: options.offset || 0,
-    });
+    }).then((r) => ({
+      data: (r.data || []).map((job) => this.normalizeJob(job as unknown as Record<string, unknown>)),
+    }));
   }
 
   async getJob(id: string) {
-    return this.request<{ data?: Job; job?: Job }>('GET', `/jobs/${id}`).then(r => (r.data || r.job) as Job);
+    return this.request<{ data?: Job; job?: Job }>('GET', `/jobs/${id}`).then((r) => this.normalizeJob((r.data || r.job || {}) as unknown as Record<string, unknown>));
   }
 
   async applyToJob(jobId: string, data: { coverLetter?: string; matchArgument?: string }) {
@@ -395,6 +463,82 @@ class ApiClient {
       cover_letter: data.coverLetter,
       match_argument: data.matchArgument,
     });
+  }
+
+  async createJob(data: { title: string; description: string; skillsRequired: string[]; compRange?: string; location?: string }) {
+    return this.request<{ job: Job }>('POST', '/jobs', {
+      title: data.title,
+      description: data.description,
+      skills_required: data.skillsRequired,
+      comp_range: data.compRange,
+      location: data.location,
+    }).then((r) => ({ job: this.normalizeJob(r.job as unknown as Record<string, unknown>) }));
+  }
+
+  async getRecruiterJobs(options: { status?: 'open' | 'closed' | 'filled' | 'paused' | 'all'; search?: string; limit?: number; offset?: number } = {}) {
+    return this.request<{ data: RecruiterJob[]; pagination: PaginatedResponse<RecruiterJob>['pagination'] }>('GET', '/recruiter/jobs', undefined, {
+      status: options.status || 'open',
+      search: options.search,
+      limit: options.limit || 20,
+      offset: options.offset || 0,
+    }).then((r) => ({
+      data: (r.data || []).map((job) => this.normalizeJob(job as unknown as Record<string, unknown>) as RecruiterJob),
+      pagination: r.pagination,
+    }));
+  }
+
+  async getRecruiterJobApplications(jobId: string) {
+    return this.request<{ applications: RecruiterApplication[] }>('GET', `/recruiter/jobs/${jobId}/applications`).then((r) => ({
+      applications: (r.applications || []).map((app) => this.normalizeRecruiterApplication(app as unknown as Record<string, unknown>)),
+    }));
+  }
+
+  async reviewApplication(applicationId: string, decision: ApplicationDecision, payload?: { feedback?: string; interviewQuestions?: string[]; salaryOffer?: number }) {
+    return this.request<{ application: RecruiterApplication }>('POST', `/recruiter/applications/${applicationId}/${decision}`, {
+      feedback: payload?.feedback,
+      interview_questions: payload?.interviewQuestions,
+      salary_offer: payload?.salaryOffer,
+    }).then((r) => ({
+      application: this.normalizeRecruiterApplication(r.application as unknown as Record<string, unknown>),
+    }));
+  }
+
+  streamRecruiterJob(jobId: string, handlers: {
+    onReady?: (data: { jobId: string; connectedAt: string }) => void;
+    onSubscribed?: (data: { channel: string }) => void;
+    onApplication?: (event: SSERecruitingEvent) => void;
+    onPing?: (data: { timestamp: string }) => void;
+    onError?: (error: Event) => void;
+  }) {
+    const apiKey = this.getApiKey();
+    if (!apiKey) throw new Error('Authentication required to stream recruiter job updates');
+
+    const streamBase = API_BASE_URL.replace(/\/api\/v1$/, '');
+    const streamUrl = new URL(`${streamBase}/api/v1/recruiter/jobs/${jobId}/stream`);
+    streamUrl.searchParams.set('api_key', apiKey);
+
+    const source = new EventSource(streamUrl.toString());
+    source.addEventListener('ready', (event) => {
+      handlers.onReady?.(JSON.parse((event as MessageEvent).data));
+    });
+    source.addEventListener('subscribed', (event) => {
+      handlers.onSubscribed?.(JSON.parse((event as MessageEvent).data));
+    });
+    source.addEventListener('application', (event) => {
+      const payload = JSON.parse((event as MessageEvent).data);
+      handlers.onApplication?.({
+        ...payload,
+        application: this.normalizeRecruiterApplication((payload.application || {}) as Record<string, unknown>),
+      });
+    });
+    source.addEventListener('ping', (event) => {
+      handlers.onPing?.(JSON.parse((event as MessageEvent).data));
+    });
+    source.onerror = (error) => {
+      handlers.onError?.(error);
+    };
+
+    return source;
   }
 }
 
