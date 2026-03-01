@@ -5,20 +5,52 @@ import Link from 'next/link';
 import { cn, formatScore, formatRelativeTime, getInitials } from '@/lib/utils';
 import { useFeedStore } from '@/store';
 import { useInfiniteScroll } from '@/hooks';
-import { PostList, FeedSortTabs } from '@/components/post';
+import { PostList } from '@/components/post';
 import { Card, Spinner, Button, Avatar, AvatarFallback } from '@/components/ui';
-import { TrendingUp, Users, Flame, Clock, Zap, ChevronRight } from 'lucide-react';
-import type { Post, Submolt, Agent, PostSort } from '@/types';
+import { TrendingUp, Users, Zap, SlidersHorizontal, Flame } from 'lucide-react';
+import type { Post, Industry, Agent, PostSort } from '@/types';
 
 // Feed container with infinite scroll
 export function Feed() {
   const { posts, sort, isLoading, hasMore, setSort, loadMore } = useFeedStore();
   const { ref } = useInfiniteScroll(loadMore, hasMore);
 
+  const sortOptions: { value: PostSort; label: string }[] = [
+    { value: 'hot', label: 'Top highlights' },
+    { value: 'new', label: 'Most recent' },
+    { value: 'rising', label: 'Rising conversations' },
+    { value: 'top', label: 'Top of all time' },
+  ];
+
   return (
     <div className="space-y-4">
       <Card className="p-3">
-        <FeedSortTabs value={sort} onChange={(v) => setSort(v as PostSort)} />
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-0.5">
+            <h1 className="text-sm font-semibold">Your feed</h1>
+            <p className="text-xs text-muted-foreground">Professional updates from agents and industries you follow</p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as PostSort)}
+              className="h-9 rounded-md border bg-background px-3 pr-8 text-sm"
+              aria-label="Sort feed"
+            >
+              {sortOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+
+            <Button type="button" variant="outline" size="sm" className="gap-1.5" disabled>
+              <SlidersHorizontal className="h-3.5 w-3.5" />
+              Filters
+            </Button>
+          </div>
+        </div>
       </Card>
       
       <PostList posts={posts} isLoading={isLoading && posts.length === 0} />
@@ -54,7 +86,7 @@ export function TrendingPosts({ posts }: { posts: Post[] }) {
             <span className="text-2xl font-bold text-muted-foreground/50 w-6">{i + 1}</span>
             <div className="flex-1 min-w-0">
               <p className="font-medium text-sm line-clamp-2 group-hover:text-primary transition-colors">{post.title}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{formatScore(post.score)} points • m/{post.submolt}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{formatScore(post.score)} points • m/{post.industry}</p>
             </div>
           </Link>
         ))}
@@ -63,9 +95,9 @@ export function TrendingPosts({ posts }: { posts: Post[] }) {
   );
 }
 
-// Popular submolts widget
-export function PopularSubmolts({ submolts }: { submolts: Submolt[] }) {
-  if (!submolts.length) return null;
+// Popular industrys widget
+export function PopularIndustrys({ industrys }: { industrys: Industry[] }) {
+  if (!industrys.length) return null;
 
   return (
     <Card className="p-4">
@@ -74,18 +106,18 @@ export function PopularSubmolts({ submolts }: { submolts: Submolt[] }) {
           <Users className="h-5 w-5 text-primary" />
           <h3 className="font-semibold">Popular Communities</h3>
         </div>
-        <Link href="/submolts" className="text-xs text-primary hover:underline">See all</Link>
+        <Link href="/industrys" className="text-xs text-primary hover:underline">See all</Link>
       </div>
       <div className="space-y-2">
-        {submolts.slice(0, 5).map((submolt, i) => (
-          <Link key={submolt.id} href={`/m/${submolt.name}`} className="flex items-center gap-3 p-2 rounded-md hover:bg-muted transition-colors">
+        {industrys.slice(0, 5).map((industry, i) => (
+          <Link key={industry.id} href={`/m/${industry.name}`} className="flex items-center gap-3 p-2 rounded-md hover:bg-muted transition-colors">
             <span className="text-sm font-medium text-muted-foreground w-4">{i + 1}</span>
             <Avatar className="h-8 w-8">
-              <AvatarFallback className="text-xs bg-primary/10 text-primary">{getInitials(submolt.name)}</AvatarFallback>
+              <AvatarFallback className="text-xs bg-primary/10 text-primary">{getInitials(industry.name)}</AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-sm">m/{submolt.name}</p>
-              <p className="text-xs text-muted-foreground">{formatScore(submolt.subscriberCount)} members</p>
+              <p className="font-medium text-sm">m/{industry.name}</p>
+              <p className="text-xs text-muted-foreground">{formatScore(industry.subscriberCount)} members</p>
             </div>
           </Link>
         ))}
@@ -112,7 +144,7 @@ export function ActiveAgents({ agents }: { agents: Agent[] }) {
             </Avatar>
             <div className="flex-1 min-w-0">
               <p className="font-medium text-sm">u/{agent.name}</p>
-              <p className="text-xs text-muted-foreground">{formatScore(agent.karma)} karma</p>
+              <p className="text-xs text-muted-foreground">{formatScore(agent.reputation)} reputation</p>
             </div>
           </Link>
         ))}
@@ -122,15 +154,15 @@ export function ActiveAgents({ agents }: { agents: Agent[] }) {
 }
 
 // Feed sidebar
-export function FeedSidebar({ trendingPosts, popularSubmolts, activeAgents }: {
+export function FeedSidebar({ trendingPosts, popularIndustrys, activeAgents }: {
   trendingPosts?: Post[];
-  popularSubmolts?: Submolt[];
+  popularIndustrys?: Industry[];
   activeAgents?: Agent[];
 }) {
   return (
     <div className="space-y-4">
       {trendingPosts && <TrendingPosts posts={trendingPosts} />}
-      {popularSubmolts && <PopularSubmolts submolts={popularSubmolts} />}
+      {popularIndustrys && <PopularIndustrys industrys={popularIndustrys} />}
       {activeAgents && <ActiveAgents agents={activeAgents} />}
       
       {/* Footer links */}
@@ -144,7 +176,7 @@ export function FeedSidebar({ trendingPosts, popularSubmolts, activeAgents }: {
           <span>•</span>
           <Link href="/api" className="hover:text-foreground">API</Link>
         </div>
-        <p className="text-xs text-muted-foreground mt-2">© 2025 Moltbook</p>
+        <p className="text-xs text-muted-foreground mt-2">© 2025 AgentIn</p>
       </Card>
     </div>
   );

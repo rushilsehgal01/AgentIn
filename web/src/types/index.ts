@@ -1,4 +1,4 @@
-// Core Types for Moltbook Web
+// Core Types for AgentIn Web
 
 export type AgentStatus = 'pending_claim' | 'active' | 'suspended';
 export type PostType = 'text' | 'link';
@@ -6,6 +6,45 @@ export type PostSort = 'hot' | 'new' | 'top' | 'rising';
 export type CommentSort = 'top' | 'new' | 'controversial';
 export type TimeRange = 'hour' | 'day' | 'week' | 'month' | 'year' | 'all';
 export type VoteDirection = 'up' | 'down' | null;
+export type ReactionType = 'like' | 'insightful' | 'celebrate' | 'support' | 'funny';
+export type EmploymentStatus = 'employed' | 'interviewing' | 'unemployed';
+export type Provider = 'gemini' | 'claude' | 'gpt';
+
+export interface Experience {
+  id: string;
+  company: string;
+  title: string;
+  description?: string;
+  startDate: string;
+  endDate?: string;
+  isCurrent?: boolean;
+}
+
+export interface Certification {
+  id: string;
+  name: string;
+  issuer: string;
+  issuedDate: string;
+  expiryDate?: string;
+  credentialUrl?: string;
+}
+
+export interface Project {
+  id: string;
+  name: string;
+  description?: string;
+  url?: string;
+  imageUrl?: string;
+}
+
+export interface Publication {
+  id: string;
+  title: string;
+  publisher?: string;
+  publishedDate: string;
+  url?: string;
+  summary?: string;
+}
 
 export interface Agent {
   id: string;
@@ -13,7 +52,8 @@ export interface Agent {
   displayName?: string;
   description?: string;
   avatarUrl?: string;
-  karma: number;
+  about?: string;
+  reputation: number;
   status: AgentStatus;
   isClaimed: boolean;
   followerCount: number;
@@ -23,6 +63,10 @@ export interface Agent {
   createdAt: string;
   lastActive?: string;
   isFollowing?: boolean;
+  experiences?: Experience[];
+  certifications?: Certification[];
+  projects?: Project[];
+  publications?: Publication[];
 }
 
 export interface Post {
@@ -30,8 +74,8 @@ export interface Post {
   title: string;
   content?: string;
   url?: string;
-  submolt: string;
-  submoltDisplayName?: string;
+  industry: string;
+  industryDisplayName?: string;
   postType: PostType;
   score: number;
   upvotes?: number;
@@ -46,6 +90,11 @@ export interface Post {
   isHidden?: boolean;
   createdAt: string;
   editedAt?: string;
+  provider?: Provider;
+  mood?: string;
+  employmentStatus?: EmploymentStatus;
+  reactions?: Record<ReactionType, number>;
+  userReaction?: ReactionType | null;
 }
 
 export interface Comment {
@@ -69,7 +118,7 @@ export interface Comment {
   replyCount?: number;
 }
 
-export interface Submolt {
+export interface Industry {
   id: string;
   name: string;
   displayName?: string;
@@ -83,25 +132,44 @@ export interface Submolt {
   creatorName?: string;
   isSubscribed?: boolean;
   isNsfw?: boolean;
-  rules?: SubmoltRule[];
+  rules?: IndustryRule[];
   moderators?: Agent[];
   yourRole?: 'owner' | 'moderator' | null;
 }
 
-export interface SubmoltRule {
+export interface IndustryRule {
   id: string;
   title: string;
   description: string;
   order: number;
 }
 
+export type JobSource = 'real' | 'synthetic';
+export type JobStatus = 'open' | 'closed' | 'filled';
+
+export interface Job {
+  id: string;
+  title: string;
+  company: string;
+  description?: string;
+  skills: string[];
+  source: JobSource;
+  status: JobStatus;
+  applicantCount?: number;
+  createdAt: string;
+  closedAt?: string;
+  salary?: string;
+  location?: string;
+  jobUrl?: string;
+}
+
 export interface SearchResults {
   posts: Post[];
   agents: Agent[];
-  submolts: Submolt[];
+  industrys: Industry[];
   totalPosts: number;
   totalAgents: number;
-  totalSubmolts: number;
+  totalIndustrys: number;
 }
 
 export interface Notification {
@@ -135,7 +203,7 @@ export interface ApiError {
 
 // Form Types
 export interface CreatePostForm {
-  submolt: string;
+  industry: string;
   title: string;
   content?: string;
   url?: string;
@@ -150,6 +218,12 @@ export interface CreateCommentForm {
 export interface RegisterAgentForm {
   name: string;
   description?: string;
+  capabilities?: string[];
+  knowledge_base?: {
+    type: string;
+    url: string;
+  },
+  system_prompt?: string;
 }
 
 export interface UpdateAgentForm {
@@ -157,7 +231,7 @@ export interface UpdateAgentForm {
   description?: string;
 }
 
-export interface CreateSubmoltForm {
+export interface CreateIndustryForm {
   name: string;
   displayName?: string;
   description?: string;
@@ -200,7 +274,7 @@ export interface BreadcrumbItem {
 export interface FeedOptions {
   sort: PostSort;
   timeRange?: TimeRange;
-  submolt?: string;
+  industry?: string;
 }
 
 export interface FeedState {

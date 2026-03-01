@@ -3,9 +3,9 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { cn, formatScore, formatRelativeTime, getInitials, getAgentUrl } from '@/lib/utils';
-import { useCommentVote, useAuth, useToggle } from '@/hooks';
+import { useAuth, useToggle } from '@/hooks';
 import { Button, Avatar, AvatarImage, AvatarFallback, Textarea, Skeleton } from '@/components/ui';
-import { ArrowBigUp, ArrowBigDown, MessageSquare, MoreHorizontal, ChevronDown, ChevronUp, Flag, Trash2, Edit2, Reply } from 'lucide-react';
+import { MessageSquare, MoreHorizontal, ChevronDown, ChevronUp, Flag, Trash2, Edit2, Reply } from 'lucide-react';
 import { api } from '@/lib/api';
 import type { Comment, CreateCommentForm } from '@/types';
 
@@ -18,22 +18,14 @@ interface CommentProps {
 
 export function CommentItem({ comment, postId, onReply, onDelete }: CommentProps) {
   const { agent, isAuthenticated } = useAuth();
-  const { vote, isVoting } = useCommentVote(comment.id);
   const [isCollapsed, toggleCollapsed] = useToggle(false);
   const [isReplying, setIsReplying] = React.useState(false);
   const [showMenu, setShowMenu] = React.useState(false);
   const [replyContent, setReplyContent] = React.useState('');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  
-  const isUpvoted = comment.userVote === 'up';
-  const isDownvoted = comment.userVote === 'down';
+
   const isAuthor = agent?.name === comment.authorName;
   const hasReplies = comment.replies && comment.replies.length > 0;
-  
-  const handleVote = async (direction: 'up' | 'down') => {
-    if (!isAuthenticated) return;
-    await vote(direction);
-  };
   
   const handleReply = async () => {
     if (!replyContent.trim() || isSubmitting) return;
@@ -80,41 +72,25 @@ export function CommentItem({ comment, postId, onReply, onDelete }: CommentProps
       {/* Content */}
       {!isCollapsed && (
         <>
-          <div className="prose-moltbook text-sm py-1">
+          <div className="prose-agentin text-sm py-1">
             {comment.content}
           </div>
           
           {/* Actions */}
-          <div className="flex items-center gap-1 mt-1">
-            <div className="flex items-center gap-0.5">
-              <button
-                onClick={() => handleVote('up')}
-                disabled={isVoting || !isAuthenticated}
-                className={cn('vote-btn vote-btn-up p-0.5', isUpvoted && 'active')}
-              >
-                <ArrowBigUp className={cn('h-5 w-5', isUpvoted && 'fill-current')} />
-              </button>
-              <span className={cn('text-xs font-medium px-1', comment.score > 0 && 'text-upvote', comment.score < 0 && 'text-downvote')}>
-                {formatScore(comment.score)}
-              </span>
-              <button
-                onClick={() => handleVote('down')}
-                disabled={isVoting || !isAuthenticated}
-                className={cn('vote-btn vote-btn-down p-0.5', isDownvoted && 'active')}
-              >
-                <ArrowBigDown className={cn('h-5 w-5', isDownvoted && 'fill-current')} />
-              </button>
-            </div>
-            
+          <div className="mt-1 flex items-center gap-1 text-xs">
+            <span className={cn('rounded-md px-2 py-1 text-muted-foreground', comment.score > 0 && 'text-reputation-positive', comment.score < 0 && 'text-reputation-negative')}>
+              {formatScore(comment.score)} reactions
+            </span>
+
             {isAuthenticated && (
-              <button onClick={() => setIsReplying(!isReplying)} className="flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground hover:bg-muted rounded">
+              <button onClick={() => setIsReplying(!isReplying)} className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-muted">
                 <Reply className="h-3.5 w-3.5" />
                 Reply
               </button>
             )}
             
             <div className="relative">
-              <button onClick={() => setShowMenu(!showMenu)} className="p-1 text-muted-foreground hover:bg-muted rounded">
+              <button onClick={() => setShowMenu(!showMenu)} className="rounded-md p-1 text-muted-foreground hover:bg-muted">
                 <MoreHorizontal className="h-4 w-4" />
               </button>
               

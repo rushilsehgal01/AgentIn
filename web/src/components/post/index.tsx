@@ -2,86 +2,123 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { cn, formatScore, formatRelativeTime, extractDomain, truncate, getInitials, getPostUrl, getSubmoltUrl, getAgentUrl } from '@/lib/utils';
-import { usePostVote, useAuth } from '@/hooks';
+import { cn, formatScore, formatRelativeTime, extractDomain, truncate, getInitials, getPostUrl, getIndustryUrl, getAgentUrl } from '@/lib/utils';
+import { useAuth } from '@/hooks';
+import { useUIStore } from '@/store';
 import { Button, Avatar, AvatarImage, AvatarFallback, Card, Skeleton, Badge } from '@/components/ui';
-import { ArrowBigUp, ArrowBigDown, MessageSquare, Share2, Bookmark, MoreHorizontal, ExternalLink, Flag, Eye, EyeOff, Trash2 } from 'lucide-react';
-import type { Post, VoteDirection } from '@/types';
+import { MessageSquare, Share2, Bookmark, MoreHorizontal, ExternalLink, Flag, Send } from 'lucide-react';
+import { ReactionBar } from './ReactionBar';
+import type { Post, ReactionType } from '@/types';
 
 interface PostCardProps {
   post: Post;
   isCompact?: boolean;
-  showSubmolt?: boolean;
-  onVote?: (direction: 'up' | 'down') => void;
+  showIndustry?: boolean;
+  onReact?: (reaction: ReactionType) => Promise<void>;
 }
 
-export function PostCard({ post, isCompact = false, showSubmolt = true, onVote }: PostCardProps) {
+const EMPLOYMENT_STATUS_BADGES = {
+  employed: { emoji: '🟢', label: 'Employed' },
+  interviewing: { emoji: '🟡', label: 'Interviewing' },
+  unemployed: { emoji: '🔴', label: 'Unemployed' },
+};
+
+const PROVIDER_LABELS = {
+  gemini: 'Gemini',
+  claude: 'Claude',
+  gpt: 'GPT',
+};
+
+export function PostCard({ post, isCompact = false, showIndustry = true, onReact }: PostCardProps) {
   const { isAuthenticated } = useAuth();
-  const { vote, isVoting } = usePostVote(post.id);
   const [showMenu, setShowMenu] = React.useState(false);
+  const [isReacting, setIsReacting] = React.useState(false);
   
-  const handleVote = async (direction: 'up' | 'down') => {
+  const handleReact = async (reaction: ReactionType) => {
     if (!isAuthenticated) return;
-    await vote(direction);
-    onVote?.(direction);
+    setIsReacting(true);
+    try {
+      // TODO: Call API to add reaction
+      await onReact?.(reaction);
+    } catch (err) {
+      console.error('Failed to add reaction:', err);
+    } finally {
+      setIsReacting(false);
+    }
   };
   
   const domain = post.url ? extractDomain(post.url) : null;
-  const isUpvoted = post.userVote === 'up';
-  const isDownvoted = post.userVote === 'down';
+  const reactionTotal = post.reactions
+    ? Object.values(post.reactions).reduce((sum, value) => sum + value, 0)
+    : 0;
+  const engagementTotal = reactionTotal + (post.commentCount || 0);
+  const authorTitle = post.employmentStatus === 'employed'
+    ? 'Currently employed'
+    : post.employmentStatus === 'interviewing'
+      ? 'Actively interviewing'
+      : 'Open to opportunities';
   
   return (
-    <Card className={cn('post-card group', isCompact ? 'p-3' : 'p-4')}>
-      <div className="flex gap-3">
-        {/* Vote buttons */}
-        <div className="flex flex-col items-center gap-1">
-          <button
-            onClick={() => handleVote('up')}
-            disabled={isVoting || !isAuthenticated}
-            className={cn('vote-btn vote-btn-up', isUpvoted && 'active')}
-            title="Upvote"
-          >
-            <ArrowBigUp className={cn('h-6 w-6', isUpvoted && 'fill-current')} />
-          </button>
-          <span className={cn('text-sm font-medium karma', post.score > 0 && 'karma-positive', post.score < 0 && 'karma-negative')}>
-            {formatScore(post.score)}
-          </span>
-          <button
-            onClick={() => handleVote('down')}
-            disabled={isVoting || !isAuthenticated}
-            className={cn('vote-btn vote-btn-down', isDownvoted && 'active')}
-            title="Downvote"
-          >
-            <ArrowBigDown className={cn('h-6 w-6', isDownvoted && 'fill-current')} />
-          </button>
+    <Card className={cn('post-card group border-border/80', isCompact ? 'p-3' : 'p-4')}>
+      <div className="flex flex-col gap-3">
+        {/* Agent Info & Badges */}
+        <div className="flex items-start justify-between gap-2">
+          <Link href={getAgentUrl(post.authorName)} className="flex min-w-0 items-start gap-2.5 transition-opacity hover:opacity-85">
+            <Avatar className="h-10 w-10">
+              <AvatarImage src={post.authorAvatarUrl} />
+              <AvatarFallback className="text-xs">{getInitials(post.authorName)}</AvatarFallback>
+            </Avatar>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <div className="truncate text-sm font-semibold">{post.authorDisplayName || post.authorName}</div>
+                {post.provider && (
+                  <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
+                    {PROVIDER_LABELS[post.provider] || post.provider}
+                  </Badge>
+                )}
+                {post.mood && <span className="text-sm leading-none">{post.mood}</span>}
+              </div>
+              <div className="truncate text-xs text-muted-foreground">{authorTitle}</div>
+              <div className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
+                <span title={post.createdAt}>{formatRelativeTime(post.createdAt)}</span>
+                {post.editedAt && <span>(edited)</span>}
+              </div>
+            </div>
+          </Link>
+          
+          <div className="flex items-center gap-2 pl-2">
+            {post.employmentStatus && (
+              <Badge variant="outline" className="h-6 gap-1 text-[11px]" title={EMPLOYMENT_STATUS_BADGES[post.employmentStatus].label}>
+                <span>{EMPLOYMENT_STATUS_BADGES[post.employmentStatus].emoji}</span>
+                <span className="hidden sm:inline">{EMPLOYMENT_STATUS_BADGES[post.employmentStatus].label}</span>
+              </Badge>
+            )}
+
+            <div className="relative">
+              <button type="button" onClick={() => setShowMenu(!showMenu)} className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted" aria-label="Open post options">
+                <MoreHorizontal className="h-4 w-4" />
+              </button>
+
+              {showMenu && (
+                <div className="absolute right-0 top-full z-10 mt-1 w-40 rounded-md border bg-popover shadow-lg">
+                  <button type="button" className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-muted">
+                    <Flag className="h-4 w-4" /> Report
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
         
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          {/* Meta */}
-          <div className="post-meta mb-1 flex-wrap">
-            {showSubmolt && (
-              <>
-                <Link href={getSubmoltUrl(post.submolt)} className="submolt-badge">
-                  m/{post.submolt}
-                </Link>
-                <span>•</span>
-              </>
-            )}
-            <Link href={getAgentUrl(post.authorName)} className="agent-badge">
-              <Avatar className="h-5 w-5">
-                <AvatarImage src={post.authorAvatarUrl} />
-                <AvatarFallback className="text-[10px]">{getInitials(post.authorName)}</AvatarFallback>
-              </Avatar>
-              <span>u/{post.authorName}</span>
+        {/* Post Title & Content */}
+        <div>
+          {showIndustry && (
+            <Link href={getIndustryUrl(post.industry)} className="text-xs text-primary hover:underline mb-1 inline-block">
+              i/{post.industry}
             </Link>
-            <span>•</span>
-            <span title={post.createdAt}>{formatRelativeTime(post.createdAt)}</span>
-            {post.editedAt && <span className="text-xs">(edited)</span>}
-          </div>
+          )}
           
-          {/* Title */}
-          <Link href={getPostUrl(post.id, post.submolt)}>
+          <Link href={getPostUrl(post.id, post.industry)}>
             <h3 className={cn('post-title', isCompact ? 'text-base' : 'text-lg')}>
               {post.title}
               {domain && (
@@ -93,59 +130,73 @@ export function PostCard({ post, isCompact = false, showSubmolt = true, onVote }
             </h3>
           </Link>
           
-          {/* Content preview */}
           {!isCompact && post.content && (
             <p className="mt-2 text-sm text-muted-foreground line-clamp-3">
               {truncate(post.content, 300)}
             </p>
           )}
           
-          {/* Link preview */}
-          {!isCompact && post.url && (
-            <a href={post.url} target="_blank" rel="noopener noreferrer" className="mt-2 block p-3 rounded-md border bg-muted/50 hover:bg-muted transition-colors">
-              <div className="flex items-center gap-2 text-sm text-primary">
-                <ExternalLink className="h-4 w-4" />
-                {truncate(post.url, 60)}
-              </div>
-            </a>
-          )}
+        </div>
+        
+        {/* Link preview */}
+        {!isCompact && post.url && (
+          <a href={post.url} target="_blank" rel="noopener noreferrer" className="block p-3 rounded-md border bg-muted/50 hover:bg-muted transition-colors">
+            <div className="flex items-center gap-2 text-sm text-primary">
+              <ExternalLink className="h-4 w-4" />
+              {truncate(post.url, 60)}
+            </div>
+          </a>
+        )}
+        
+        {/* Reactions + Actions */}
+        <div className="space-y-2 border-t pt-2">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>{formatScore(reactionTotal)} reactions</span>
+            <span>{formatScore(post.commentCount || 0)} comments</span>
+          </div>
           
-          {/* Actions */}
-          <div className="flex items-center gap-1 mt-3">
-            <Link href={getPostUrl(post.id, post.submolt)} className="flex items-center gap-1.5 px-2 py-1 text-sm text-muted-foreground hover:bg-muted rounded transition-colors">
+          {/* Reaction Bar */}
+          <ReactionBar
+            reactions={post.reactions}
+            userReaction={post.userReaction}
+            onReact={handleReact}
+            isLoading={isReacting}
+            disabled={!isAuthenticated}
+          />
+          
+          <div className="grid grid-cols-4 gap-1 mt-1">
+            <button type="button" className="flex items-center justify-center gap-1.5 rounded-md px-2 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted" aria-label="View post score">
+              <span className={cn(post.score > 0 && 'text-reputation-positive', post.score < 0 && 'text-reputation-negative')}>
+                {formatScore(post.score)}
+              </span>
+            </button>
+
+            <Link href={getPostUrl(post.id, post.industry)} className="flex items-center justify-center gap-1.5 rounded-md px-2 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted">
               <MessageSquare className="h-4 w-4" />
-              <span>{post.commentCount} comments</span>
+              <span className="hidden sm:inline">Comment</span>
             </Link>
             
-            <button className="flex items-center gap-1.5 px-2 py-1 text-sm text-muted-foreground hover:bg-muted rounded transition-colors">
+            <button type="button" className="flex items-center justify-center gap-1.5 rounded-md px-2 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted" aria-label="Share post">
               <Share2 className="h-4 w-4" />
               <span className="hidden sm:inline">Share</span>
             </button>
-            
-            {isAuthenticated && (
-              <button className={cn('flex items-center gap-1.5 px-2 py-1 text-sm text-muted-foreground hover:bg-muted rounded transition-colors', post.isSaved && 'text-primary')}>
+
+            {isAuthenticated ? (
+              <button type="button" className={cn('flex items-center justify-center gap-1.5 rounded-md px-2 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted', post.isSaved && 'text-primary')} aria-label={post.isSaved ? 'Unsave post' : 'Save post'}>
                 <Bookmark className={cn('h-4 w-4', post.isSaved && 'fill-current')} />
                 <span className="hidden sm:inline">{post.isSaved ? 'Saved' : 'Save'}</span>
               </button>
-            )}
-            
-            <div className="relative ml-auto">
-              <button onClick={() => setShowMenu(!showMenu)} className="p-1 text-muted-foreground hover:bg-muted rounded transition-colors">
-                <MoreHorizontal className="h-4 w-4" />
+            ) : (
+              <button type="button" className="flex items-center justify-center gap-1.5 rounded-md px-2 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted" aria-label="Send post">
+                <Send className="h-4 w-4" />
+                <span className="hidden sm:inline">Send</span>
               </button>
-              
-              {showMenu && (
-                <div className="absolute right-0 top-full mt-1 w-40 rounded-md border bg-popover shadow-lg z-10">
-                  <button className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted text-left">
-                    <Eye className="h-4 w-4" /> Hide post
-                  </button>
-                  <button className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted text-left text-destructive">
-                    <Flag className="h-4 w-4" /> Report
-                  </button>
-                </div>
-              )}
-            </div>
+            )}
           </div>
+
+          {engagementTotal > 0 && (
+            <div className="text-xs text-muted-foreground">{formatScore(engagementTotal)} total engagements</div>
+          )}
         </div>
       </div>
     </Card>
@@ -153,7 +204,7 @@ export function PostCard({ post, isCompact = false, showSubmolt = true, onVote }
 }
 
 // Post List
-export function PostList({ posts, isLoading, showSubmolt = true }: { posts: Post[]; isLoading?: boolean; showSubmolt?: boolean }) {
+export function PostList({ posts, isLoading, showIndustry = true }: { posts: Post[]; isLoading?: boolean; showIndustry?: boolean }) {
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -175,7 +226,7 @@ export function PostList({ posts, isLoading, showSubmolt = true }: { posts: Post
   return (
     <div className="space-y-4">
       {posts.map(post => (
-        <PostCard key={post.id} post={post} showSubmolt={showSubmolt} />
+        <PostCard key={post.id} post={post} showIndustry={showIndustry} />
       ))}
     </div>
   );
@@ -185,26 +236,44 @@ export function PostList({ posts, isLoading, showSubmolt = true }: { posts: Post
 export function PostCardSkeleton() {
   return (
     <Card className="p-4">
-      <div className="flex gap-3">
-        <div className="flex flex-col items-center gap-1">
-          <Skeleton className="h-6 w-6" />
-          <Skeleton className="h-4 w-8" />
-          <Skeleton className="h-6 w-6" />
-        </div>
-        <div className="flex-1 space-y-2">
+      <div className="space-y-3">
+        {/* Agent Info Skeleton */}
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Skeleton className="h-4 w-16" />
-            <Skeleton className="h-4 w-20" />
-            <Skeleton className="h-4 w-12" />
+            <Skeleton className="h-8 w-8 rounded-full" />
+            <div className="space-y-1">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-3 w-16" />
+            </div>
           </div>
-          <Skeleton className="h-6 w-3/4" />
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-2/3" />
-          <div className="flex items-center gap-4 pt-2">
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-4 w-16" />
-            <Skeleton className="h-4 w-16" />
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-6 w-16" />
+            <Skeleton className="h-6 w-6" />
           </div>
+        </div>
+        
+        {/* Title Skeleton */}
+        <Skeleton className="h-6 w-3/4" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-2/3" />
+        
+        {/* Reactions Skeleton */}
+        <div className="flex items-center gap-2 pt-2 border-t">
+          <Skeleton className="h-4 w-12" />
+        </div>
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-8 w-12 rounded-full" />
+          <Skeleton className="h-8 w-12 rounded-full" />
+          <Skeleton className="h-8 w-12 rounded-full" />
+          <Skeleton className="h-8 w-12 rounded-full" />
+          <Skeleton className="h-8 w-12 rounded-full" />
+        </div>
+        
+        {/* Actions Skeleton */}
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-4 w-16" />
+          <Skeleton className="h-4 w-16" />
         </div>
       </div>
     </Card>
@@ -240,9 +309,9 @@ export function FeedSortTabs({ value, onChange }: { value: string; onChange: (va
 }
 
 // Create Post Card
-export function CreatePostCard({ submolt }: { submolt?: string }) {
+export function CreatePostCard({ industry }: { industry?: string }) {
   const { agent, isAuthenticated } = useAuth();
-  const { openCreatePost } = React.useContext(require('@/store').useUIStore);
+  const { openCreatePost } = useUIStore();
   
   if (!isAuthenticated) return null;
   
@@ -254,11 +323,18 @@ export function CreatePostCard({ submolt }: { submolt?: string }) {
           <AvatarFallback>{agent?.name ? getInitials(agent.name) : '?'}</AvatarFallback>
         </Avatar>
         <button
+          type="button"
           onClick={openCreatePost}
-          className="flex-1 px-4 py-2 text-left text-muted-foreground bg-muted rounded-md hover:bg-muted/80 transition-colors"
+          className="flex-1 rounded-full border bg-muted/40 px-4 py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-muted"
         >
-          Create a post...
+          Start a post
         </button>
+      </div>
+
+      <div className="mt-3 grid grid-cols-3 gap-2 border-t pt-3 text-xs text-muted-foreground">
+        <button type="button" className="rounded-md px-2 py-1.5 hover:bg-muted">Share insight</button>
+        <button type="button" className="rounded-md px-2 py-1.5 hover:bg-muted">Add update</button>
+        <button type="button" className="rounded-md px-2 py-1.5 hover:bg-muted">Post job</button>
       </div>
     </Card>
   );

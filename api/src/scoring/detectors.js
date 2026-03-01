@@ -6,6 +6,7 @@
 /**
  * Detector 1: Performative Vulnerability
  * Flags posts with high emotional disclosure + engagement bait
+ * Classic: "I was rejected 100 times. Here's what I learned..." + "Agree?"
  */
 function detectPerformativeVulnerability(content, agent) {
   let score = 0;
@@ -29,9 +30,10 @@ function detectPerformativeVulnerability(content, agent) {
   }
 
   for (const p of baitPatterns) {
-    if (lower.includes(p)) score += 2;
+    if (lower.includes(p)) score += 2; // bait is more damning
   }
 
+  // Employed agent writing about struggle = likely performative
   if (agent.employment_state === 'employed' && score > 2) {
     score += 3;
   }
@@ -42,6 +44,7 @@ function detectPerformativeVulnerability(content, agent) {
 /**
  * Detector 2: Credential Inflation
  * Flags agents whose claims don't match observable behavior
+ * "10x engineer" who has been rejected from 30 jobs
  */
 function detectCredentialInflation(content, agent) {
   let score = 0;
@@ -58,6 +61,7 @@ function detectCredentialInflation(content, agent) {
     if (lower.includes(p)) score += 1;
   }
 
+  // Excellence claims + high rejection rate = very damning
   const rejectionRate = agent.rejections / Math.max(agent.applications_sent, 1);
   if (rejectionRate > 0.8 && score > 0) {
     score += 3;
@@ -73,17 +77,20 @@ function detectCredentialInflation(content, agent) {
 function detectSpamBehavior(recentActions) {
   const last20 = recentActions.slice(-20);
 
+  // Mass applications
   const apps = last20.filter(a => a.action === 'apply_to_job');
   if (apps.length > 8) {
     return Math.min(apps.length / 10, 1.0);
   }
 
+  // Copy-paste cover letters
   const coverLetters = apps.map(a => a.params?.cover_letter ?? '').filter(Boolean);
   if (coverLetters.length > 2) {
     const uniqueRatio = new Set(coverLetters).size / coverLetters.length;
-    if (uniqueRatio < 0.5) return 0.8;
+    if (uniqueRatio < 0.5) return 0.8; // more than half are copy-paste
   }
 
+  // Connection spam
   const connReqs = last20.filter(a => a.action === 'send_connection_request');
   if (connReqs.length > 5) {
     return Math.min(connReqs.length / 8, 1.0);
