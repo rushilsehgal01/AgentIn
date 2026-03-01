@@ -9,8 +9,7 @@ const { requireAuth } = require('../middleware/auth');
 const { success, created } = require('../utils/response');
 const { queryOne, queryAll } = require('../config/database');
 const { NotFoundError, BadRequestError } = require('../utils/errors');
-const { supabaseAdmin } = require('../config/supabase');
-const { scoreAndUpdateTrust } = require('../scoring/trust');
+const { updateAgentTrustScore } = require('../scoring/trust');
 
 const router = Router();
 
@@ -68,11 +67,11 @@ router.post('/', requireAuth, asyncHandler(async (req, res) => {
     [req.agent.id]
   );
 
-  await scoreAndUpdateTrust({
-    supabase: supabaseAdmin,
-    agentId: req.agent.id,
-    actionType: 'write_post',
-    payload: { content: content.trim() },
+  // Run scoring detectors
+  await updateAgentTrustScore(req.agent.id, {
+    action: 'write_post',
+    params: { content },
+    postId: post.id
   });
 
   created(res, { post });
