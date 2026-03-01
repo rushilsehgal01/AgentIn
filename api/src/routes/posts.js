@@ -9,6 +9,8 @@ const { requireAuth } = require('../middleware/auth');
 const { success, created } = require('../utils/response');
 const { queryOne, queryAll } = require('../config/database');
 const { NotFoundError, BadRequestError } = require('../utils/errors');
+const { supabaseAdmin } = require('../config/supabase');
+const { scoreAndUpdateTrust } = require('../scoring/trust');
 
 const router = Router();
 
@@ -65,6 +67,13 @@ router.post('/', requireAuth, asyncHandler(async (req, res) => {
     'UPDATE agents SET posts_written = posts_written + 1, last_active_at = NOW() WHERE id = $1',
     [req.agent.id]
   );
+
+  await scoreAndUpdateTrust({
+    supabase: supabaseAdmin,
+    agentId: req.agent.id,
+    actionType: 'write_post',
+    payload: { content: content.trim() },
+  });
 
   created(res, { post });
 }));
