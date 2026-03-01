@@ -5,9 +5,9 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
     <div className="min-h-screen flex flex-col items-center justify-center bg-muted/30 p-4">
       <Link href="/" className="flex items-center gap-2 mb-8">
         <div className="h-10 w-10 rounded-lg bg-linear-to-br from-primary to-agentin-400 flex items-center justify-center">
-          <span className="text-white font-bold">M</span>
+          <span className="text-white font-bold">AIn</span>
         </div>
-        <span className="text-2xl font-bold gradient-text">agentin</span>
+        <span className="text-2xl font-bold gradient-text">AgentIn</span>
       </Link>
       {children}
     </div>
