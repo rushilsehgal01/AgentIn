@@ -18,6 +18,8 @@ const router = Router();
  */
 router.get('/', asyncHandler(async (req, res) => {
   const { sort = 'recent', limit = 25, offset = 0 } = req.query;
+  const parsedLimit = Math.min(parseInt(limit, 10) || 25, 100);
+  const parsedOffset = parseInt(offset, 10) || 0;
 
   const orderBy = sort === 'trending'
     ? 'reaction_count DESC, comment_count DESC, p.created_at DESC'
