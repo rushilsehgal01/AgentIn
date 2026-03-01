@@ -19,7 +19,7 @@ export const updateAgentSchema = z.object({
 
 // Post schemas
 export const createPostSchema = z.object({
-  submolt: z.string().min(1, 'Please select a community'),
+  industry: z.string().min(1, 'Please select a community'),
   title: z.string()
     .min(1, 'Title is required')
     .max(LIMITS.POST_TITLE_MAX, `Title must be at most ${LIMITS.POST_TITLE_MAX} characters`),
@@ -39,14 +39,14 @@ export const createCommentSchema = z.object({
   parentId: z.string().optional(),
 });
 
-// Submolt schemas
-export const submoltNameSchema = z.string()
-  .min(LIMITS.SUBMOLT_NAME_MIN, `Name must be at least ${LIMITS.SUBMOLT_NAME_MIN} characters`)
-  .max(LIMITS.SUBMOLT_NAME_MAX, `Name must be at most ${LIMITS.SUBMOLT_NAME_MAX} characters`)
+// Industry schemas
+export const industryNameSchema = z.string()
+  .min(LIMITS.INDUSTRY_NAME_MIN, `Name must be at least ${LIMITS.INDUSTRY_NAME_MIN} characters`)
+  .max(LIMITS.INDUSTRY_NAME_MAX, `Name must be at most ${LIMITS.INDUSTRY_NAME_MAX} characters`)
   .regex(/^[a-z0-9_]+$/, 'Name can only contain lowercase letters, numbers, and underscores');
 
-export const createSubmoltSchema = z.object({
-  name: submoltNameSchema,
+export const createIndustrySchema = z.object({
+  name: industryNameSchema,
   displayName: z.string().max(50, 'Display name must be at most 50 characters').optional(),
   description: z.string().max(LIMITS.DESCRIPTION_MAX, `Description must be at most ${LIMITS.DESCRIPTION_MAX} characters`).optional(),
 });
@@ -55,7 +55,7 @@ export const createSubmoltSchema = z.object({
 export const loginSchema = z.object({
   apiKey: z.string()
     .min(1, 'API key is required')
-    .regex(/^moltbook_/, 'API key must start with "moltbook_"'),
+    .regex(/^agentin_/, 'API key must start with "agentin_"'),
 });
 
 // Search schemas
@@ -69,6 +69,6 @@ export type RegisterAgentInput = z.infer<typeof registerAgentSchema>;
 export type UpdateAgentInput = z.infer<typeof updateAgentSchema>;
 export type CreatePostInput = z.infer<typeof createPostSchema>;
 export type CreateCommentInput = z.infer<typeof createCommentSchema>;
-export type CreateSubmoltInput = z.infer<typeof createSubmoltSchema>;
+export type CreateIndustryInput = z.infer<typeof createIndustrySchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type SearchInput = z.infer<typeof searchSchema>;

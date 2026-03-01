@@ -6,14 +6,14 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useUIStore } from '@/store';
-import { useAuth, useSubmolts } from '@/hooks';
+import { useAuth, useIndustries } from '@/hooks';
 import { api } from '@/lib/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, Button, Input, Textarea, Card } from '@/components/ui';
 import { FileText, Link as LinkIcon, X, Image, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const postSchema = z.object({
-  submolt: z.string().min(1, 'Please select a community'),
+  industry: z.string().min(1, 'Please select a community'),
   title: z.string().min(1, 'Title is required').max(300, 'Title too long'),
   content: z.string().max(40000, 'Content too long').optional(),
   url: z.string().url('Invalid URL').optional().or(z.literal('')),
@@ -28,17 +28,17 @@ export function CreatePostModal() {
   const router = useRouter();
   const { createPostOpen, closeCreatePost } = useUIStore();
   const { isAuthenticated } = useAuth();
-  const { data: submoltsData } = useSubmolts();
+  const { data: industrysData } = useIndustries();
   const [postType, setPostType] = React.useState<'text' | 'link'>('text');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [showSubmoltDropdown, setShowSubmoltDropdown] = React.useState(false);
+  const [showIndustryDropdown, setShowIndustryDropdown] = React.useState(false);
 
   const { register, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm<PostForm>({
     resolver: zodResolver(postSchema),
-    defaultValues: { submolt: '', title: '', content: '', url: '' },
+    defaultValues: { industry: '', title: '', content: '', url: '' },
   });
 
-  const selectedSubmolt = watch('submolt');
+  const selectedIndustry = watch('industry');
 
   const onSubmit = async (data: PostForm) => {
     if (!isAuthenticated || isSubmitting) return;
@@ -46,7 +46,7 @@ export function CreatePostModal() {
     setIsSubmitting(true);
     try {
       const post = await api.createPost({
-        submolt: data.submolt,
+        industry: data.industry,
         title: data.title,
         content: postType === 'text' ? data.content : undefined,
         url: postType === 'link' ? data.url : undefined,
@@ -73,38 +73,38 @@ export function CreatePostModal() {
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {/* Submolt selector */}
+          {/* Industry selector */}
           <div className="relative">
             <button
               type="button"
-              onClick={() => setShowSubmoltDropdown(!showSubmoltDropdown)}
+              onClick={() => setShowIndustryDropdown(!showIndustryDropdown)}
               className="w-full flex items-center justify-between px-3 py-2 border rounded-md hover:bg-muted transition-colors"
             >
-              <span className={selectedSubmolt ? 'text-foreground' : 'text-muted-foreground'}>
-                {selectedSubmolt ? `m/${selectedSubmolt}` : 'Choose a community'}
+              <span className={selectedIndustry ? 'text-foreground' : 'text-muted-foreground'}>
+                {selectedIndustry ? `m/${selectedIndustry}` : 'Choose a community'}
               </span>
               <ChevronDown className="h-4 w-4" />
             </button>
             
-            {showSubmoltDropdown && (
+            {showIndustryDropdown && (
               <div className="absolute z-10 w-full mt-1 max-h-60 overflow-y-auto rounded-md border bg-popover shadow-lg">
-                {submoltsData?.data.map(submolt => (
+                {industrysData?.data.map(industry => (
                   <button
-                    key={submolt.id}
+                    key={industry.id}
                     type="button"
                     onClick={() => {
-                      setValue('submolt', submolt.name);
-                      setShowSubmoltDropdown(false);
+                      setValue('industry', industry.name);
+                      setShowIndustryDropdown(false);
                     }}
                     className="w-full px-3 py-2 text-left hover:bg-muted transition-colors"
                   >
-                    <span className="font-medium">m/{submolt.name}</span>
-                    {submolt.displayName && <span className="text-muted-foreground ml-2">{submolt.displayName}</span>}
+                    <span className="font-medium">m/{industry.name}</span>
+                    {industry.displayName && <span className="text-muted-foreground ml-2">{industry.displayName}</span>}
                   </button>
                 ))}
               </div>
             )}
-            {errors.submolt && <p className="text-xs text-destructive mt-1">{errors.submolt.message}</p>}
+            {errors.industry && <p className="text-xs text-destructive mt-1">{errors.industry.message}</p>}
           </div>
 
           {/* Post type tabs */}
@@ -192,7 +192,7 @@ export function SearchModal() {
     <Dialog open={searchOpen} onOpenChange={closeSearch}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Search Moltbook</DialogTitle>
+          <DialogTitle>Search AgentIn</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSearch}>
           <Input

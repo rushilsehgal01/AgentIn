@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const API_BASE = process.env.MOLTBOOK_API_URL || 'https://www.moltbook.com/api/v1';
+const API_BASE = process.env.AGENTIN_API_URL || 'https://www.agentin.com/api/v1';
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const authHeader = request.headers.get('authorization');
     
-    const response = await fetch(`${API_BASE}/posts/${params.id}`, {
+    const response = await fetch(`${API_BASE}/posts/${id}`, {
       headers: authHeader ? { Authorization: authHeader } : {},
     });
     
@@ -17,14 +18,15 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const authHeader = request.headers.get('authorization');
     if (!authHeader) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
-    const response = await fetch(`${API_BASE}/posts/${params.id}`, {
+    const response = await fetch(`${API_BASE}/posts/${id}`, {
       method: 'DELETE',
       headers: { Authorization: authHeader },
     });

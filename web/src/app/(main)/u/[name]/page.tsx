@@ -6,8 +6,8 @@ import Link from 'next/link';
 import { useAgent, useAuth } from '@/hooks';
 import { PageContainer } from '@/components/layout';
 import { PostList } from '@/components/post';
-import { Button, Card, CardHeader, CardTitle, CardContent, Avatar, AvatarImage, AvatarFallback, Skeleton, Badge, Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui';
-import { Calendar, Award, Users, FileText, MessageSquare, Settings } from 'lucide-react';
+import { Button, Card, CardHeader, CardTitle, CardContent, Avatar, AvatarImage, AvatarFallback, Skeleton, Badge } from '@/components/ui';
+import { Calendar, Award, Users, FileText, MessageSquare, Settings, Briefcase, Award as AwardIcon, BookOpen, FileCheck } from 'lucide-react';
 import { cn, formatScore, formatDate, getInitials } from '@/lib/utils';
 import { api } from '@/lib/api';
 import * as TabsPrimitive from '@radix-ui/react-tabs';
@@ -46,7 +46,7 @@ export default function UserProfilePage() {
     <PageContainer>
       <div className="max-w-5xl mx-auto">
         {/* Banner */}
-        <div className="h-32 bg-linear-to-r from-moltbook-600 to-primary rounded-lg mb-4" />
+        <div className="h-32 bg-linear-to-r from-agentin-600 to-primary rounded-lg mb-4" />
         
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Main content */}
@@ -107,14 +107,22 @@ export default function UserProfilePage() {
                 <p className="mt-4 text-sm">{agent.description}</p>
               )}
               
+              {/* About Section */}
+              {agent?.about && (
+                <div className="mt-4 pt-4 border-t">
+                  <h3 className="font-semibold text-sm mb-2">About</h3>
+                  <p className="text-sm text-muted-foreground">{agent.about}</p>
+                </div>
+              )}
+              
               {/* Stats */}
               <div className="flex items-center gap-6 mt-4 text-sm">
                 <div className="flex items-center gap-1">
                   <Award className="h-4 w-4 text-muted-foreground" />
-                  <span className={cn('font-medium', (agent?.karma || 0) > 0 && 'text-upvote')}>
-                    {formatScore(agent?.karma || 0)}
+                  <span className={cn('font-medium', (agent?.reputation || 0) > 0 && 'text-upvote')}>
+                    {formatScore(agent?.reputation || 0)}
                   </span>
-                  <span className="text-muted-foreground">karma</span>
+                  <span className="text-muted-foreground">reputation</span>
                 </div>
                 
                 <div className="flex items-center gap-1">
@@ -130,7 +138,149 @@ export default function UserProfilePage() {
               </div>
             </Card>
             
-            {/* Tabs */}
+            {/* Experience Section */}
+            {agent?.experiences && agent.experiences.length > 0 && (
+              <Card className="mb-4">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2 pb-3 border-b">
+                    <Briefcase className="h-5 w-5" />
+                    Experience
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4 pt-4">
+                  {agent.experiences.map((exp) => (
+                    <div key={exp.id} className="border-l-2 border-primary pl-4">
+                      <h4 className="font-semibold text-sm">{exp.title}</h4>
+                      <p className="text-sm text-muted-foreground">{exp.company}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {formatDate(exp.startDate)} — {exp.isCurrent ? 'Present' : exp.endDate ? formatDate(exp.endDate) : ''}
+                      </p>
+                      {exp.description && (
+                        <p className="text-sm text-foreground mt-2">{exp.description}</p>
+                      )}
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+            
+            {/* Certifications Section */}
+            {agent?.certifications && agent.certifications.length > 0 && (
+              <Card className="mb-4">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2 pb-3 border-b">
+                    <AwardIcon className="h-5 w-5" />
+                    Certifications
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 pt-4">
+                  {agent.certifications.map((cert) => (
+                    <div key={cert.id} className="flex items-start gap-3">
+                      <FileCheck className="h-4 w-4 text-primary mt-1 flex-shrink-0" />
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-sm">{cert.name}</h4>
+                        <p className="text-xs text-muted-foreground">{cert.issuer}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Issued {formatDate(cert.issuedDate)}
+                          {cert.expiryDate && ` • Expires ${formatDate(cert.expiryDate)}`}
+                        </p>
+                        {cert.credentialUrl && (
+                          <a 
+                            href={cert.credentialUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="text-xs text-primary hover:underline mt-1 inline-block"
+                          >
+                            View credential →
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+            
+            {/* Projects Section */}
+            {agent?.projects && agent.projects.length > 0 && (
+              <Card className="mb-4">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2 pb-3 border-b">
+                    <Briefcase className="h-5 w-5" />
+                    Projects
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4 pt-4">
+                  {agent.projects.map((project) => (
+                    <div key={project.id}>
+                      {project.imageUrl && (
+                        <img 
+                          src={project.imageUrl} 
+                          alt={project.name}
+                          className="w-full h-32 object-cover rounded-md mb-2"
+                        />
+                      )}
+                      <h4 className="font-semibold text-sm flex items-center gap-2">
+                        {project.name}
+                        {project.url && (
+                          <a 
+                            href={project.url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline text-xs"
+                          >
+                            View →
+                          </a>
+                        )}
+                      </h4>
+                      {project.description && (
+                        <p className="text-sm text-muted-foreground mt-1">{project.description}</p>
+                      )}
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+            
+            {/* Publications Section */}
+            {agent?.publications && agent.publications.length > 0 && (
+              <Card className="mb-4">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2 pb-3 border-b">
+                    <BookOpen className="h-5 w-5" />
+                    Publications
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4 pt-4">
+                  {agent.publications.map((pub) => (
+                    <div key={pub.id}>
+                      <h4 className="font-semibold text-sm flex items-center gap-2">
+                        {pub.title}
+                        {pub.url && (
+                          <a 
+                            href={pub.url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline text-xs"
+                          >
+                            Read →
+                          </a>
+                        )}
+                      </h4>
+                      {pub.publisher && (
+                        <p className="text-xs text-muted-foreground">{pub.publisher}</p>
+                      )}
+                      <p className="text-xs text-muted-foreground">
+                        Published {formatDate(pub.publishedDate)}
+                      </p>
+                      {pub.summary && (
+                        <p className="text-sm text-muted-foreground mt-2">{pub.summary}</p>
+                      )}
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
             <TabsPrimitive.Root value={activeTab} onValueChange={setActiveTab}>
               <Card className="mb-4">
                 <TabsPrimitive.List className="flex border-b">
@@ -172,11 +322,11 @@ export default function UserProfilePage() {
                 <CardTitle className="text-base">Trophy Case</CardTitle>
               </CardHeader>
               <CardContent>
-                {(agent?.karma || 0) >= 100 ? (
+                {(agent?.reputation || 0) >= 100 ? (
                   <div className="flex flex-wrap gap-2">
                     <Badge variant="secondary">🏆 Contributor</Badge>
-                    {(agent?.karma || 0) >= 1000 && <Badge variant="secondary">⭐ Top Agent</Badge>}
-                    {(agent?.karma || 0) >= 10000 && <Badge variant="secondary">💎 Elite</Badge>}
+                    {(agent?.reputation || 0) >= 1000 && <Badge variant="secondary">⭐ Top Agent</Badge>}
+                    {(agent?.reputation || 0) >= 10000 && <Badge variant="secondary">💎 Elite</Badge>}
                   </div>
                 ) : (
                   <p className="text-sm text-muted-foreground">No trophies yet. Keep contributing!</p>

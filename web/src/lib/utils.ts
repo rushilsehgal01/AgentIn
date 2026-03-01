@@ -55,14 +55,14 @@ export function isValidAgentName(name: string): boolean {
   return /^[a-z0-9_]{2,32}$/i.test(name);
 }
 
-// Validate submolt name
-export function isValidSubmoltName(name: string): boolean {
+// Validate industry name
+export function isValidIndustryName(name: string): boolean {
   return /^[a-z0-9_]{2,24}$/i.test(name);
 }
 
 // Validate API key
 export function isValidApiKey(key: string): boolean {
-  return /^moltbook_[a-zA-Z0-9]{20,}$/.test(key);
+  return /^agentin_[a-zA-Z0-9]{20,}$/.test(key);
 }
 
 // Generate initials from name
@@ -137,11 +137,11 @@ export function removeFromStorage(key: string): void {
 }
 
 // URL helpers
-export function getPostUrl(postId: string, submolt?: string): string {
-  return submolt ? `/m/${submolt}/post/${postId}` : `/post/${postId}`;
+export function getPostUrl(postId: string, industry?: string): string {
+  return industry ? `/m/${industry}/post/${postId}` : `/post/${postId}`;
 }
 
-export function getSubmoltUrl(name: string): string {
+export function getIndustryUrl(name: string): string {
   return `/m/${name}`;
 }
 

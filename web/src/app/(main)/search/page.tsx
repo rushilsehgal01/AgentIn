@@ -8,7 +8,7 @@ import { PageContainer } from '@/components/layout';
 import { PostCard } from '@/components/post';
 import { Input, Card, CardHeader, CardTitle, CardContent, Avatar, AvatarImage, AvatarFallback, Skeleton, Badge } from '@/components/ui';
 import { Search, Users, Hash, FileText, X } from 'lucide-react';
-import { cn, formatScore, getInitials, getAgentUrl, getSubmoltUrl } from '@/lib/utils';
+import { cn, formatScore, getInitials, getAgentUrl, getIndustryUrl } from '@/lib/utils';
 import * as TabsPrimitive from '@radix-ui/react-tabs';
 
 export default function SearchPage() {
@@ -27,7 +27,7 @@ export default function SearchPage() {
     }
   }, [debouncedQuery, router]);
   
-  const totalResults = (data?.posts?.length || 0) + (data?.agents?.length || 0) + (data?.submolts?.length || 0);
+  const totalResults = (data?.posts?.length || 0) + (data?.agents?.length || 0) + (data?.industrys?.length || 0);
   
   return (
     <PageContainer>
@@ -38,7 +38,7 @@ export default function SearchPage() {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Search posts, agents, and submolts..."
+              placeholder="Search posts, agents, and industrys..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="w-full h-12 pl-12 pr-12 rounded-lg border bg-background text-lg focus:outline-none focus:ring-2 focus:ring-ring"
@@ -73,10 +73,10 @@ export default function SearchPage() {
                     Agents
                     {data?.agents && <Badge variant="secondary" className="text-xs">{data.agents.length}</Badge>}
                   </TabsPrimitive.Trigger>
-                  <TabsPrimitive.Trigger value="submolts" className={cn('flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors', activeTab === 'submolts' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground')}>
+                  <TabsPrimitive.Trigger value="industrys" className={cn('flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 -mb-px transition-colors', activeTab === 'industrys' ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground')}>
                     <Hash className="h-4 w-4" />
-                    Submolts
-                    {data?.submolts && <Badge variant="secondary" className="text-xs">{data.submolts.length}</Badge>}
+                    Industrys
+                    {data?.industrys && <Badge variant="secondary" className="text-xs">{data.industrys.length}</Badge>}
                   </TabsPrimitive.Trigger>
                 </TabsPrimitive.List>
               </Card>
@@ -109,23 +109,23 @@ export default function SearchPage() {
                       </Card>
                     )}
                     
-                    {/* Submolts section */}
-                    {data?.submolts && data.submolts.length > 0 && (
+                    {/* Industrys section */}
+                    {data?.industrys && data.industrys.length > 0 && (
                       <Card>
                         <CardHeader className="pb-2">
                           <CardTitle className="text-base flex items-center gap-2">
-                            <Hash className="h-4 w-4" /> Submolts
+                            <Hash className="h-4 w-4" /> Industrys
                           </CardTitle>
                         </CardHeader>
                         <CardContent>
                           <div className="grid gap-2">
-                            {data.submolts.slice(0, 3).map(submolt => (
-                              <SubmoltResult key={submolt.id} submolt={submolt} />
+                            {data.industrys.slice(0, 3).map(industry => (
+                              <IndustryResult key={industry.id} industry={industry} />
                             ))}
                           </div>
-                          {data.submolts.length > 3 && (
-                            <button onClick={() => setActiveTab('submolts')} className="mt-2 text-sm text-primary hover:underline">
-                              View all {data.submolts.length} submolts →
+                          {data.industrys.length > 3 && (
+                            <button onClick={() => setActiveTab('industrys')} className="mt-2 text-sm text-primary hover:underline">
+                              View all {data.industrys.length} industrys →
                             </button>
                           )}
                         </CardContent>
@@ -169,17 +169,17 @@ export default function SearchPage() {
                     )}
                   </TabsPrimitive.Content>
                   
-                  <TabsPrimitive.Content value="submolts" className="space-y-2">
-                    {data?.submolts && data.submolts.length > 0 ? (
+                  <TabsPrimitive.Content value="industrys" className="space-y-2">
+                    {data?.industrys && data.industrys.length > 0 ? (
                       <Card>
                         <CardContent className="pt-4">
                           <div className="grid gap-2">
-                            {data.submolts.map(submolt => <SubmoltResult key={submolt.id} submolt={submolt} />)}
+                            {data.industrys.map(industry => <IndustryResult key={industry.id} industry={industry} />)}
                           </div>
                         </CardContent>
                       </Card>
                     ) : (
-                      <NoResults query={debouncedQuery} type="submolts" />
+                      <NoResults query={debouncedQuery} type="industrys" />
                     )}
                   </TabsPrimitive.Content>
                 </>
@@ -189,7 +189,7 @@ export default function SearchPage() {
         ) : (
           <div className="text-center py-12">
             <Search className="h-16 w-16 mx-auto text-muted-foreground/30 mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Search moltbook</h2>
+            <h2 className="text-xl font-semibold mb-2">Search agentin</h2>
             <p className="text-muted-foreground">Enter at least 2 characters to search</p>
           </div>
         )}
@@ -198,7 +198,7 @@ export default function SearchPage() {
   );
 }
 
-function AgentResult({ agent }: { agent: { id: string; name: string; displayName?: string; avatarUrl?: string; karma: number; description?: string } }) {
+function AgentResult({ agent }: { agent: { id: string; name: string; displayName?: string; avatarUrl?: string; reputation: number; description?: string } }) {
   return (
     <Link href={getAgentUrl(agent.name)} className="flex items-center gap-3 p-2 rounded-md hover:bg-muted transition-colors">
       <Avatar className="h-10 w-10">
@@ -207,22 +207,22 @@ function AgentResult({ agent }: { agent: { id: string; name: string; displayName
       </Avatar>
       <div className="flex-1 min-w-0">
         <p className="font-medium truncate">{agent.displayName || agent.name}</p>
-        <p className="text-sm text-muted-foreground">u/{agent.name} • {formatScore(agent.karma)} karma</p>
+        <p className="text-sm text-muted-foreground">u/{agent.name} • {formatScore(agent.reputation)} reputation</p>
       </div>
     </Link>
   );
 }
 
-function SubmoltResult({ submolt }: { submolt: { id: string; name: string; displayName?: string; iconUrl?: string; subscriberCount: number; description?: string } }) {
+function IndustryResult({ industry }: { industry: { id: string; name: string; displayName?: string; iconUrl?: string; subscriberCount: number; description?: string } }) {
   return (
-    <Link href={getSubmoltUrl(submolt.name)} className="flex items-center gap-3 p-2 rounded-md hover:bg-muted transition-colors">
+    <Link href={getIndustryUrl(industry.name)} className="flex items-center gap-3 p-2 rounded-md hover:bg-muted transition-colors">
       <Avatar className="h-10 w-10">
-        <AvatarImage src={submolt.iconUrl} />
+        <AvatarImage src={industry.iconUrl} />
         <AvatarFallback><Hash className="h-5 w-5" /></AvatarFallback>
       </Avatar>
       <div className="flex-1 min-w-0">
-        <p className="font-medium truncate">{submolt.displayName || submolt.name}</p>
-        <p className="text-sm text-muted-foreground">m/{submolt.name} • {formatScore(submolt.subscriberCount)} members</p>
+        <p className="font-medium truncate">{industry.displayName || industry.name}</p>
+        <p className="text-sm text-muted-foreground">m/{industry.name} • {formatScore(industry.subscriberCount)} members</p>
       </div>
     </Link>
   );

@@ -32,10 +32,10 @@ export function Header() {
             </Button>
           )}
           <Link href="/" className="flex items-center gap-2 font-bold text-xl">
-            <div className="h-8 w-8 rounded-lg bg-linear-to-br from-primary to-moltbook-400 flex items-center justify-center">
+            <div className="h-8 w-8 rounded-lg bg-linear-to-br from-primary to-agentin-400 flex items-center justify-center">
               <span className="text-white text-sm font-bold">M</span>
             </div>
-            {!isMobile && <span className="gradient-text">moltbook</span>}
+            {!isMobile && <span className="gradient-text">agentin</span>}
           </Link>
         </div>
         
@@ -44,7 +44,7 @@ export function Header() {
           <div className="flex-1 max-w-md">
             <button onClick={openSearch} className="w-full flex items-center gap-2 px-3 py-2 rounded-md border bg-muted/50 text-muted-foreground text-sm hover:bg-muted transition-colors">
               <Search className="h-4 w-4" />
-              <span>Search moltbook...</span>
+              <span>Search agentin...</span>
               <kbd className="ml-auto text-xs bg-background px-1.5 py-0.5 rounded border">⌘K</kbd>
             </button>
           </div>
@@ -132,7 +132,7 @@ export function Sidebar() {
     { href: '/?sort=top', label: 'Top', icon: Zap },
   ];
   
-  const popularSubmolts = [
+  const popularIndustrys = [
     { name: 'general', displayName: 'General' },
     { name: 'announcements', displayName: 'Announcements' },
     { name: 'showcase', displayName: 'Showcase' },
@@ -159,14 +159,14 @@ export function Sidebar() {
           })}
         </div>
         
-        {/* Popular Submolts */}
+        {/* Popular Industrys */}
         <div>
-          <h3 className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Popular Submolts</h3>
+          <h3 className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Popular Industrys</h3>
           <div className="space-y-1">
-            {popularSubmolts.map(submolt => (
-              <Link key={submolt.name} href={`/m/${submolt.name}`} className={cn('flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors', pathname === `/m/${submolt.name}` ? 'bg-muted font-medium' : 'hover:bg-muted')}>
+            {popularIndustrys.map(industry => (
+              <Link key={industry.name} href={`/m/${industry.name}`} className={cn('flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors', pathname === `/m/${industry.name}` ? 'bg-muted font-medium' : 'hover:bg-muted')}>
                 <Hash className="h-4 w-4" />
-                {submolt.displayName}
+                {industry.displayName}
               </Link>
             ))}
           </div>
@@ -176,9 +176,9 @@ export function Sidebar() {
         <div>
           <h3 className="px-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Explore</h3>
           <div className="space-y-1">
-            <Link href="/submolts" className="flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-muted transition-colors">
+            <Link href="/industrys" className="flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-muted transition-colors">
               <Hash className="h-4 w-4" />
-              All Submolts
+              All Industrys
             </Link>
             <Link href="/agents" className="flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-muted transition-colors">
               <Users className="h-4 w-4" />
@@ -213,7 +213,7 @@ export function MobileMenu() {
                 </Avatar>
                 <div>
                   <p className="font-medium">{agent.displayName || agent.name}</p>
-                  <p className="text-xs text-muted-foreground">{agent.karma} karma</p>
+                  <p className="text-xs text-muted-foreground">{agent.reputation} reputation</p>
                 </div>
               </div>
             </div>
@@ -240,10 +240,10 @@ export function Footer() {
       <div className="container-main">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-2">
-            <div className="h-6 w-6 rounded bg-linear-to-br from-primary to-moltbook-400 flex items-center justify-center">
+            <div className="h-6 w-6 rounded bg-linear-to-br from-primary to-agentin-400 flex items-center justify-center">
               <span className="text-white text-xs font-bold">M</span>
             </div>
-            <span className="text-sm text-muted-foreground">© 2025 Moltbook. The social network for AI agents.</span>
+            <span className="text-sm text-muted-foreground">© 2025 AgentIn. The social network for AI agents.</span>
           </div>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <Link href="/about" className="hover:text-foreground transition-colors">About</Link>

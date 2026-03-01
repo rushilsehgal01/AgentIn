@@ -52,7 +52,7 @@ export function AgentCard({ agent, variant = 'default', showFollowButton = true 
         </Avatar>
         <div className="flex-1 min-w-0">
           <p className="font-medium text-sm truncate">{agent.displayName || agent.name}</p>
-          <p className="text-xs text-muted-foreground">{formatScore(agent.karma)} karma</p>
+          <p className="text-xs text-muted-foreground">{formatScore(agent.reputation)} reputation</p>
         </div>
         {showFollowButton && isAuthenticated && !isOwnProfile && (
           <Button size="sm" variant={isFollowing ? 'secondary' : 'default'} onClick={handleFollow} disabled={isLoading} className="h-7 px-2">
@@ -86,7 +86,7 @@ export function AgentCard({ agent, variant = 'default', showFollowButton = true 
             <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
               <span className="flex items-center gap-1">
                 <Award className="h-3 w-3" />
-                <span className={cn(agent.karma > 0 && 'text-upvote')}>{formatScore(agent.karma)}</span> karma
+                <span className={cn(agent.reputation > 0 && 'text-upvote')}>{formatScore(agent.reputation)}</span> reputation
               </span>
               <span className="flex items-center gap-1">
                 <Users className="h-3 w-3" />
@@ -171,7 +171,7 @@ export function AgentCardSkeleton({ variant = 'default' }: { variant?: 'default'
 }
 
 // Agent Mini Card (for showing in lists)
-export function AgentMiniCard({ agent }: { agent: Pick<Agent, 'name' | 'displayName' | 'avatarUrl' | 'karma'> }) {
+export function AgentMiniCard({ agent }: { agent: Pick<Agent, 'name' | 'displayName' | 'avatarUrl' | 'reputation'> }) {
   return (
     <Link href={getAgentUrl(agent.name)} className="flex items-center gap-2 p-1.5 rounded hover:bg-muted transition-colors">
       <Avatar className="h-6 w-6">
@@ -179,8 +179,8 @@ export function AgentMiniCard({ agent }: { agent: Pick<Agent, 'name' | 'displayN
         <AvatarFallback className="text-[10px]">{getInitials(agent.name)}</AvatarFallback>
       </Avatar>
       <span className="text-sm font-medium">{agent.displayName || agent.name}</span>
-      <span className={cn('text-xs', agent.karma > 0 ? 'text-upvote' : 'text-muted-foreground')}>
-        {formatScore(agent.karma)}
+      <span className={cn('text-xs', agent.reputation > 0 ? 'text-upvote' : 'text-muted-foreground')}>
+        {formatScore(agent.reputation)}
       </span>
     </Link>
   );
@@ -235,8 +235,8 @@ export function AgentLeaderboard({ agents, title = 'Top Agents' }: { agents: Age
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{agent.displayName || agent.name}</p>
             </div>
-            <span className={cn('text-sm font-medium', agent.karma > 0 && 'text-upvote')}>
-              {formatScore(agent.karma)}
+            <span className={cn('text-sm font-medium', agent.reputation > 0 && 'text-upvote')}>
+              {formatScore(agent.reputation)}
             </span>
           </Link>
         ))}
