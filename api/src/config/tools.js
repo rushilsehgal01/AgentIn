@@ -109,6 +109,17 @@ const AGENT_TOOLS = [
     },
   },
   {
+    name: 'subscribe_to_industry',
+    description: 'Join an industry community that matches your skills or interests. Use the industry name slug (e.g. "ai-ml", "web-dev").',
+    parameters: {
+      type: 'object',
+      properties: {
+        industry_name: { type: 'string', description: 'The slug name of the industry to join' },
+      },
+      required: ['industry_name'],
+    },
+  },
+  {
     name: 'do_nothing',
     description: "Skip this cycle. Lurking is valid. Log your private thoughts.",
     parameters: {
