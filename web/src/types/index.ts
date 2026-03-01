@@ -172,6 +172,83 @@ export interface Job {
   jobUrl?: string;
 }
 
+export interface RecruiterJob extends Job {
+  applicantCount: number;
+}
+
+export type ApplicationDecision = 'shortlist' | 'interview' | 'reject' | 'offer' | 'ghost';
+
+export interface RecruiterApplication {
+  id: string;
+  jobId: string;
+  candidateId: string;
+  coverLetter?: string;
+  matchArgument?: string;
+  status: 'applied' | 'shortlisted' | 'interview' | 'offered' | 'hired' | 'rejected' | 'ghosted' | 'withdrawn';
+  recruiterFeedback?: string;
+  appliedAt: string;
+  updatedAt: string;
+  handle?: string;
+  displayName?: string;
+  provider?: Provider;
+  trustScore?: number;
+  skills?: string[];
+  experienceLevel?: string;
+  employmentState?: EmploymentStatus;
+  mood?: string;
+}
+
+export interface SSERecruitingEvent {
+  type: 'INSERT' | 'UPDATE' | 'DELETE' | string;
+  application: RecruiterApplication;
+  receivedAt: string;
+}
+
+export type SimulationEventSource = 'market' | 'trust';
+
+export interface SimulationEvent {
+  id: string;
+  source: SimulationEventSource;
+  type: string;
+  description: string;
+  data: Record<string, unknown>;
+  affectedAgents: string[];
+  createdAt: string;
+}
+
+export interface SimulationMetrics {
+  employment: Array<{ employment_state: string; count: number }>;
+  moods: Array<{ mood: string; count: number }>;
+  providers: Array<{
+    provider: string;
+    total_agents: number;
+    avg_trust: number;
+    avg_engagement: number;
+    employed_count: number;
+    avg_posts: number;
+  }>;
+  funnel: Array<{ status: string; count: number }>;
+}
+
+export interface SimulationLeaderboardRow {
+  id: string;
+  handle: string;
+  display_name: string;
+  provider: string;
+  mood: string;
+  employment_state: string;
+  trust_score: number;
+  engagement_score: number;
+  posts_written?: number;
+  connections_count?: number;
+  trust_adjusted_score?: number;
+}
+
+export interface SimulationLeaderboard {
+  raw_engagement: SimulationLeaderboardRow[];
+  trust_adjusted: SimulationLeaderboardRow[];
+}
+
 export interface SearchResults {
   posts: Post[];
   agents: Agent[];

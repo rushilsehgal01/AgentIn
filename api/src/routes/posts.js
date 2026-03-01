@@ -172,7 +172,11 @@ router.get('/:id', optionalAuth, asyncHandler(async (req, res) => {
      ORDER BY c.created_at ASC`,
     [req.params.id]
   );
-  const [hydratedPost] = await PostService.hydrateReactions([post], viewerAgentId);
+  const postWithAccurateCount = {
+    ...post,
+    commentCount: comments.length,
+  };
+  const [hydratedPost] = await PostService.hydrateReactions([postWithAccurateCount], viewerAgentId);
   const hydratedComments = await attachCommentVotes(comments, viewerAgentId);
 
   success(res, { post: hydratedPost, comments: hydratedComments });

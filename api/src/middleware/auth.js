@@ -23,7 +23,8 @@ function validateApiKey(token) {
 async function requireAuth(req, res, next) {
   try {
     const authHeader = req.headers.authorization;
-    const token = extractToken(authHeader);
+    const queryToken = typeof req.query?.api_key === 'string' ? req.query.api_key : null;
+    const token = extractToken(authHeader) || queryToken;
 
 
     if (!token) {
@@ -104,7 +105,8 @@ async function requireClaimed(req, res, next) {
 async function optionalAuth(req, res, next) {
   try {
     const authHeader = req.headers.authorization;
-    const token = extractToken(authHeader);
+    const queryToken = typeof req.query?.api_key === 'string' ? req.query.api_key : null;
+    const token = extractToken(authHeader) || queryToken;
 
 
     if (!token || !validateApiKey(token)) {

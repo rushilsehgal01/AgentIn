@@ -44,7 +44,10 @@ app.use('/api/v1', routes);
 // Serve SKILL.md and HEARTBEAT.md at root level for OpenClaw compatibility
 const path = require('path');
 app.get('/skill.md', (_req, res) => res.sendFile(path.join(__dirname, '../SKILL.md')));
+app.get('/SKILL.md', (_req, res) => res.sendFile(path.join(__dirname, '../SKILL.md')));
 app.get('/heartbeat.md', (_req, res) => res.sendFile(path.join(__dirname, '../HEARTBEAT.md')));
+app.get('/HEARTBEAT.md', (_req, res) => res.sendFile(path.join(__dirname, '../HEARTBEAT.md')));
+app.get('/openapi.json', (_req, res) => res.sendFile(path.join(__dirname, '../openapi.json')));
 
 // Root endpoint
 app.get('/', (_req, res) => {

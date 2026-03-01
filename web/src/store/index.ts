@@ -66,6 +66,7 @@ export const useAuthStore = create<AuthStore>()(
 // Feed Store
 interface FeedStore {
   posts: Post[];
+  mode: 'discover' | 'home';
   sort: PostSort;
   timeRange: TimeRange;
   industry: string | null;
@@ -73,10 +74,11 @@ interface FeedStore {
   hasMore: boolean;
   offset: number;
   
+  setMode: (mode: 'discover' | 'home') => void;
   setSort: (sort: PostSort) => void;
   setTimeRange: (timeRange: TimeRange) => void;
   setIndustry: (industry: string | null) => void;
-  applyFilters: (filters: { sort?: PostSort; timeRange?: TimeRange; industry?: string | null }) => void;
+  applyFilters: (filters: { mode?: 'discover' | 'home'; sort?: PostSort; timeRange?: TimeRange; industry?: string | null }) => void;
   loadPosts: (reset?: boolean) => Promise<void>;
   loadMore: () => Promise<void>;
   updatePostVote: (postId: string, vote: 'up' | 'down' | null, scoreDiff: number) => void;
@@ -86,6 +88,7 @@ interface FeedStore {
 
 export const useFeedStore = create<FeedStore>((set, get) => ({
   posts: [],
+  mode: 'discover',
   sort: 'hot',
   timeRange: 'day',
   industry: null,
@@ -93,6 +96,11 @@ export const useFeedStore = create<FeedStore>((set, get) => ({
   hasMore: true,
   offset: 0,
   
+  setMode: (mode) => {
+    set({ mode, posts: [], offset: 0, hasMore: true });
+    get().loadPosts(true);
+  },
+
   setSort: (sort) => {
     set({ sort, offset: 0, hasMore: true });
     get().loadPosts(true);
@@ -110,11 +118,13 @@ export const useFeedStore = create<FeedStore>((set, get) => ({
 
   applyFilters: (filters) => {
     const current = get();
+    const nextMode = filters.mode ?? current.mode;
     const nextSort = filters.sort ?? current.sort;
     const nextTimeRange = filters.timeRange ?? current.timeRange;
     const nextIndustry = filters.industry === undefined ? current.industry : filters.industry;
 
     if (
+      nextMode === current.mode &&
       nextSort === current.sort &&
       nextTimeRange === current.timeRange &&
       nextIndustry === current.industry
@@ -123,6 +133,7 @@ export const useFeedStore = create<FeedStore>((set, get) => ({
     }
 
     set({
+      mode: nextMode,
       sort: nextSort,
       timeRange: nextTimeRange,
       industry: nextIndustry,
@@ -134,19 +145,26 @@ export const useFeedStore = create<FeedStore>((set, get) => ({
   },
   
   loadPosts: async (reset = false) => {
-    const { sort, timeRange, industry, isLoading } = get();
+    const { mode, sort, timeRange, industry, isLoading } = get();
     if (isLoading) return;
     
     set({ isLoading: true });
     try {
       const offset = reset ? 0 : get().offset;
-      const response = await api.getPosts({
-        sort,
-        timeRange: industry ? undefined : timeRange,
-        limit: 25,
-        offset,
-        industry: industry || undefined,
-      });
+      const shouldUsePersonalized = mode === 'home' && !industry && Boolean(api.getApiKey());
+      const response = shouldUsePersonalized
+        ? await api.getFeed({
+            sort: sort === 'hot' ? 'recent' : sort === 'new' ? 'new' : 'trending',
+            limit: 25,
+            offset,
+          })
+        : await api.getPosts({
+            sort,
+            timeRange: industry ? undefined : timeRange,
+            limit: 25,
+            offset,
+            industry: industry || undefined,
+          });
       
       set({
         posts: reset ? response.data : [...get().posts, ...response.data],
