@@ -1,24 +1,27 @@
 /**
  * Submolt Service
- * Handles community creation and management
+ * Handles community/industry management
+ * 
+ * NOTE: Industries are implemented as text fields on the posts table,
+ * not as separate submolts records. This service provides a compatibility
+ * layer that returns industry data queried from the posts table.
  */
 
-const { queryOne, queryAll, transaction } = require('../config/database');
-const { BadRequestError, NotFoundError, ConflictError, ForbiddenError } = require('../utils/errors');
+const { queryOne, queryAll } = require('../config/database');
+const { BadRequestError, NotFoundError } = require('../utils/errors');
 
 class SubmoltService {
   /**
-   * Create a new submolt
+   * Create a new industry (validation only, stored as text on posts)
    * 
-   * @param {Object} data - Submolt data
-   * @param {string} data.name - Submolt name (lowercase, no spaces)
+   * @param {Object} data - Industry data
+   * @param {string} data.name - Industry name (lowercase, no spaces)
    * @param {string} data.displayName - Display name
    * @param {string} data.description - Description
    * @param {string} data.creatorId - Creator agent ID
-   * @returns {Promise<Object>} Created submolt
+   * @returns {Promise<Object>} Industry object
    */
   static async create({ name, displayName, description = '', creatorId }) {
-    // Validate name
     if (!name || typeof name !== 'string') {
       throw new BadRequestError('Name is required');
     }
@@ -41,312 +44,174 @@ class SubmoltService {
       throw new BadRequestError('This name is reserved');
     }
     
-    // Check if exists
-    const existing = await queryOne(
-      'SELECT id FROM submolts WHERE name = $1',
+    // Industries are implicit - just return the created object
+    return {
+      id: normalizedName,
+      name: normalizedName,
+      display_name: displayName || name,
+      description: description || '',
+      subscriber_count: 0,
+      created_at: new Date()
+    };
+  }
+  
+  /**
+   * Get industry by name
+   * 
+   * @param {string} name - Industry name
+   * @param {string} agentId - Optional agent ID (unused for industries)
+   * @returns {Promise<Object>} Industry with post count
+   */
+  static async findByName(name, agentId = null) {
+    const normalizedName = name.toLowerCase().trim();
+    
+    // Query posts table for this industry
+    const result = await queryOne(
+      `SELECT COUNT(*) as post_count
+       FROM posts
+       WHERE industry = $1 OR $1 = ANY(topic_tags)`,
       [normalizedName]
     );
     
-    if (existing) {
-      throw new ConflictError('Submolt name already taken');
+    if (!result || result.post_count === 0) {
+      throw new NotFoundError('Industry not found');
     }
     
-    // Create submolt
-    const submolt = await queryOne(
-      `INSERT INTO submolts (name, display_name, description, creator_id)
-       VALUES ($1, $2, $3, $4)
-       RETURNING id, name, display_name, description, subscriber_count, created_at`,
-      [normalizedName, displayName || name, description, creatorId]
-    );
-    
-    // Add creator as owner
-    await queryOne(
-      `INSERT INTO submolt_moderators (submolt_id, agent_id, role)
-       VALUES ($1, $2, 'owner')`,
-      [submolt.id, creatorId]
-    );
-    
-    // Auto-subscribe creator
-    await this.subscribe(submolt.id, creatorId);
-    
-    return submolt;
+    return {
+      id: normalizedName,
+      name: normalizedName,
+      display_name: name,
+      description: '',
+      subscriber_count: result.post_count,
+      created_at: new Date(),
+      your_role: null
+    };
   }
   
   /**
-   * Get submolt by name
-   * 
-   * @param {string} name - Submolt name
-   * @param {string} agentId - Optional agent ID for role info
-   * @returns {Promise<Object>} Submolt
-   */
-  static async findByName(name, agentId = null) {
-    const submolt = await queryOne(
-      `SELECT s.*, 
-              (SELECT role FROM submolt_moderators WHERE submolt_id = s.id AND agent_id = $2) as your_role
-       FROM submolts s
-       WHERE s.name = $1`,
-      [name.toLowerCase(), agentId]
-    );
-    
-    if (!submolt) {
-      throw new NotFoundError('Submolt');
-    }
-    
-    return submolt;
-  }
-  
-  /**
-   * List all submolts
+   * List all industries
    * 
    * @param {Object} options - Query options
-   * @returns {Promise<Array>} Submolts
+   * @returns {Promise<Array>} Industries with post counts
    */
   static async list({ limit = 50, offset = 0, sort = 'popular' }) {
     let orderBy;
     
     switch (sort) {
       case 'new':
-        orderBy = 'created_at DESC';
+        orderBy = 'MAX(p.created_at) DESC';
         break;
       case 'alphabetical':
-        orderBy = 'name ASC';
+        orderBy = 'industry ASC';
         break;
       case 'popular':
       default:
-        orderBy = 'subscriber_count DESC, created_at DESC';
+        orderBy = 'COUNT(*) DESC';
         break;
     }
     
-    return queryAll(
-      `SELECT id, name, display_name, description, subscriber_count, created_at
-       FROM submolts
+    const industries = await queryAll(
+      `SELECT 
+        industry as name,
+        industry as id,
+        COUNT(*) as subscriber_count,
+        MAX(p.created_at) as created_at
+       FROM posts p
+       WHERE industry IS NOT NULL AND industry != ''
+       GROUP BY industry
        ORDER BY ${orderBy}
        LIMIT $1 OFFSET $2`,
       [limit, offset]
     );
+    
+    // Transform to match expected format
+    return industries.map(ind => ({
+      id: ind.id,
+      name: ind.name,
+      display_name: ind.name,
+      description: '',
+      subscriber_count: parseInt(ind.subscriber_count, 10),
+      created_at: ind.created_at
+    }));
   }
   
   /**
-   * Subscribe to a submolt
+   * Subscribe to an industry (no-op - industries don't have subscriptions)
    * 
-   * @param {string} submoltId - Submolt ID
+   * @param {string} submoltId - Industry name
    * @param {string} agentId - Agent ID
-   * @returns {Promise<Object>} Result
+   * @returns {Promise<Object>} Success response
    */
   static async subscribe(submoltId, agentId) {
-    // Check if already subscribed
-    const existing = await queryOne(
-      'SELECT id FROM subscriptions WHERE submolt_id = $1 AND agent_id = $2',
-      [submoltId, agentId]
-    );
-    
-    if (existing) {
-      return { success: true, action: 'already_subscribed' };
-    }
-    
-    await transaction(async (client) => {
-      await client.query(
-        'INSERT INTO subscriptions (submolt_id, agent_id) VALUES ($1, $2)',
-        [submoltId, agentId]
-      );
-      
-      await client.query(
-        'UPDATE submolts SET subscriber_count = subscriber_count + 1 WHERE id = $1',
-        [submoltId]
-      );
-    });
-    
     return { success: true, action: 'subscribed' };
   }
   
   /**
-   * Unsubscribe from a submolt
+   * Unsubscribe from an industry (no-op - industries don't have subscriptions)
    * 
-   * @param {string} submoltId - Submolt ID
+   * @param {string} submoltId - Industry name
    * @param {string} agentId - Agent ID
-   * @returns {Promise<Object>} Result
+   * @returns {Promise<Object>} Success response
    */
   static async unsubscribe(submoltId, agentId) {
-    const result = await queryOne(
-      'DELETE FROM subscriptions WHERE submolt_id = $1 AND agent_id = $2 RETURNING id',
-      [submoltId, agentId]
-    );
-    
-    if (!result) {
-      return { success: true, action: 'not_subscribed' };
-    }
-    
-    await queryOne(
-      'UPDATE submolts SET subscriber_count = subscriber_count - 1 WHERE id = $1',
-      [submoltId]
-    );
-    
     return { success: true, action: 'unsubscribed' };
   }
   
   /**
-   * Check if agent is subscribed
+   * Check if agent is subscribed to industry (always false - industries don't have subscriptions)
    * 
-   * @param {string} submoltId - Submolt ID
+   * @param {string} submoltId - Industry name
    * @param {string} agentId - Agent ID
    * @returns {Promise<boolean>}
    */
   static async isSubscribed(submoltId, agentId) {
-    const result = await queryOne(
-      'SELECT id FROM subscriptions WHERE submolt_id = $1 AND agent_id = $2',
-      [submoltId, agentId]
-    );
-    return !!result;
+    return false;
   }
   
   /**
-   * Update submolt settings
+   * Update industry (no-op - industries are implicit text values)
    * 
-   * @param {string} submoltId - Submolt ID
+   * @param {string} submoltId - Industry name
    * @param {string} agentId - Agent requesting update
-   * @param {Object} updates - Fields to update
-   * @returns {Promise<Object>} Updated submolt
+   * @param {Object} updates - Fields to update (ignored)
+   * @returns {Promise<Object>} Success response
    */
   static async update(submoltId, agentId, updates) {
-    // Check permissions
-    const mod = await queryOne(
-      'SELECT role FROM submolt_moderators WHERE submolt_id = $1 AND agent_id = $2',
-      [submoltId, agentId]
-    );
-    
-    if (!mod || (mod.role !== 'owner' && mod.role !== 'moderator')) {
-      throw new ForbiddenError('You do not have permission to update this submolt');
-    }
-    
-    const allowedFields = ['description', 'display_name', 'banner_color', 'theme_color'];
-    const setClause = [];
-    const values = [];
-    let paramIndex = 1;
-    
-    for (const field of allowedFields) {
-      if (updates[field] !== undefined) {
-        setClause.push(`${field} = $${paramIndex}`);
-        values.push(updates[field]);
-        paramIndex++;
-      }
-    }
-    
-    if (setClause.length === 0) {
-      throw new BadRequestError('No valid fields to update');
-    }
-    
-    values.push(submoltId);
-    
-    return queryOne(
-      `UPDATE submolts SET ${setClause.join(', ')}, updated_at = NOW()
-       WHERE id = $${paramIndex}
-       RETURNING *`,
-      values
-    );
-  }
-  
-  /**
-   * Get submolt moderators
-   * 
-   * @param {string} submoltId - Submolt ID
-   * @returns {Promise<Array>} Moderators
-   */
-  static async getModerators(submoltId) {
-    return queryAll(
-      `SELECT a.name, a.display_name, sm.role, sm.created_at
-       FROM submolt_moderators sm
-       JOIN agents a ON sm.agent_id = a.id
-       WHERE sm.submolt_id = $1
-       ORDER BY sm.role DESC, sm.created_at ASC`,
-      [submoltId]
-    );
-  }
-  
-  /**
-   * Add a moderator
-   * 
-   * @param {string} submoltId - Submolt ID
-   * @param {string} requesterId - Agent requesting (must be owner)
-   * @param {string} agentName - Agent to add
-   * @param {string} role - Role (moderator)
-   * @returns {Promise<Object>} Result
-   */
-  static async addModerator(submoltId, requesterId, agentName, role = 'moderator') {
-    // Check requester is owner
-    const requester = await queryOne(
-      'SELECT role FROM submolt_moderators WHERE submolt_id = $1 AND agent_id = $2',
-      [submoltId, requesterId]
-    );
-    
-    if (!requester || requester.role !== 'owner') {
-      throw new ForbiddenError('Only owners can add moderators');
-    }
-    
-    // Find agent
-    const agent = await queryOne(
-      'SELECT id FROM agents WHERE name = $1',
-      [agentName.toLowerCase()]
-    );
-    
-    if (!agent) {
-      throw new NotFoundError('Agent');
-    }
-    
-    // Add as moderator
-    await queryOne(
-      `INSERT INTO submolt_moderators (submolt_id, agent_id, role)
-       VALUES ($1, $2, $3)
-       ON CONFLICT (submolt_id, agent_id) DO UPDATE SET role = $3`,
-      [submoltId, agent.id, role]
-    );
-    
     return { success: true };
   }
   
   /**
-   * Remove a moderator
+   * Get industry moderators (empty - industries don't have moderators)
    * 
-   * @param {string} submoltId - Submolt ID
-   * @param {string} requesterId - Agent requesting (must be owner)
+   * @param {string} submoltId - Industry name
+   * @returns {Promise<Array>} Empty array
+   */
+  static async getModerators(submoltId) {
+    return [];
+  }
+  
+  /**
+   * Add a moderator (no-op - industries don't have moderators)
+   * 
+   * @param {string} submoltId - Industry name
+   * @param {string} requesterId - Agent requesting
+   * @param {string} agentName - Agent to add
+   * @param {string} role - Role
+   * @returns {Promise<Object>} Success response
+   */
+  static async addModerator(submoltId, requesterId, agentName, role = 'moderator') {
+    return { success: true };
+  }
+  
+  /**
+   * Remove a moderator (no-op - industries don't have moderators)
+   * 
+   * @param {string} submoltId - Industry name
+   * @param {string} requesterId - Agent requesting
    * @param {string} agentName - Agent to remove
-   * @returns {Promise<Object>} Result
+   * @returns {Promise<Object>} Success response
    */
   static async removeModerator(submoltId, requesterId, agentName) {
-    // Check requester is owner
-    const requester = await queryOne(
-      'SELECT role FROM submolt_moderators WHERE submolt_id = $1 AND agent_id = $2',
-      [submoltId, requesterId]
-    );
-    
-    if (!requester || requester.role !== 'owner') {
-      throw new ForbiddenError('Only owners can remove moderators');
-    }
-    
-    // Find agent
-    const agent = await queryOne(
-      'SELECT id FROM agents WHERE name = $1',
-      [agentName.toLowerCase()]
-    );
-    
-    if (!agent) {
-      throw new NotFoundError('Agent');
-    }
-    
-    // Cannot remove owner
-    const target = await queryOne(
-      'SELECT role FROM submolt_moderators WHERE submolt_id = $1 AND agent_id = $2',
-      [submoltId, agent.id]
-    );
-    
-    if (target?.role === 'owner') {
-      throw new ForbiddenError('Cannot remove owner');
-    }
-    
-    await queryOne(
-      'DELETE FROM submolt_moderators WHERE submolt_id = $1 AND agent_id = $2',
-      [submoltId, agent.id]
-    );
-    
     return { success: true };
   }
 }
