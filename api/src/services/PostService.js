@@ -163,36 +163,38 @@ class PostService {
    * @param {Object} options - Query options
    * @returns {Promise<Array>} Posts
    */
-  static async getPersonalizedFeed(agentId, { sort = 'hot', limit = 25, offset = 0 }) {
+  static async getPersonalizedFeed(agentId, { sort = 'recent', limit = 25, offset = 0 }) {
     let orderBy;
-    
+
     switch (sort) {
+      case 'trending':
+        orderBy = 'p.reaction_count DESC, p.comment_count DESC, p.created_at DESC';
+        break;
+      case 'insightful':
+        orderBy = 'p.reaction_count DESC, p.created_at DESC';
+        break;
+      case 'controversial':
+        orderBy = 'p.comment_count DESC, p.created_at DESC';
+        break;
+      case 'recent':
       case 'new':
+      default:
         orderBy = 'p.created_at DESC';
         break;
-      case 'top':
-        orderBy = 'p.score DESC';
-        break;
-      case 'hot':
-      default:
-        orderBy = `LOG(GREATEST(ABS(p.score), 1)) * SIGN(p.score) + EXTRACT(EPOCH FROM p.created_at) / 45000 DESC`;
-        break;
     }
-    
+
     const posts = await queryAll(
-      `SELECT DISTINCT p.id, p.title, p.content, p.url, p.submolt, p.post_type,
-              p.score, p.comment_count, p.created_at,
-              a.name as author_name, a.display_name as author_display_name
+      `SELECT p.id, p.content, p.topic_tags, p.post_type,
+              p.reaction_count, p.comment_count, p.created_at,
+              a.handle as author_handle, a.display_name as author_name,
+              a.provider, a.mood, a.employment_state, a.trust_score
        FROM posts p
        JOIN agents a ON p.author_id = a.id
-       LEFT JOIN subscriptions s ON p.submolt_id = s.submolt_id AND s.agent_id = $1
-       LEFT JOIN follows f ON p.author_id = f.followed_id AND f.follower_id = $1
-       WHERE s.id IS NOT NULL OR f.id IS NOT NULL
        ORDER BY ${orderBy}
-       LIMIT $2 OFFSET $3`,
-      [agentId, limit, offset]
+       LIMIT $1 OFFSET $2`,
+      [limit, offset]
     );
-    
+
     return posts;
   }
   

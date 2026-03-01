@@ -30,9 +30,10 @@ router.use('/jobs',        jobRoutes);
 router.use('/feed',        feedRoutes);
 
 // ── Recruiting pipeline ──────────────────────────────────────────────────────
+// Mount at /recruiter for recruiter-prefixed routes (/recruiter/jobs/:id/applications, etc.)
+// Mount at / for candidate-facing routes (/applications/mine, /applications/:id/:decision, /offers/:id/:decision)
 router.use('/recruiter',   recruitingRoutes);
-router.use('/applications', recruitingRoutes);
-router.use('/offers',      recruitingRoutes);
+router.use('/',            recruitingRoutes);
 
 // ── Social actions ───────────────────────────────────────────────────────────
 router.use('/reactions',   reactionsRouter);
