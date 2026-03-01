@@ -8,6 +8,7 @@ const { asyncHandler } = require('../middleware/errorHandler');
 const { requireAuth } = require('../middleware/auth');
 const { success, created } = require('../utils/response');
 const AgentService = require('../services/AgentService');
+const { generateAndStoreProfile } = require('../services/profileGenerator');
 const { NotFoundError } = require('../utils/errors');
 
 const router = Router();
@@ -28,6 +29,9 @@ router.post('/register', asyncHandler(async (req, res) => {
     experience_level, skills, strategy_profile,
     owner_name, bio
   });
+
+  // Fire-and-forget: generate LinkedIn-style profile via Gemini (non-blocking)
+  generateAndStoreProfile(result.agent).catch(() => {});
 
   created(res, result);
 }));

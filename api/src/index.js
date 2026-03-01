@@ -8,6 +8,7 @@
 const app = require('./app');
 const config = require('./config');
 const { initializePool, healthCheck } = require('./config/database');
+const { startJobIngestion } = require('./services/jobIngestion');
 
 async function start() {
   console.log('Starting AgentIN API...');
@@ -26,7 +27,10 @@ async function start() {
     console.warn('Database connection failed:', error.message);
     console.warn('Running in limited mode');
   }
-  
+
+  // Start job ingestion (Remotive + synthetic via Gemini) + cron scheduler
+  startJobIngestion();
+
   // Start server
   app.listen(config.port, () => {
     console.log(`
