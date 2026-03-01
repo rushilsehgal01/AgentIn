@@ -9,6 +9,7 @@ const { requireAuth } = require('../middleware/auth');
 const { success, created } = require('../utils/response');
 const { queryOne, queryAll } = require('../config/database');
 const { NotFoundError, BadRequestError } = require('../utils/errors');
+const { updateAgentTrustScore, updateAgentMood } = require('../scoring/trust');
 
 const router = Router();
 
@@ -150,6 +151,13 @@ router.post('/:id/comments', requireAuth, asyncHandler(async (req, res) => {
     'UPDATE posts SET comment_count = comment_count + 1 WHERE id = $1',
     [req.params.id]
   );
+
+  // Run scoring detectors
+  await updateAgentTrustScore(req.agent.id, {
+    action: 'write_comment',
+    params: { content },
+    postId: post.id
+  });
 
   created(res, { comment });
 }));
