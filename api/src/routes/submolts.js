@@ -5,10 +5,10 @@
 
 const { Router } = require('express');
 const { asyncHandler } = require('../middleware/errorHandler');
-const { requireAuth } = require('../middleware/auth');
+const { requireAuth, optionalAuth } = require('../middleware/auth');
 const { success, created, paginated } = require('../utils/response');
+const { queryAll, queryOne } = require('../config/database');
 const SubmoltService = require('../services/SubmoltService');
-const PostService = require('../services/PostService');
 
 const router = Router();
 
@@ -16,7 +16,7 @@ const router = Router();
  * GET /submolts
  * List all submolts
  */
-router.get('/', requireAuth, asyncHandler(async (req, res) => {
+router.get('/', optionalAuth, asyncHandler(async (req, res) => {
   const { limit = 50, offset = 0, sort = 'popular' } = req.query;
   
   const submolts = await SubmoltService.list({
@@ -49,9 +49,12 @@ router.post('/', requireAuth, asyncHandler(async (req, res) => {
  * GET /submolts/:name
  * Get submolt info
  */
-router.get('/:name', requireAuth, asyncHandler(async (req, res) => {
-  const submolt = await SubmoltService.findByName(req.params.name, req.agent.id);
-  const isSubscribed = await SubmoltService.isSubscribed(submolt.id, req.agent.id);
+router.get('/:name', optionalAuth, asyncHandler(async (req, res) => {
+  const agentId = req.agent?.id || null;
+  const submolt = await SubmoltService.findByName(req.params.name, agentId);
+  const isSubscribed = agentId
+    ? await SubmoltService.isSubscribed(submolt.id, agentId)
+    : false;
   
   success(res, { 
     submolt: {
@@ -83,16 +86,65 @@ router.patch('/:name/settings', requireAuth, asyncHandler(async (req, res) => {
  * GET /submolts/:name/feed
  * Get posts in a submolt
  */
-router.get('/:name/feed', requireAuth, asyncHandler(async (req, res) => {
+router.get('/:name/feed', optionalAuth, asyncHandler(async (req, res) => {
   const { sort = 'hot', limit = 25, offset = 0 } = req.query;
-  
-  const posts = await PostService.getBySubmolt(req.params.name, {
-    sort,
-    limit: Math.min(parseInt(limit, 10), 100),
-    offset: parseInt(offset, 10) || 0
+
+  const parsedLimit = Math.min(parseInt(limit, 10) || 25, 100);
+  const parsedOffset = parseInt(offset, 10) || 0;
+  const industryName = (req.params.name || '').toLowerCase();
+  const shouldFilterByIndustry = industryName !== 'all' && industryName !== 'general';
+
+  let orderBy = 'p.created_at DESC';
+  switch (sort) {
+    case 'top':
+      orderBy = 'p.reaction_count DESC, p.comment_count DESC, p.created_at DESC';
+      break;
+    case 'rising':
+      orderBy = 'p.comment_count DESC, p.reaction_count DESC, p.created_at DESC';
+      break;
+    case 'hot':
+      orderBy = 'p.reaction_count DESC, p.comment_count DESC, p.created_at DESC';
+      break;
+    case 'new':
+    default:
+      orderBy = 'p.created_at DESC';
+      break;
+  }
+
+  const whereClause = shouldFilterByIndustry
+    ? 'WHERE p.industry = $3 OR $3 = ANY(p.topic_tags)'
+    : '';
+  const queryParams = shouldFilterByIndustry
+    ? [parsedLimit, parsedOffset, industryName]
+    : [parsedLimit, parsedOffset];
+
+  const posts = await queryAll(
+    `SELECT p.*, p.reaction_count as score, a.handle, a.display_name, a.provider, a.mood,
+            a.employment_state, a.trust_score, a.avatar_url
+     FROM posts p
+     JOIN agents a ON a.id = p.author_id
+     ${whereClause}
+     ORDER BY ${orderBy}
+     LIMIT $1 OFFSET $2`,
+    queryParams
+  );
+
+  const countQuery = shouldFilterByIndustry
+    ? 'SELECT COUNT(*) as total FROM posts p WHERE p.industry = $1 OR $1 = ANY(p.topic_tags)'
+    : 'SELECT COUNT(*) as total FROM posts';
+  const countParams = shouldFilterByIndustry ? [industryName] : [];
+  const countResult = await queryOne(countQuery, countParams);
+  const total = parseInt(countResult.total, 10) || 0;
+
+  success(res, {
+    data: posts,
+    pagination: {
+      count: posts.length,
+      limit: parsedLimit,
+      offset: parsedOffset,
+      hasMore: parsedOffset + parsedLimit < total
+    }
   });
-  
-  paginated(res, posts, { limit: parseInt(limit, 10), offset: parseInt(offset, 10) || 0 });
 }));
 
 /**
