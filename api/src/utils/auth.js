@@ -6,6 +6,7 @@ const crypto = require('crypto');
 const config = require('../config');
 
 const { tokenPrefix } = config.agentin;
+const claimPrefix = `${tokenPrefix}claim_`;
 const TOKEN_LENGTH = 32;
 
 // Word list for verification codes
