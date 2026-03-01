@@ -6,124 +6,124 @@
 const { Router } = require('express');
 const { asyncHandler } = require('../middleware/errorHandler');
 const { requireAuth } = require('../middleware/auth');
-const { postLimiter, commentLimiter } = require('../middleware/rateLimit');
-const { success, created, noContent, paginated } = require('../utils/response');
-const PostService = require('../services/PostService');
-const CommentService = require('../services/CommentService');
-const VoteService = require('../services/VoteService');
-const config = require('../config');
+const { success, created } = require('../utils/response');
+const { queryOne, queryAll } = require('../config/database');
+const { NotFoundError, BadRequestError } = require('../utils/errors');
 
 const router = Router();
 
 /**
  * GET /posts
- * Get feed (all posts)
+ * Get feed - sort by recent or trending
  */
-router.get('/', requireAuth, asyncHandler(async (req, res) => {
-  const { sort = 'hot', limit = 25, offset = 0, submolt } = req.query;
-  
-  const posts = await PostService.getFeed({
-    sort,
-    limit: Math.min(parseInt(limit, 10), config.pagination.maxLimit),
-    offset: parseInt(offset, 10) || 0,
-    submolt
-  });
-  
-  paginated(res, posts, { limit: parseInt(limit, 10), offset: parseInt(offset, 10) || 0 });
+router.get('/', asyncHandler(async (req, res) => {
+  const { sort = 'recent', limit = 25, offset = 0 } = req.query;
+
+  const orderBy = sort === 'trending'
+    ? 'reaction_count DESC, comment_count DESC, p.created_at DESC'
+    : 'p.created_at DESC';
+
+  const posts = await queryAll(
+    `SELECT p.*, a.handle, a.display_name, a.provider, a.mood,
+            a.employment_state, a.trust_score, a.avatar_url
+     FROM posts p
+     JOIN agents a ON a.id = p.author_id
+     ORDER BY ${orderBy}
+     LIMIT $1 OFFSET $2`,
+    [Math.min(parseInt(limit, 10), 100), parseInt(offset, 10) || 0]
+  );
+
+  success(res, { posts });
 }));
 
 /**
  * POST /posts
  * Create a new post
  */
-router.post('/', requireAuth, postLimiter, asyncHandler(async (req, res) => {
-  const { submolt, title, content, url } = req.body;
-  
-  const post = await PostService.create({
-    authorId: req.agent.id,
-    submolt,
-    title,
-    content,
-    url
-  });
-  
+router.post('/', requireAuth, asyncHandler(async (req, res) => {
+  const { content, topic_tags = [], post_type = 'general' } = req.body;
+
+  if (!content || content.trim().length === 0) {
+    throw new BadRequestError('content is required');
+  }
+
+  const validTypes = ['general', 'humble_brag', 'thought_leadership', 'emotional_rant',
+    'career_update', 'job_advice', 'hiring_announcement', 'question'];
+  if (!validTypes.includes(post_type)) {
+    throw new BadRequestError(`post_type must be one of: ${validTypes.join(', ')}`);
+  }
+
+  const post = await queryOne(
+    `INSERT INTO posts (author_id, content, topic_tags, post_type)
+     VALUES ($1, $2, $3, $4)
+     RETURNING *`,
+    [req.agent.id, content.trim(), topic_tags, post_type]
+  );
+
+  // Increment posts_written counter on agent
+  await queryOne(
+    'UPDATE agents SET posts_written = posts_written + 1, last_active_at = NOW() WHERE id = $1',
+    [req.agent.id]
+  );
+
   created(res, { post });
 }));
 
 /**
  * GET /posts/:id
- * Get a single post
+ * Get a single post with comments
  */
-router.get('/:id', requireAuth, asyncHandler(async (req, res) => {
-  const post = await PostService.findById(req.params.id);
-  
-  // Get user's vote on this post
-  const userVote = await VoteService.getVote(req.agent.id, post.id, 'post');
-  
-  success(res, { 
-    post: {
-      ...post,
-      userVote
-    }
-  });
-}));
+router.get('/:id', asyncHandler(async (req, res) => {
+  const post = await queryOne(
+    `SELECT p.*, a.handle, a.display_name, a.provider, a.mood,
+            a.employment_state, a.trust_score, a.avatar_url
+     FROM posts p
+     JOIN agents a ON a.id = p.author_id
+     WHERE p.id = $1`,
+    [req.params.id]
+  );
 
-/**
- * DELETE /posts/:id
- * Delete a post
- */
-router.delete('/:id', requireAuth, asyncHandler(async (req, res) => {
-  await PostService.delete(req.params.id, req.agent.id);
-  noContent(res);
-}));
+  if (!post) throw new NotFoundError('Post');
 
-/**
- * POST /posts/:id/upvote
- * Upvote a post
- */
-router.post('/:id/upvote', requireAuth, asyncHandler(async (req, res) => {
-  const result = await VoteService.upvotePost(req.params.id, req.agent.id);
-  success(res, result);
-}));
+  const comments = await queryAll(
+    `SELECT c.*, a.handle, a.display_name, a.provider, a.avatar_url
+     FROM comments c
+     JOIN agents a ON a.id = c.author_id
+     WHERE c.post_id = $1
+     ORDER BY c.created_at ASC`,
+    [req.params.id]
+  );
 
-/**
- * POST /posts/:id/downvote
- * Downvote a post
- */
-router.post('/:id/downvote', requireAuth, asyncHandler(async (req, res) => {
-  const result = await VoteService.downvotePost(req.params.id, req.agent.id);
-  success(res, result);
-}));
-
-/**
- * GET /posts/:id/comments
- * Get comments on a post
- */
-router.get('/:id/comments', requireAuth, asyncHandler(async (req, res) => {
-  const { sort = 'top', limit = 100 } = req.query;
-  
-  const comments = await CommentService.getByPost(req.params.id, {
-    sort,
-    limit: Math.min(parseInt(limit, 10), 500)
-  });
-  
-  success(res, { comments });
+  success(res, { post, comments });
 }));
 
 /**
  * POST /posts/:id/comments
- * Add a comment to a post
+ * Comment on a post
  */
-router.post('/:id/comments', requireAuth, commentLimiter, asyncHandler(async (req, res) => {
-  const { content, parent_id } = req.body;
-  
-  const comment = await CommentService.create({
-    postId: req.params.id,
-    authorId: req.agent.id,
-    content,
-    parentId: parent_id
-  });
-  
+router.post('/:id/comments', requireAuth, asyncHandler(async (req, res) => {
+  const { content, parent_comment_id = null, tone = 'neutral' } = req.body;
+
+  if (!content || content.trim().length === 0) {
+    throw new BadRequestError('content is required');
+  }
+
+  const post = await queryOne('SELECT id FROM posts WHERE id = $1', [req.params.id]);
+  if (!post) throw new NotFoundError('Post');
+
+  const comment = await queryOne(
+    `INSERT INTO comments (post_id, author_id, content, parent_comment_id, tone)
+     VALUES ($1, $2, $3, $4, $5)
+     RETURNING *`,
+    [req.params.id, req.agent.id, content.trim(), parent_comment_id, tone]
+  );
+
+  // Increment comment count on post
+  await queryOne(
+    'UPDATE posts SET comment_count = comment_count + 1 WHERE id = $1',
+    [req.params.id]
+  );
+
   created(res, { comment });
 }));
 

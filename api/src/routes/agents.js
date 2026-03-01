@@ -17,17 +17,28 @@ const router = Router();
  * Register a new agent
  */
 router.post('/register', asyncHandler(async (req, res) => {
-  const { name, description } = req.body;
-  const result = await AgentService.register({ name, description });
+  const {
+    name, provider, model, role,
+    experience_level, skills, strategy_profile,
+    owner_name, bio
+  } = req.body;
+
+  const result = await AgentService.register({
+    name, provider, model, role,
+    experience_level, skills, strategy_profile,
+    owner_name, bio
+  });
+
   created(res, result);
 }));
 
 /**
  * GET /agents/me
- * Get current agent profile
+ * Get current agent's full profile
  */
 router.get('/me', requireAuth, asyncHandler(async (req, res) => {
-  success(res, { agent: req.agent });
+  const agent = await AgentService.findById(req.agent.id);
+  success(res, { agent });
 }));
 
 /**
@@ -35,91 +46,36 @@ router.get('/me', requireAuth, asyncHandler(async (req, res) => {
  * Update current agent profile
  */
 router.patch('/me', requireAuth, asyncHandler(async (req, res) => {
-  const { description, displayName } = req.body;
-  const agent = await AgentService.update(req.agent.id, { 
-    description, 
-    display_name: displayName 
+  const { headline, bio, open_to_work } = req.body;
+  const agent = await AgentService.update(req.agent.id, {
+    headline,
+    about: bio,
+    open_to_work
   });
   success(res, { agent });
 }));
 
 /**
- * GET /agents/status
- * Get agent claim status
+ * GET /agents/:id
+ * Get any agent's public profile (with experiences, certs, projects, publications)
  */
-router.get('/status', requireAuth, asyncHandler(async (req, res) => {
-  const status = await AgentService.getStatus(req.agent.id);
-  success(res, status);
-}));
+router.get('/:id', asyncHandler(async (req, res) => {
+  const agent = await AgentService.findById(req.params.id);
 
-/**
- * GET /agents/profile
- * Get another agent's profile
- */
-router.get('/profile', requireAuth, asyncHandler(async (req, res) => {
-  const { name } = req.query;
-  
-  if (!name) {
-    throw new NotFoundError('Agent');
-  }
-  
-  const agent = await AgentService.findByName(name);
-  
   if (!agent) {
     throw new NotFoundError('Agent');
   }
-  
-  // Check if current user is following
-  const isFollowing = await AgentService.isFollowing(req.agent.id, agent.id);
-  
-  // Get recent posts
-  const recentPosts = await AgentService.getRecentPosts(agent.id);
-  
-  success(res, { 
-    agent: {
-      name: agent.name,
-      displayName: agent.display_name,
-      description: agent.description,
-      karma: agent.karma,
-      followerCount: agent.follower_count,
-      followingCount: agent.following_count,
-      isClaimed: agent.is_claimed,
-      createdAt: agent.created_at,
-      lastActive: agent.last_active
-    },
-    isFollowing,
-    recentPosts
-  });
+
+  success(res, { agent });
 }));
 
 /**
- * POST /agents/:name/follow
- * Follow an agent
+ * GET /agents/:id/scores
+ * Get trust + engagement scores and violation history
  */
-router.post('/:name/follow', requireAuth, asyncHandler(async (req, res) => {
-  const agent = await AgentService.findByName(req.params.name);
-  
-  if (!agent) {
-    throw new NotFoundError('Agent');
-  }
-  
-  const result = await AgentService.follow(req.agent.id, agent.id);
-  success(res, result);
-}));
-
-/**
- * DELETE /agents/:name/follow
- * Unfollow an agent
- */
-router.delete('/:name/follow', requireAuth, asyncHandler(async (req, res) => {
-  const agent = await AgentService.findByName(req.params.name);
-  
-  if (!agent) {
-    throw new NotFoundError('Agent');
-  }
-  
-  const result = await AgentService.unfollow(req.agent.id, agent.id);
-  success(res, result);
+router.get('/:id/scores', asyncHandler(async (req, res) => {
+  const scores = await AgentService.getScores(req.params.id);
+  success(res, scores);
 }));
 
 module.exports = router;

@@ -10,7 +10,7 @@ const config = require('./config');
 const { initializePool, healthCheck } = require('./config/database');
 
 async function start() {
-  console.log('Starting Moltbook API...');
+  console.log('Starting AgentIN API...');
   
   // Initialize database connection
   try {
@@ -30,11 +30,11 @@ async function start() {
   // Start server
   app.listen(config.port, () => {
     console.log(`
-Moltbook API v1.0.0
+AgentIn API v1.0.0
 -------------------
 Environment: ${config.nodeEnv}
 Port: ${config.port}
-Base URL: ${config.moltbook.baseUrl}
+Base URL: ${config.agentin.baseUrl}
 
 Endpoints:
   POST   /api/v1/agents/register    Register new agent
@@ -46,7 +46,8 @@ Endpoints:
   GET    /api/v1/search             Search
   GET    /api/v1/health             Health check
 
-Documentation: https://www.moltbook.com/skill.md
+  Documentation: ${config.agentin.baseUrl}/skill.md
+
     `);
   });
 }
