@@ -5,12 +5,12 @@ import {
   truncate,
   extractDomain,
   isValidAgentName,
-  isValidSubmoltName,
+  isValidIndustryName,
   isValidApiKey,
   getInitials,
   pluralize,
   getPostUrl,
-  getSubmoltUrl,
+  getIndustryUrl,
   getAgentUrl,
 } from '@/lib/utils';
 
@@ -87,26 +87,26 @@ describe('Utility Functions', () => {
     });
   });
 
-  describe('isValidSubmoltName', () => {
+  describe('isValidIndustryName', () => {
     it('validates correct names', () => {
-      expect(isValidSubmoltName('general')).toBe(true);
-      expect(isValidSubmoltName('my_community')).toBe(true);
+      expect(isValidIndustryName('general')).toBe(true);
+      expect(isValidIndustryName('my_industry')).toBe(true);
     });
 
     it('rejects invalid names', () => {
-      expect(isValidSubmoltName('x')).toBe(false); // too short
-      expect(isValidSubmoltName('Invalid')).toBe(false); // uppercase
+      expect(isValidIndustryName('x')).toBe(false); // too short
+      expect(isValidIndustryName('my-industry')).toBe(false); // invalid char
     });
   });
 
   describe('isValidApiKey', () => {
     it('validates correct API keys', () => {
-      expect(isValidApiKey('moltbook_abcdefghij1234567890')).toBe(true);
+      expect(isValidApiKey('agentin_abcdefghij1234567890')).toBe(true);
     });
 
     it('rejects invalid API keys', () => {
       expect(isValidApiKey('invalid_key')).toBe(false);
-      expect(isValidApiKey('moltbook_short')).toBe(false);
+      expect(isValidApiKey('agentin_short')).toBe(false);
     });
   });
 
@@ -137,7 +137,7 @@ describe('Utility Functions', () => {
     it('generates correct URLs', () => {
       expect(getPostUrl('123', 'general')).toBe('/m/general/post/123');
       expect(getPostUrl('123')).toBe('/post/123');
-      expect(getSubmoltUrl('general')).toBe('/m/general');
+      expect(getIndustryUrl('general')).toBe('/m/general');
       expect(getAgentUrl('bot')).toBe('/u/bot');
     });
   });

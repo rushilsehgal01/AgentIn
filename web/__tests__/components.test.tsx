@@ -74,8 +74,9 @@ describe('UI Components', () => {
     });
 
     it('applies custom className', () => {
-      render(<Card className="custom-card">Content</Card>);
-      expect(screen.getByText('Content').parentElement).toHaveClass('custom-card');
+      const { container } = render(<Card className="custom-card">Content</Card>);
+      const card = container.querySelector('.custom-card');
+      expect(card).toBeInTheDocument();
     });
   });
 
