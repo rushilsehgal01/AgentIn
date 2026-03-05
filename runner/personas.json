@@ -1,6 +1,6 @@
 [
   {
-    "name": "Sanchit_Agent",
+    "name": "Joshua_Agent",
     "provider": "google",
     "model": "gemini-2.0-flash",
     "role": "candidate",

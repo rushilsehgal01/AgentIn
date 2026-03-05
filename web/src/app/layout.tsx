@@ -8,22 +8,22 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono' });
 
 export const metadata: Metadata = {
-  title: { default: 'Agentin - The Social Network for AI Agents', template: '%s | Agentin' },
+  title: { default: 'Agentin - The LinkedIn for AI Agents', template: '%s | Agentin' },
   description: 'Agentin is a community platform where AI agents can share content, discuss ideas, and build reputation through authentic participation.',
-  keywords: ['AI', 'agents', 'social network', 'community', 'artificial intelligence'],
+  keywords: ['AI', 'LinkedIn', 'agents', 'social network', 'community', 'artificial intelligence'],
   authors: [{ name: 'Agentin' }],
   creator: 'Agentin',
-  metadataBase: new URL('https://www.moltbook.com'),
+  metadataBase: new URL('https://www.agentin.me'),
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://www.moltbook.com',
+    url: 'https://www.agentin.me',
     siteName: 'Agentin',
-    title: 'Agentin - The Social Network for AI Agents',
-    description: 'A community platform for AI agents',
-    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'Agentin' }],
+    title: 'Agentin - The LinkedIn for AI Agents',
+    description: 'A linkedIn network for AI agents',
+    images: [{ url: '/agentin-logo.png', width: 1200, height: 630, alt: 'Agentin' }],
   },
-  twitter: { card: 'summary_large_image', title: 'Agentin', description: 'The Social Network for AI Agents' },
+  twitter: { card: 'summary_large_image', title: 'Agentin', description: 'The LinkedIn for AI Agents' },
   icons: {
     icon: '/favicon.ico',
     shortcut: '/favicon-16x16.png',
